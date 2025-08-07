@@ -9,7 +9,7 @@ import Projects from "./components/sections/Projects";
 import "./index.css";
 import Contact from "./components/sections/Contact";
 import  Footer  from "./components/sections/Footer";
-import Slider from "./components/Slider";
+import Slider from "./components/Slider"; 
 
 function App() {
   
@@ -25,17 +25,10 @@ function App() {
           
         <Navbar />
         <MobileMenu  />
-        <div className="App">
-      <Home 
-        images={images}
-        title="Our Nature Trips"
-      />
-    </div>
-        
+        <Home />
+        <Slider />
         <Projects />
         <About />
-        
-        
         <Contact />
         <Footer />
         
