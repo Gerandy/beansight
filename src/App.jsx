@@ -2,13 +2,13 @@ import { useState } from "react";
 import "./App.css";
 
 import Navbar from "./components/Navbar";
-import { MobileMenu } from "./components/MobileMenu";
+import  MobileMenu  from "./components/MobileMenu";
 import Home from "./components/sections/Home";
 import About from "./components/sections/About";
 import Projects from "./components/sections/Projects";
 import "./index.css";
 import Contact from "./components/sections/Contact";
-import { Footer } from "./components/sections/Footer";
+import  Footer  from "./components/sections/Footer";
 import Slider from "./components/Slider";
 
 function App() {
@@ -37,6 +37,7 @@ function App() {
         
         
         <Contact />
+        <Footer />
         
         
         
