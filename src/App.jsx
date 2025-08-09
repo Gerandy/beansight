@@ -10,6 +10,8 @@ import "./index.css";
 import Contact from "./components/sections/Contact";
 import  Footer  from "./components/sections/Footer";
 import Slider from "./components/Slider"; 
+import MenuGrid from "./components/MenuGrid";
+import MenuCategories from "./components/MenuCategories";
 
 function App() {
   
@@ -27,6 +29,8 @@ function App() {
         <MobileMenu  />
         <Home />
         <Slider />
+        <MenuGrid />
+        <MenuCategories />
         <Projects />
         <About />
         <Contact />
