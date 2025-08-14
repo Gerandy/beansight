@@ -8,7 +8,7 @@ function MenuCard({ name, price, img}) {
                 alt={name}
                 className="w-30 h-30 object-cover mb-3"
             />
-            <h2 className="text-center text-lg font-medium mb-2">{name}</h2>
+            <h2 className="text-gray-950 text-center text-lg font-medium mb-2">{name}</h2>
             <p className="text-lg text-gray-600">{price}</p>
         </div>
     );

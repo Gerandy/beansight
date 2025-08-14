@@ -12,6 +12,7 @@ import  Footer  from "./components/sections/Footer";
 import Slider from "./components/Slider"; 
 import MenuGrid from "./components/MenuGrid";
 import MenuCategories from "./components/MenuCategories";
+import MenuFeatured from "./components/MenuFeatured";
 
 function App() {
   
@@ -31,6 +32,7 @@ function App() {
         <Slider />
         <MenuGrid />
         <MenuCategories />
+        <MenuFeatured />
         <Projects />
         <About />
         <Contact />
