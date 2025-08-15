@@ -4,7 +4,7 @@ import "./App.css";
 import Navbar from "./components/Navbar";
 import  MobileMenu  from "./components/MobileMenu";
 import Home from "./components/sections/Home";
-import About from "./components/sections/About";
+import Menu from "./components/sections/Menu";
 import Projects from "./components/sections/Projects";
 import "./index.css";
 import Contact from "./components/sections/Contact";
@@ -34,7 +34,7 @@ function App() {
         <MenuCategories />
         <MenuFeatured />
         <Projects />
-        <About />
+        <Menu />
         <Contact />
         <Footer />
         

@@ -34,15 +34,15 @@ function Navbar({menuOpen, setMenuOpen}){
                   </a>
                   <a href="#about" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
                     {""}
-                    About{""}
+                    Menu{""}
                   </a>
                   <a href="#projects" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
                     {""}
-                    Project{""}
+                    Orders{""}
                   </a>
                   <a href="#contact" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
                     {""}
-                    Contacts{""}
+                    MyAccount{""}
                   </a>
                 </div>
             </div>
