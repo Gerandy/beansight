@@ -1,8 +1,14 @@
-function Menu(){
-  return(
+import Navbar from "../Navbar";
+import Footer from "./Footer";
 
-    <></>
-  )
-  
-};
-export default Menu
+function Menu() {
+  return (
+    <div>
+      <Navbar />
+
+      <Footer />
+    </div>
+  );
+}
+
+export default Menu;

@@ -50,7 +50,7 @@ function Slider() {
   return (
     <div
       className="group w-full max-w-[900px] mx-auto mt-8 rounded-2xl overflow-hidden relative"
-      style={{ height: 300 }}
+      style={{ height: 300, marginTop: 100 }}
     >
       {/* previous button */}
       <button

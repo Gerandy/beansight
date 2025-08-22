@@ -1,18 +1,11 @@
-import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
-
-import Navbar from "./components/Navbar";
+import { useState } from "react";
 import  MobileMenu  from "./components/MobileMenu";
 import Home from "./components/sections/Home";
 import Menu from "./components/sections/Menu";
-import Projects from "./components/sections/Projects";
 import "./index.css";
-import Contact from "./components/sections/Contact";
-import  Footer  from "./components/sections/Footer";
-import Slider from "./components/Slider"; 
-import MenuGrid from "./components/MenuGrid";
-import MenuCategories from "./components/MenuCategories";
-import MenuFeatured from "./components/MenuFeatured";
+
 
 function App() {
   
@@ -20,30 +13,13 @@ function App() {
   const images = ["https://d3bjzufjcawald.cloudfront.net/public/web/2022-08-04/62eb51d93d530/Mcdo_E-Gifts_CAROUSEL-MOBILE-Banner-Refresh_767x455-banner-mobile.jpg"]
 
   return (
-    <>
-    
-      
-
-        <div>
-          
-        <Navbar />
-        <MobileMenu  />
-        <Home />
-        <Slider />
-        <MenuGrid />
-        <MenuCategories />
-        <MenuFeatured />
-        <Projects />
-        <Menu />
-        <Contact />
-        <Footer />
-        
-        
-        
-        
-      </div>
-      
-    </>
+    <Router>
+      <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/menu" element={<Menu />} />
+      </Routes>
+    </Router>
   );
 }
 

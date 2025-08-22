@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect } from "react"
 import logo from "../assets/ahjinlogo.png"
 
@@ -28,22 +29,18 @@ function Navbar({menuOpen, setMenuOpen}){
                 </div>
 
                 <div className="hidden md:flex items-center space-x-8">
-                  <a href="#home" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
-                    {""}
-                    Home{""}
-                  </a>
-                  <a href="#about" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
-                    {""}
-                    Menu{""}
-                  </a>
-                  <a href="#projects" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
-                    {""}
-                    Orders{""}
-                  </a>
-                  <a href="#contact" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
-                    {""}
-                    MyAccount{""}
-                  </a>
+                  <Link to="/" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                    Home
+                  </Link>
+                  <Link to="/menu" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                    Menu
+                  </Link>
+                  <Link to="/orders" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                    Orders
+                  </Link>
+                  <Link to="/account" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                    MyAccount
+                  </Link>
                 </div>
             </div>
           </div>

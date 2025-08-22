@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import MenuCard from "./MenuCard";
+import MenuCard from "./HomeCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function MenuGrid() {
+function MenuFeatured() {
   const foodMenu = [
     { name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
     { name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
@@ -27,11 +27,14 @@ function MenuGrid() {
   };
 
   return (
-    <div className="max-w-[950px] mx-auto p-6 relative">
-      <h1 className="text-gray-950 text-4xl font-bold">Hello, User!</h1>
-      <p className="text-gray-950 mb-6">Food Options for you!</p>
+    <div className="max-w-[950px] mx-auto p-6 pb-6 relative"
+      style={{
+      marginBottom: '100px'
+      }}>
+      <h1 className="text-gray-950 text-4xl font-bold">Featured</h1>
+      <p className="text-gray-950 mb-6">Discover your New Favorites here!</p>
 
-      <div className="hidden lg:grid grid-cols-4 gap-6">
+      <div className="hidden lg:grid grid-cols-4 gap-6 ">
         {foodMenu.map((item, index) => (
           <MenuCard
             key={index}
@@ -90,7 +93,4 @@ function MenuGrid() {
   );
 }
 
-export default MenuGrid;
-
-
-
+export default MenuFeatured;
