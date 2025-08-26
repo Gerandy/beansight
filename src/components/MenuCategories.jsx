@@ -1,0 +1,68 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef } from "react";
+
+function MenuCategories() {
+  const categories = [
+    "Featured",
+    "Group Meals",
+    "Chicken",
+    "Burgers",
+    "McSpaghetti",
+    "Rice Bowls",
+    "Desserts & Drinks",
+    "McCafé",
+    "Fries & Extras",
+    "Happy Meal",
+    "Sulit Busog Meals",
+  ];
+
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const scrollAmount = direction === "left" ? -clientWidth : clientWidth;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <div className="relative bg-white shadow-sm border-b sticky top-16 z-20">
+   
+      <button
+        onClick={() => scroll("left")}
+        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md p-2 rounded-full z-30"
+      >
+        <ChevronLeft className="w-5 h-5 text-gray-600" />
+      </button>
+
+     
+      <div
+        ref={scrollRef}
+        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth"
+      >
+        {categories.map((cat, idx) => (
+          <button
+            key={idx}
+            className="text-sm font-medium text-gray-700 hover:text-yellow-600 whitespace-nowrap"
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+     
+      <button
+        onClick={() => scroll("right")}
+        className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md p-2 rounded-full z-30"
+      >
+        <ChevronRight className="w-5 h-5 text-gray-600" />
+      </button>
+    </div>
+  );
+}
+
+export default MenuCategories;
+
+
+
