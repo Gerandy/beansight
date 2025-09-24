@@ -89,7 +89,7 @@ function MenuGrid() {
             </p>
 
             
-            <button className="mt-auto bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-4 rounded-xl">
+            <button className="mt-auto bg-yellow-950 dark:hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-xl">
               Order
             </button>
           </div>
