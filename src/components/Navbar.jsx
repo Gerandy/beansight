@@ -22,8 +22,8 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center group cursor-pointer">
                           <img className="h-12 w-12 mr-2 group-hover:scale-105" src={logo} alt="logo" />
-                          <span className="text-zinc-900 group-hover:text-purple-500 transition-colors duration-400 group-hover:scale-105 mr-1">Ahjin</span>
-                          <span className="text-purple-500 group-hover:text-zinc-900 transition-colors duration-400 group-hover:scale-105">.guild</span>
+                          <span className="text-zinc-900 group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Solace</span>
+                          <span className="text-orange-200  group-hover:text-zinc-900 transition-colors duration-400 group-hover:scale-105">.Cafe</span>
                         </div>
                     </div>                
                 </a>

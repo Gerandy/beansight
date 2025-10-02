@@ -1,5 +1,3 @@
-import React from "react";
-
 function MenuCard({ name, price, img}) {
     return (
         <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center hover:shadow-lg transition">

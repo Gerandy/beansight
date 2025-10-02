@@ -1,11 +1,8 @@
-import Navbar from "../Navbar";
-import MobileMenu from "../MobileMenu";
 import Slider from "../Slider";
 import HomeGrid from "../HomeGrid";
 import HomeCategories from "../HomeCategories";
 import Favorites from "../Favorites";
 import HomeFeatured from "../HomeFeatured";
-import Footer from "./Footer";
 
 
 function Home(){ 
@@ -16,7 +13,6 @@ function Home(){
       <HomeCategories />
       <Favorites />
       <HomeFeatured />
-      <Footer />
     </div>
     
   );

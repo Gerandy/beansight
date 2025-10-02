@@ -5,8 +5,10 @@ import MobileMenu from "./components/MobileMenu";
 import Navbar from "./components/Navbar"; 
 import Home from "./components/sections/Home";
 import Menu from "./components/sections/Menu";
+import ProductDetails from "./components/sections/ProductDetails";
 import Myaccount from "./components/sections/Myaccount";
 import Myprofile from "./components/Myprofile";
+import Footer from "./components/sections/Footer";
 import "./index.css";
 
 function App() {
@@ -30,6 +32,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
         <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
+        <Route path="/menu/product-details/:id/" element={<ProductDetails />} />
 
         {/* MyAccount parent route */}
         <Route path="/Myaccount" element={<Myaccount />}>
@@ -37,6 +40,7 @@ function App() {
           <Route path="profile" element={<Myprofile />} />
         </Route>
       </Routes>
+      <Footer />
     </Router>
   );
 }

@@ -27,11 +27,11 @@ function MenuCategories() {
   };
 
   return (
-    <div className="relative bg-white shadow-sm border-b sticky top-16 z-20">
+    <div className="relative bg-lime-50 shadow-sm border-b sticky top-16 z-20">
    
       <button
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 bg-white shadow-md p-2 rounded-full z-30"
+        className="absolute left-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
       >
         <ChevronLeft className="w-5 h-5 text-gray-600" />
       </button>
@@ -44,7 +44,7 @@ function MenuCategories() {
         {categories.map((cat, idx) => (
           <button
             key={idx}
-            className="text-sm font-medium text-gray-700 hover:text-yellow-600 whitespace-nowrap"
+            className="text-sm font-medium text-gray-700 hover:text-yellow-950 whitespace-nowrap"
           >
             {cat}
           </button>
@@ -54,7 +54,7 @@ function MenuCategories() {
      
       <button
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 bg-white shadow-md p-2 rounded-full z-30"
+        className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
       >
         <ChevronRight className="w-5 h-5 text-gray-600" />
       </button>

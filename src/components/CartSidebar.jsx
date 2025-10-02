@@ -22,7 +22,7 @@ function CartSidebar({ cartOpen }) {
         }`}
         style={{ top: '4rem' }}
       >
-        <div className="p-3 m-3 flex items-center justify-between border-b border-gray-200 border rounded-b-none">
+        <div className="p-3 m-3 flex items-center justify-between border-b border-gray-400 border rounded-md">
           <div>
             <div className="text-xs text-black">Cavite</div>
             <div className="font-bold text-sm text-black">Deliver (Friday, 10:41 PM)</div>
@@ -36,14 +36,14 @@ function CartSidebar({ cartOpen }) {
         </div>
 
         <div className="flex flex-col items-center">
-          <div className="p-4 flex justify-between items-center border-b">
+          <div className="p-1 flex justify-between items-center border-b border-black">
             <h2 className="text-center font-bold text-lg text-black">My Bag</h2>
           </div>
           <div>
             <p className="text-center text-black">Your bag is empty. Add something from the menu.</p>
           </div>
         </div>
-        <div className="absolute bottom-0 w-full p-4 border-t">
+        <div className="absolute bottom-0 w-full p-4 border-t border-black">
           <div className="flex justify-between">
             <span className="text-black">Subtotal</span>
             <span className="text-black">₱0.00</span>

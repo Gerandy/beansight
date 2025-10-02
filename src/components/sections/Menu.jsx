@@ -1,5 +1,4 @@
 import MenuCategories from "../MenuCategories";
-import Footer from "./Footer";
 import MenuGrid from "../MenuGrid";
 
 function Menu({ cartOpen }) {
@@ -12,7 +11,6 @@ function Menu({ cartOpen }) {
     >
       <MenuCategories />
       <MenuGrid />
-      <Footer />
     </div>
   );
 }
