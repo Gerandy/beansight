@@ -10,6 +10,8 @@ import Myaccount from "./components/sections/Myaccount";
 import Myprofile from "./components/Myprofile";
 import Footer from "./components/sections/Footer";
 import "./index.css";
+import MyAddresses from "./components/MyAddresses";
+import MyContactNumbers from "./components/MyContactNumbers";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false); 
@@ -38,6 +40,8 @@ function App() {
         <Route path="/Myaccount" element={<Myaccount />}>
           <Route index element={<Myprofile />} />
           <Route path="profile" element={<Myprofile />} />
+          <Route path="addresses" element={<MyAddresses/>} />
+          <Route path="contacts" element={<MyContactNumbers/>} />
         </Route>
       </Routes>
       <Footer />

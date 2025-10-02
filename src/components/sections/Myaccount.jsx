@@ -1,5 +1,5 @@
 import Footer from "./Footer";
-import Sidebar from "../AccountSidebar";
+import Sidebar from "../MyAccountSidebar";
 import { Outlet } from "react-router-dom";
 
 function MyAccount() {
