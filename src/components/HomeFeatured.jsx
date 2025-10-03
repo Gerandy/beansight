@@ -27,7 +27,7 @@ function MenuFeatured() {
   };
 
   return (
-    <div className="max-w-[950px] mx-auto p-6 pb-6 relative"
+    <div className="max-w-[1050px] mx-auto p-6 pb-6 relative"
       style={{
       marginBottom: '100px'
       }}>

@@ -29,7 +29,7 @@ function MenuCategories() {
   };
 
   return (
-    <div className="max-w-[950px] mx-auto p-6 relative">
+    <div className="max-w-[1050px] mx-auto p-6 relative">
       <h1 className="text-gray-950 text-4xl font-bold">Menu</h1>
       <p className="text-gray-950 mb-6">What are you craving for today?</p>
       <div className="flex items-center">

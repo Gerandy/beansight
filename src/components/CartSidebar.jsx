@@ -17,7 +17,7 @@ function CartSidebar({ cartOpen }) {
   return (
     <div className="relative">
       <div
-        className={`fixed right-0 w-95 h-[calc(100vh-4rem)] bg-white shadow-lg border-l border-gray-200 z-50 transform transition-transform duration-300 ${
+        className={`fixed right-0 w-95 h-[calc(100vh-4rem)] bg-lime-50 shadow-lg border-l border-gray-200 z-50 transform transition-transform duration-300 ${
           cartOpen ? "translate-x-0" : "translate-x-full"
         }`}
         style={{ top: '4rem' }}

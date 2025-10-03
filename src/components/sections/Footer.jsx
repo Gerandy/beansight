@@ -21,8 +21,12 @@ function Footer() {
         </div>
 
         
-        <div className="text-center md:text-left">
+        <div className="text-center md:text-left flex items-center gap-4">
           <p className="text-red-600 font-bold">For news and updates, follow us</p>
+          <div className="flex items-center">
+            <image src="src/assets/1.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />
+            <image src="src/assets/2.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />
+          </div>
         </div>
       </div>
     </footer>
