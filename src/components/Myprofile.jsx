@@ -12,7 +12,7 @@ function MyProfile() {
             <input
               type="text"
               defaultValue="Ferd"
-              className="w-full p-2 border rounded-md bg-gray-100"
+              className="w-full p-2 border rounded-md bg-gray-100 text-black"
             />
           </div>
 
@@ -23,7 +23,7 @@ function MyProfile() {
             <input
               type="text"
               defaultValue="Olaira"
-              className="w-full p-2 border rounded-md bg-gray-100"
+              className="w-full p-2 border rounded-md bg-gray-100 text-black"
             />
           </div>
 
@@ -34,7 +34,7 @@ function MyProfile() {
             <input
               type="email"
               defaultValue="sinbaggy12@gmail.com"
-              className="w-full p-2 border rounded-md bg-gray-100"
+              className="w-full p-2 border rounded-md bg-gray-100 text-black"
             />
           </div>
 
@@ -44,7 +44,7 @@ function MyProfile() {
             </label>
             <input
               type="date"
-              className="w-full p-2 border rounded-md bg-gray-100"
+              className="w-full p-2 border rounded-md bg-gray-100 text-black"
             />
           </div>
 

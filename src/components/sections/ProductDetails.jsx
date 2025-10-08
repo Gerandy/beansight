@@ -42,7 +42,7 @@ function ProductDetails() {
           onClick={() => navigate(-1)}
         >
           <ChevronLeft size={20} className="mr-1" />
-          Back to Menu
+          Back
         </button>
 
         <div className="flex flex-col lg:flex-row gap-8">

@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 function MenuCategories() {
   const categories = [
@@ -17,10 +17,23 @@ function MenuCategories() {
   ];
 
   const scrollRef = useRef(null);
+  const [showArrows, setShowArrows] = useState(false);
+
+  const checkOverflow = () => {
+    if (scrollRef.current) {
+      setShowArrows(scrollRef.current.scrollWidth > scrollRef.current.clientWidth);
+    }
+  };
+
+  useEffect(() => {
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, []);
 
   const scroll = (direction) => {
     if (scrollRef.current) {
-      const { scrollLeft, clientWidth } = scrollRef.current;
+      const { clientWidth } = scrollRef.current;
       const scrollAmount = direction === "left" ? -clientWidth : clientWidth;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
     }
@@ -28,15 +41,15 @@ function MenuCategories() {
 
   return (
     <div className="relative bg-lime-50 shadow-sm border-b sticky top-16 z-20">
-   
-      <button
-        onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
-      >
-        <ChevronLeft className="w-5 h-5 text-gray-600" />
-      </button>
+      {showArrows && (
+        <button
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
 
-     
       <div
         ref={scrollRef}
         className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth"
@@ -51,13 +64,14 @@ function MenuCategories() {
         ))}
       </div>
 
-     
-      <button
-        onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
-      >
-        <ChevronRight className="w-5 h-5 text-gray-600" />
-      </button>
+      {showArrows && (
+        <button
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
+        >
+          <ChevronRight className="w-5 h-5 text-gray-600" />
+        </button>
+      )}
     </div>
   );
 }
