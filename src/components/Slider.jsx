@@ -48,111 +48,113 @@ function Slider() {
   };
 
   return (
-    <div
-      className="group w-full max-w-[1000px] mx-auto mt-8 rounded-2xl overflow-hidden relative"
-      style={{ height: 300, marginTop: 100 }}
-    >
-      {/* previous button */}
-      <button
-        onClick={() => handleBtnClick("left", () => startSwipe("left"))}
-        aria-label="Previous"
-        disabled={animating}
-        className={`
-          absolute left-3 top-1/2 -translate-y-1/2 z-40
-          bg-black text-white rounded-full w-10 h-10 flex items-center justify-center
-          text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200
-          active:scale-90
-        `}
-      >
-        <span
-          className={`
-            inline-block
-            ${waveBtn === "left" ? "animate-waveicon" : ""}
-          `}
-        >
-          &#8249;
-        </span>
-      </button>
+    <div className="w-full flex justify-center items-center bg-transparent" style={{marginTop: '88px'}}>
+      <div className="relative w-full max-w-2xl lg:max-w-5xl mx-auto px-4">
+        <div className="relative w-full aspect-[2.8/1] bg-white rounded-2xl shadow-xl flex items-center justify-center overflow-hidden">
+          {/* Previous button */}
+          <button
+            onClick={() => handleBtnClick("left", () => startSwipe("left"))}
+            aria-label="Previous"
+            disabled={animating}
+            className={`
+              absolute left-4 top-1/2 -translate-y-1/2 z-30
+              bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
+              text-3xl shadow-lg
+              transition
+              active:scale-90
+              hover:cursor-pointer
+            `}
+          >
+            <span
+              className={`
+                inline-block
+                ${waveBtn === "left" ? "animate-waveicon" : ""}
+              `}
+            >
+              &#8249;
+            </span>
+          </button>
 
-      {/* swipe images */}
-      <div className="absolute inset-0 w-full h-full z-10 overflow-hidden">
-        {/* current image */}
-        <img
-          src={slides[current].image}
-          alt=""
-          className={`absolute inset-0 w-full h-full object-cover bg-white transition-transform duration-300 ${getCurrentImgClass()}`}
-        />
-        {/* next image animation (visible while animation) */}
-        <img
-          src={slides[next].image}
-          alt=""
-          className={`absolute inset-0 w-full h-full object-cover bg-white transition-transform duration-300 ${getNextImgClass()}`}
-        />
+          {/* Images */}
+          <div className="w-full h-full flex items-center justify-center">
+            <img
+              src={slides[current].image}
+              alt=""
+              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 rounded-2xl ${getCurrentImgClass()}`}
+            />
+            <img
+              src={slides[next].image}
+              alt=""
+              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 rounded-2xl ${getNextImgClass()}`}
+            />
+          </div>
+
+          {/* Next button */}
+          <button
+            onClick={() => handleBtnClick("right", () => startSwipe("right"))}
+            aria-label="Next"
+            disabled={animating}
+            className={`
+              absolute right-4 top-1/2 -translate-y-1/2 z-20
+              bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
+              text-3xl shadow-lg
+              transition
+              active:scale-90
+              hover:cursor-pointer
+            `}
+          >
+            <span
+              className={`
+                inline-block
+                ${waveBtn === "right" ? "animate-waveicon" : ""}
+              `}
+            >
+              &#8250;
+            </span>
+          </button>
+        </div>
+        {/* keyframes for wave and swipe */}
+        <style>
+          {`
+            @keyframes waveicon {
+              0% { transform: scale(1);}
+              50% { transform: scale(1.25);}
+              100% { transform: scale(1);}
+            }
+            .animate-waveicon {
+              animation: waveicon 0.35s;
+            }
+            @keyframes slideInRight {
+              from { transform: translateX(100%);}
+              to { transform: translateX(0);}
+            }
+            .animate-slideInRight {
+              animation: slideInRight 0.35s cubic-bezier(.77,0,.18,1);
+            }
+            @keyframes slideOutLeft {
+              from { transform: translateX(0);}
+              to { transform: translateX(-100%);}
+            }
+            .animate-slideOutLeft {
+              animation: slideOutLeft 0.35s cubic-bezier(.77,0,.18,1);
+            }
+            @keyframes slideInLeft {
+              from { transform: translateX(-100%);}
+              to { transform: translateX(0);}
+            }
+            .animate-slideInLeft {
+              animation: slideInLeft 0.35s cubic-bezier(.77,0,.18,1);
+            }
+            @keyframes slideOutRight {
+              from { transform: translateX(0);}
+              to { transform: translateX(100%);}
+            }
+            .animate-slideOutRight {
+              animation: slideOutRight 0.35s cubic-bezier(.77,0,.18,1);
+            }
+          `}
+        </style>
       </div>
-
-      {/* next button */}
-      <button
-        onClick={() => handleBtnClick("right", () => startSwipe("right"))}
-        aria-label="Next"
-        disabled={animating}
-        className={`
-          absolute right-3 top-1/2 -translate-y-1/2 z-40
-          bg-black text-white rounded-full w-10 h-10 flex items-center justify-center
-          text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200
-          active:scale-90
-        `}
-      >
-        <span
-          className={`
-            inline-block
-            ${waveBtn === "right" ? "animate-waveicon" : ""}
-          `}
-        >
-          &#8250;
-        </span>
-      </button>
-
-      {/* keyframes for wave and swipe */}
-      <style>
-        {`
-          @keyframes waveicon {
-            0% { transform: scale(1);}
-            50% { transform: scale(1.25);}
-            100% { transform: scale(1);}
-          }
-          .animate-waveicon {
-            animation: waveicon 0.35s;
-          }
-          @keyframes slideInRight {
-            from { transform: translateX(100%);}
-            to { transform: translateX(0);}
-          }
-          .animate-slideInRight {
-            animation: slideInRight 0.35s cubic-bezier(.77,0,.18,1);
-          }
-          @keyframes slideOutLeft {
-            from { transform: translateX(0);}
-            to { transform: translateX(-100%);}
-          }
-          .animate-slideOutLeft {
-            animation: slideOutLeft 0.35s cubic-bezier(.77,0,.18,1);
-          }
-          @keyframes slideInLeft {
-            from { transform: translateX(-100%);}
-            to { transform: translateX(0);}
-          }
-          .animate-slideInLeft {
-            animation: slideInLeft 0.35s cubic-bezier(.77,0,.18,1);
-          }
-          @keyframes slideOutRight {
-            from { transform: translateX(0);}
-            to { transform: translateX(100%);}
-          }
-          .animate-slideOutRight {
-            animation: slideOutRight 0.35s cubic-bezier(.77,0,.18,1);
-          }
-        `}
-      </style>
     </div>
   );
 }

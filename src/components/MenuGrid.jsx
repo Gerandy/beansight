@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 function MenuGrid() {
+  const navigate = useNavigate();
+
   const products = [
     {
       id: 1,
@@ -89,7 +93,10 @@ function MenuGrid() {
             </p>
 
             
-            <button className="mt-auto bg-yellow-950 dark:hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-xl">
+            <button
+              className="mt-auto bg-yellow-950 dark:hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-xl hover:cursor-pointer transition-transform"
+              onClick={() => navigate(`/menu/product-details/${p.id}/`)}
+            >
               Order
             </button>
           </div>

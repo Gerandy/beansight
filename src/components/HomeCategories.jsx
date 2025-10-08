@@ -35,7 +35,7 @@ function MenuCategories() {
       <div className="flex items-center">
         <button
           onClick={() => handleScroll("left")}
-          className="bg-yellow-950 rounded-full shadow p-2 mr-2 flex items-center justify-center"
+          className="bg-yellow-950 rounded-full shadow p-2 mr-2 flex items-center justify-center hover:cursor-pointer"
           aria-label="Scroll left"
           disabled={startIdx === 0}
         >
@@ -65,7 +65,7 @@ function MenuCategories() {
         </div>
         <button
           onClick={() => handleScroll("right")}
-          className="bg-yellow-950 rounded-full shadow p-2 ml-2 flex items-center justify-center"
+          className="bg-yellow-950 rounded-full shadow p-2 ml-2 flex items-center justify-center hover:cursor-pointer"
           aria-label="Scroll right"
           disabled={startIdx >= categories.length - visibleCount}
         >

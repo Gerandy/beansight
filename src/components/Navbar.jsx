@@ -50,22 +50,22 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                       <div className="absolute hidden group-hover:block bg-white shadow-lg rounded-md top-full w-52 right-0">
                         <ul className="flex flex-col text-gray-700">
                           <li>
-                            <Link to="/profile" className="px-4 py-2 hover:bg-gray-100 block">
+                            <Link to="/Myaccount/profile" className="px-4 py-2 hover:bg-gray-100 block">
                               My Profile
                             </Link>
                           </li>
                           <li>
-                            <Link to="/addresses" className="px-4 py-2 hover:bg-gray-100 block">
+                            <Link to="/Myaccount/addresses" className="px-4 py-2 hover:bg-gray-100 block">
                               My Addresses
                             </Link>
                           </li>
                           <li>
-                            <Link to="/contact" className="px-4 py-2 hover:bg-gray-100 block">
+                            <Link to="/Myaccount/contacts" className="px-4 py-2 hover:bg-gray-100 block">
                               My Contact Numbers
                             </Link>
                           </li>
                           <li>
-                            <Link to="/coupons" className="px-4 py-2 hover:bg-gray-100 block">
+                            <Link to="/Myaccount/coupons" className="px-4 py-2 hover:bg-gray-100 block">
                               Coupons
                             </Link>
                           </li>

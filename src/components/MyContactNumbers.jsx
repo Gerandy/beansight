@@ -32,7 +32,7 @@ function MyContactNumbers() {
               <input
                 type="text"
                 placeholder="9XXXXXXXXX"
-                className="flex-1 text-black p-2 border border-l-0 rounded-r-md"
+                className="flex-1 text-black p-2 border border-l-0 rounded-r-md bg-gray-100"
               />
               <button className="ml-2 text-gray-500 hover:text-red-500">
                 <Trash2 size={18} />

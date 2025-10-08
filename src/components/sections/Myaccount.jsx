@@ -1,4 +1,3 @@
-import Footer from "./Footer";
 import Sidebar from "../MyAccountSidebar";
 import { Outlet } from "react-router-dom";
 
