@@ -25,7 +25,7 @@ function MyAddresses() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-black mb-6">My Addresses</h1>
+      <h1 className="text-4xl border-b text-black font-bold mb-10">My Addresses</h1>
 
       <div className="space-y-4">
         {addresses.map((address) => (
@@ -33,7 +33,7 @@ function MyAddresses() {
             key={address.id}
             className="flex items-start justify-between border-b pb-4"
           >
-            {/* Left: radio + address */}
+            
             <div className="flex items-start">
               <input
                 type="radio"
@@ -47,7 +47,7 @@ function MyAddresses() {
               </div>
             </div>
 
-            {/* Right: Edit button */}
+            
             <button className="px-4 py-1 bg-gray-200 rounded-full text-black font-medium hover:bg-gray-300">
               Edit
             </button>
@@ -55,7 +55,7 @@ function MyAddresses() {
         ))}
       </div>
 
-      {/* Add new address button */}
+    
       <div className="mt-6">
         <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-full">
           Add New Address

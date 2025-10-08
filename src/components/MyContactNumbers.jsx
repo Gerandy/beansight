@@ -6,7 +6,7 @@ function MyContactNumbers() {
 
   return (
     <div>
-      <h1 className="text-2xl text-black font-bold mb-6">My Contact Numbers</h1>
+      <h1 className="text-4xl border-b text-black font-bold mb-10">My Contact Numbers</h1>
 
       <div className="border rounded-lg p-8 shadow-sm flex flex-col items-center text-center">
         {!showForm ? (
