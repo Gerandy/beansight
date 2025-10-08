@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 
 const slides = [
-  { image: "src/assets/gerandy profile.jpg" },
-  { image: "src/assets/noer profile.png" }
+  { image: "src/assets/ahjinlogo.png" },
+  { image: "src/assets/ahjinlogo2.png" }
 ];
 
 function Slider() {
@@ -49,8 +49,8 @@ function Slider() {
 
   return (
     <div
-      className="group w-full max-w-[900px] mx-auto mt-8 rounded-2xl overflow-hidden relative"
-      style={{ height: 300 }}
+      className="group w-full max-w-[1000px] mx-auto mt-8 rounded-2xl overflow-hidden relative"
+      style={{ height: 300, marginTop: 100 }}
     >
       {/* previous button */}
       <button

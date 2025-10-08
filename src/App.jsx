@@ -1,49 +1,51 @@
-import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
-
-import Navbar from "./components/Navbar";
-import  MobileMenu  from "./components/MobileMenu";
+import { useState } from "react";
+import MobileMenu from "./components/MobileMenu";
+import Navbar from "./components/Navbar"; 
 import Home from "./components/sections/Home";
 import Menu from "./components/sections/Menu";
-import Projects from "./components/sections/Projects";
+import ProductDetails from "./components/sections/ProductDetails";
+import Myaccount from "./components/sections/Myaccount";
+import Myprofile from "./components/Myprofile";
+import Footer from "./components/sections/Footer";
 import "./index.css";
-import Contact from "./components/sections/Contact";
-import  Footer  from "./components/sections/Footer";
-import Slider from "./components/Slider"; 
-import MenuGrid from "./components/MenuGrid";
-import MenuCategories from "./components/MenuCategories";
-import MenuFeatured from "./components/MenuFeatured";
+import MyAddresses from "./components/MyAddresses";
+import MyContactNumbers from "./components/MyContactNumbers";
 
 function App() {
-  
-  const [menuOpen, setMenuOpen] = useState(false);
-  const images = ["https://d3bjzufjcawald.cloudfront.net/public/web/2022-08-04/62eb51d93d530/Mcdo_E-Gifts_CAROUSEL-MOBILE-Banner-Refresh_767x455-banner-mobile.jpg"]
+  const [menuOpen, setMenuOpen] = useState(false); 
+  const [cartOpen, setCartOpen] = useState(false);  
 
   return (
-    <>
-    
-      
+    <Router>
+      <Navbar 
+        menuOpen={menuOpen} 
+        setMenuOpen={setMenuOpen} 
+        cartOpen={cartOpen} 
+        setCartOpen={setCartOpen} 
+      />
 
-        <div>
-          
-        <Navbar />
-        <MobileMenu  />
-        <Home />
-        <Slider />
-        <MenuGrid />
-        <MenuCategories />
-        <MenuFeatured />
-        <Projects />
-        <Menu />
-        <Contact />
-        <Footer />
-        
-        
-        
-        
-      </div>
-      
-    </>
+      <MobileMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
+      {/* Page content */}
+      <Routes>
+        {/* Public pages */}
+        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
+        <Route path="/menu/product-details/:id/" element={<ProductDetails />} />
+
+        {/* MyAccount parent route */}
+        <Route path="/Myaccount" element={<Myaccount />}>
+          <Route index element={<Myprofile />} />
+          <Route path="profile" element={<Myprofile />} />
+          <Route path="addresses" element={<MyAddresses/>} />
+          <Route path="contacts" element={<MyContactNumbers/>} />
+        </Route>
+      </Routes>
+      <Footer />
+    </Router>
   );
 }
 

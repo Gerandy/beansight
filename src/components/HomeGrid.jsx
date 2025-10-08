@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import MenuCard from "./MenuCard";
+import MenuCard from "./HomeCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-function MenuFeatured() {
+function MenuGrid() {
   const foodMenu = [
-    { name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Dinakdakan", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Longganigg*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
-    
+    { id: 834, name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
+    { id: 835, name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
+    { id: 836, name: "Dinakdakan", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
+    { id: 837, name: "Longganigg*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
   ];
 
   const [startIdx, setStartIdx] = useState(0);
@@ -27,18 +27,19 @@ function MenuFeatured() {
   };
 
   return (
-    <div className="max-w-[950px] mx-auto p-6 relative">
-      <h1 className="text-gray-950 text-4xl font-bold">Featured</h1>
-      <p className="text-gray-950 mb-6">Discover your New Favorites here!</p>
-
+    <div className="max-w-[1050px] mx-auto p-6 relative">
+      <h1 className="text-gray-950 text-4xl font-bold">Hello, User!</h1>
+      <p className="text-gray-950 mb-6">Food Options for you!</p>
+      
       <div className="hidden lg:grid grid-cols-4 gap-6">
         {foodMenu.map((item, index) => (
-          <MenuCard
-            key={index}
-            name={item.name}
-            price={item.price}
-            img={item.img}
-          />
+          <Link to={`/menu/product-details/${item.id}/`} key={item.id}>
+            <MenuCard
+              name={item.name}
+              price={item.price}
+              img={item.img}
+            />
+          </Link>
         ))}
       </div>
 
@@ -59,7 +60,7 @@ function MenuFeatured() {
             height: "auto",
           }}
         >
-          <div
+          <div 
             className="flex gap-6 transition-transform duration-300"
             style={{
               transform: `translateX(-${startIdx * cardWidth}px)`,
@@ -90,4 +91,7 @@ function MenuFeatured() {
   );
 }
 
-export default MenuFeatured;
+export default MenuGrid;
+
+
+

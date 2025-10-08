@@ -12,20 +12,21 @@ function Footer() {
         <div className="flex gap-12 text-sm">
           <div className="flex flex-col gap-2">
             <a href="#" className="hover:underline">About</a>
-            <a href="#" className="hover:underline"></a>
-            <a href="#" className="hover:underline"></a>
-            <a href="#" className="hover:underline"></a>
+            <a href="#" className="hover:underline">Terms & Conditions</a>
           </div>
           <div className="flex flex-col gap-2">
             <a href="#" className="hover:underline">Contact Us</a>
-            <a href="#" className="hover:underline">Terms & Conditions</a>
             <a href="#" className="hover:underline">Privacy Policy</a>
           </div>
         </div>
 
         
-        <div className="text-center md:text-left">
+        <div className="text-center md:text-left flex items-center gap-4">
           <p className="text-red-600 font-bold">For news and updates, follow us</p>
+          <div className="flex items-center">
+            <image src="src/assets/1.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />
+            <image src="src/assets/2.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />
+          </div>
         </div>
       </div>
     </footer>

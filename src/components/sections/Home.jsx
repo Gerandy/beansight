@@ -1,8 +1,18 @@
+import Slider from "../Slider";
+import HomeGrid from "../HomeGrid";
+import HomeCategories from "../HomeCategories";
+import Favorites from "../HomeFavorites";
+import HomeFeatured from "../HomeFeatured";
 
 
 function Home(){ 
   return (
-    <div className="flex items-center justify-center py-20">
+    <div>
+      <Slider />
+      <HomeGrid />
+      <HomeCategories />
+      <Favorites />
+      <HomeFeatured />
     </div>
     
   );

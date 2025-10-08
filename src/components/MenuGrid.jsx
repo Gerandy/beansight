@@ -1,96 +1,103 @@
-import React, { useState } from "react";
-import MenuCard from "./MenuCard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
 function MenuGrid() {
-  const foodMenu = [
-    { name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Dinakdakan", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Longganigg*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
-    
+  const products = [
+    {
+      id: 1,
+      name: "McCafé Cereal Milk Iced Latte",
+      price: 130,
+      img: "/images/latte.png",
+      isNew: true,
+    },
+    {
+      id: 2,
+      name: "McCafé Cereal Milk Iced Coffee",
+      price: 83,
+      img: "/images/icedcoffee.png",
+      isNew: true,
+    },
+    {
+      id: 3,
+      name: "McCafé Cereal Milk Premium Roast Coffee",
+      price: 73,
+      img: "/images/roastcoffee.png",
+      isNew: true,
+    },
+    {
+      id: 4,
+      name: "Golden Chicken Curry Fillet with Fries Medium Meal",
+      price: 181,
+      img: "/images/chickenmeal.png",
+      isNew: false,
+    },
+        {
+      id: 4,
+      name: "Golden Chicken Curry Fillet with Fries Medium Meal",
+      price: 181,
+      img: "/images/chickenmeal.png",
+      isNew: false,
+    },
+        {
+      id: 4,
+      name: "Golden Chicken Curry Fillet with Fries Medium Meal",
+      price: 181,
+      img: "/images/chickenmeal.png",
+      isNew: false,
+    },
+        {
+      id: 4,
+      name: "Golden Chicken Curry Fillet with Fries Medium Meal",
+      price: 181,
+      img: "/images/chickenmeal.png",
+      isNew: false,
+    },
+            {
+      id: 4,
+      name: "Golden Chicken Curry Fillet with Fries Medium Meal",
+      price: 181,
+      img: "/images/chickenmeal.png",
+      isNew: false,
+    },
   ];
 
-  const [startIdx, setStartIdx] = useState(0);
-
-  
-  const visibleCount = 3; 
-  const cardWidth = 200; 
-
-  const handleScroll = (direction) => {
-    if (direction === "left" && startIdx > 0) {
-      setStartIdx(startIdx - 1);
-    }
-    if (direction === "right" && startIdx < foodMenu.length - visibleCount) {
-      setStartIdx(startIdx + 1);
-    }
-  };
-
   return (
-    <div className="max-w-[950px] mx-auto p-6 relative">
-      <h1 className="text-gray-950 text-4xl font-bold">Hello, User!</h1>
-      <p className="text-gray-950 mb-6">Food Options for you!</p>
-
-      <div className="hidden lg:grid grid-cols-4 gap-6">
-        {foodMenu.map((item, index) => (
-          <MenuCard
-            key={index}
-            name={item.name}
-            price={item.price}
-            img={item.img}
-          />
-        ))}
-      </div>
-
-      
-      <div className="flex items-center lg:hidden">
-        <button
-          onClick={() => handleScroll("left")}
-          className="bg-yellow-950 text-white rounded-full shadow p-2 mr-2 flex items-center justify-center"
-          disabled={startIdx === 0}
-        >
-          <ChevronLeft size={20} />
-        </button>
-
-        <div
-          className="relative w-full overflow-hidden"
-          style={{
-            maxWidth: `${visibleCount * cardWidth}px`,
-            height: "auto",
-          }}
-        >
+    <div className="max-w-6xl mx-auto mt-15 px-4 py-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((p) => (
           <div
-            className="flex gap-6 transition-transform duration-300"
-            style={{
-              transform: `translateX(-${startIdx * cardWidth}px)`,
-              width: `${foodMenu.length * cardWidth}px`,
-            }}
+            key={p.id}
+            className="border rounded-xl shadow-sm p-3 flex flex-col relative bg-white"
           >
-            {foodMenu.map((item, index) => (
-              <div key={index} style={{ width: `${cardWidth - 20}px` }}>
-                <MenuCard
-                  name={item.name}
-                  price={item.price}
-                  img={item.img}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+            
+            {p.isNew && (
+              <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                New
+              </span>
+            )}
 
-        <button
-          onClick={() => handleScroll("right")}
-          className="bg-yellow-950 text-white rounded-full shadow p-2 ml-2 flex items-center justify-center"
-          disabled={startIdx >= foodMenu.length - visibleCount}
-        >
-          <ChevronRight size={20} />
-        </button>
+            
+            <img
+              src={p.img}
+              alt={p.name}
+              className="h-32 object-contain mx-auto"
+            />
+
+            
+            <h3 className="mt-3 font-medium text-gray-900 text-sm md:text-base">
+              {p.name}
+            </h3>
+            <p className="font-semibold text-black text-sm md:text-base">
+              ₱ {p.price}.00
+            </p>
+
+            
+            <button className="mt-auto bg-yellow-950 dark:hover:bg-yellow-900 text-white font-semibold py-2 px-4 rounded-xl">
+              Order
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
 export default MenuGrid;
-
-
 
