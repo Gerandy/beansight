@@ -14,8 +14,6 @@ function MyAccount() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
