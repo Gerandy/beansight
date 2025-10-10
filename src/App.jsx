@@ -21,7 +21,7 @@ import MenuPerformance from "./admin/menuperformance";
 import Customers from "./admin/CustomerAnalytics";
 import Inventory from "./admin/Inventory";
 import Reports from "./admin/reports";
-import Add from "./admin/Products";
+import Product from "./admin/Products";
 import Pos from "./admin/Pos";
 
 function App() {
@@ -73,7 +73,7 @@ function App() {
           <Route path="customers" element={<Customers />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
-          <Route path="AddItems" element={<Add />} />
+          <Route path="products" element={<Product />} />
           <Route path="/admin/pos" element={<Pos />} />
         </Route>
       </Routes>
