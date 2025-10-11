@@ -12,7 +12,7 @@ import Footer from "./components/sections/Footer";
 import MyAddresses from "./components/MyAddresses";
 import MyContactNumbers from "./components/MyContactNumbers";
 import MyFavorites from "./components/MyFavorites";
-
+import Orders from "./components/sections/Orders";
 
 import AdminLayout from "./admin/layouts/Adminlayouts";
 import Dashboard from "./admin/dashboard";
@@ -23,6 +23,7 @@ import Inventory from "./admin/Inventory";
 import Reports from "./admin/reports";
 import Product from "./admin/Products";
 import Pos from "./admin/Pos";
+import UserManagement from "./admin/UserManagement";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,7 +36,7 @@ function App() {
         <Route
           path="/*"
           element={
-            <>
+            <div className="flex flex-col min-h-screen">
               <Navbar
                 menuOpen={menuOpen}
                 setMenuOpen={setMenuOpen}
@@ -43,24 +44,27 @@ function App() {
                 setCartOpen={setCartOpen}
               />
               <MobileMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
-                <Route
-                  path="/menu/product-details/:id/"
-                  element={<ProductDetails />}
-                />
-                <Route path="/Myaccount" element={<Myaccount />}>
-                  <Route index element={<Myprofile />} />
-                  <Route path="profile" element={<Myprofile />} />
-                  <Route path="addresses" element={<MyAddresses />} />
-                  <Route path="contacts" element={<MyContactNumbers />} />
-                  <Route path="favorites" element={<MyFavorites />} />
-                </Route>
-              </Routes>
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
+                  <Route
+                    path="/menu/product-details/:id/"
+                    element={<ProductDetails />}
+                  />
+                  <Route path="/orders" element={<Orders />} />
+                  <Route path="/Myaccount" element={<Myaccount />}>
+                    <Route index element={<Myprofile />} />
+                    <Route path="profile" element={<Myprofile />} />
+                    <Route path="addresses" element={<MyAddresses />} />
+                    <Route path="contacts" element={<MyContactNumbers />} />
+                    <Route path="favorites" element={<MyFavorites />} />
+                  </Route>
+                </Routes>
+              </main>
               <Footer />
-            </>
+            </div>
           }
         />
 
@@ -74,7 +78,7 @@ function App() {
           <Route path="inventory" element={<Inventory />} />
           <Route path="reports" element={<Reports />} />
           <Route path="products" element={<Product />} />
-          <Route path="/admin/pos" element={<Pos />} />
+          <Route path="user-management" element={<UserManagement />} />
         </Route>
       </Routes>
     </Router>

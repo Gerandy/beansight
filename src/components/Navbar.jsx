@@ -22,8 +22,8 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center group cursor-pointer">
                           <img className="h-12 w-12 mr-2 group-hover:scale-105" src={logo} alt="logo" />
-                          <span className="text-zinc-900 group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Solace</span>
-                          <span className="text-orange-200  group-hover:text-zinc-900 transition-colors duration-400 group-hover:scale-105">.Cafe</span>
+                          <span className="text-white group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Solace</span>
+                          <span className="text-orange-200  group-hover:text-white transition-colors duration-400 group-hover:scale-105">.Cafe</span>
                         </div>
                     </div>                
                 </a>
@@ -32,19 +32,19 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                 </div>
 
                 <div className="hidden md:flex items-center space-x-8">
-                  <Link to="/" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Home
                   </Link>
-                  <Link to="/menu" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/menu" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Menu
                   </Link>
-                  <Link to="/orders" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/orders" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Orders
                   </Link>
 
                   {/*MyAccount*/}
                   <div className="relative group inline-block">
-                      <Link to="/Myaccount" className="font-sans font-bold text-xl relative text-orange-100 hover:text-zinc-500 transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-zinc-500 after:transition-all after:duration-100 hover:after:w-full">
+                      <Link to="/Myaccount" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                         MyAccount
                       </Link>
                       <div className="absolute hidden group-hover:block bg-white shadow-lg rounded-md top-full w-52 right-0">

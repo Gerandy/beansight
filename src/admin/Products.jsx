@@ -4,7 +4,7 @@ import { Upload, Save, Edit, Trash2, Plus, X } from "lucide-react";
 const initialProducts = [
   {
     id: 1,
-    name: "Big Mac",
+    name: "Hot Coffee",
     description: "Two all-beef patties, special sauce, lettuce, cheese, pickles, onions on a sesame seed bun.",
     category: "burger",
     price: 120,
@@ -13,7 +13,7 @@ const initialProducts = [
   },
   {
     id: 2,
-    name: "Crispy Chicken",
+    name: "Iced Coffee",
     description: "Juicy fried chicken with crispy coating.",
     category: "chicken",
     price: 150,
@@ -128,14 +128,14 @@ function ProductManagement() {
         {/* Product Table */}
         <div className="bg-white shadow-lg rounded-2xl overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-yellow-100">
+            <thead className="bg-yellow-950">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Image</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Category</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Price (₱)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Stock</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold ">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold ">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold ">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold ">Price (₱)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold ">Stock</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold ">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -200,7 +200,7 @@ function ProductManagement() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border text-black border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
                     placeholder="e.g. Big Mac"
                     required
                   />
@@ -215,7 +215,7 @@ function ProductManagement() {
                     value={formData.description}
                     onChange={handleChange}
                     rows="3"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border text-black border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
                     placeholder="e.g. Two all-beef patties, special sauce..."
                     required
                   ></textarea>

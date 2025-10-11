@@ -9,14 +9,27 @@ export default function AdminLayout() {
   const pageTitles = {
     "/admin/dashboard": "Dashboard",
     "/admin/sales": "Sales",
-    "/admin/AddItems": "Products",
+    "/admin/products": "Products",
     "/admin/menu-performance": "Menu Performance",
     "/admin/customers": "Customers",
     "/admin/inventory": "Inventory",
     "/admin/reports": "Reports",
+    "/admin/user-management": "User Management",
   };
 
   const currentTitle = pageTitles[location.pathname] || "Dashboard";
+
+  // Define which routes are considered analytics pages
+  const analyticsPages = [
+    "/admin/sales",
+    "/admin/menu-performance",
+    "/admin/reports",
+    "/admin/inventory",
+    "/admin/dashboard",
+    "/admin/customers",
+  ];
+
+  const showExportButton = analyticsPages.includes(location.pathname);
 
   const SidebarContent = (isMobile = false) => (
     <>
@@ -89,6 +102,23 @@ export default function AdminLayout() {
           onClick={() => setSidebarOpen(false)}
         >
           <PieChart size={20} /> Menu Performance
+        </NavLink>
+        <NavLink
+          to="/admin/user-management"
+          className={({ isActive }) =>
+            `block p-2 rounded flex items-center gap-2 transition ${
+              isMobile
+                ? isActive
+                  ? "bg-yellow-950 text-white"
+                  : "text-white hover:bg-yellow-400 hover:text-black"
+                : isActive
+                ? "bg-yellow-950 text-white"
+                : "hover:bg-yellow-950 hover:text-white"
+            }`
+          }
+          onClick={() => setSidebarOpen(false)}
+        >
+          <PieChart size={20} /> Users
         </NavLink>
         <NavLink
           to="/admin/customers"
@@ -184,9 +214,11 @@ export default function AdminLayout() {
             >
               <Menu size={28} />
             </button>
-            <button className="bg-yellow-950 hover:bg-yellow-900 text-white px-4 py-2 rounded font-medium hidden sm:block">
-              Export Report
-            </button>
+            {showExportButton && (
+              <button className="bg-yellow-950 hover:bg-yellow-900 text-white px-4 py-2 rounded font-medium hidden sm:block">
+                Export Report
+              </button>
+            )}
           </div>
         </header>
         <Outlet />

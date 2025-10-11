@@ -17,7 +17,7 @@ export default function Reports() {
       <h1 className="text-2xl font-bold text-gray-800">Reports</h1>
 
       {/* Date Filter */}
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="flex text-black flex-wrap gap-4 items-center">
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Start Date

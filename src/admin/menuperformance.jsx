@@ -1,48 +1,48 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 function MenuPerformance() {
-  // Mock data — you can later replace with real data from your backend
+  // Cafe & Pastry Shop Data
   const categoryData = [
-    { name: "Burgers", sales: 520 },
-    { name: "Fries", sales: 410 },
-    { name: "Drinks", sales: 380 },
-    { name: "Desserts", sales: 250 },
-    { name: "Chicken Meals", sales: 340 },
+    { name: "Coffee", sales: 620 },
+    { name: "Pastries", sales: 480 },
+    { name: "Tea", sales: 210 },
+    { name: "Sandwiches", sales: 320 },
+    { name: "Cold Drinks", sales: 170 },
   ];
 
   const topItems = [
-    { name: "Big Mac", sold: 230 },
-    { name: "McSpaghetti", sold: 180 },
-    { name: "Fries (Large)", sold: 160 },
-    { name: "Iced Coffee", sold: 120 },
-    { name: "Apple Pie", sold: 95 },
+    { name: "Cappuccino", sold: 220 },
+    { name: "Butter Croissant", sold: 180 },
+    { name: "Latte", sold: 160 },
+    { name: "Ham & Cheese Sandwich", sold: 120 },
+    { name: "Chocolate Muffin", sold: 95 },
   ];
 
   const lowPerformingItems = [
-    { name: "Tuna Pie", sold: 12 },
-    { name: "Salad", sold: 8 },
-    { name: "Fish Sandwich", sold: 6 },
+    { name: "Matcha Latte", sold: 14 },
+    { name: "Vegan Brownie", sold: 10 },
+    { name: "Egg Salad Sandwich", sold: 8 },
   ];
 
   const COLORS = ["#DA291C", "#FFC72C", "#FF8C42", "#FFB347", "#F7C948"];
 
   return (
     <div className="p-6 space-y-8 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">🍔 Menu Performance</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">☕ Menu Performance</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
           <h2 className="text-gray-600 text-sm">Top Category</h2>
-          <p className="text-2xl font-bold text-red-600">Burgers</p>
+          <p className="text-2xl font-bold text-red-600">Coffee</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
           <h2 className="text-gray-600 text-sm">Total Items Sold</h2>
-          <p className="text-2xl font-bold text-red-600">1,600</p>
+          <p className="text-2xl font-bold text-red-600">1,500</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
           <h2 className="text-gray-600 text-sm">Avg. Sales per Item</h2>
-          <p className="text-2xl font-bold text-red-600">₱240</p>
+          <p className="text-2xl font-bold text-red-600">₱210</p>
         </div>
       </div>
 
