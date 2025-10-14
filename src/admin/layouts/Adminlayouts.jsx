@@ -1,188 +1,204 @@
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, BarChart, PlusCircle, PieChart, Users, Boxes, FileText, Menu } from "lucide-react";
-import { useState } from "react";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  BarChart,
+  PlusCircle,
+  PieChart,
+  Users,
+  Boxes,
+  FileText,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  UserCog,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function AdminLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
 
   const pageTitles = {
     "/admin/dashboard": "Dashboard",
-    "/admin/sales": "Sales",
+    "/admin/sales": "Sales Report",
     "/admin/products": "Products",
     "/admin/menu-performance": "Menu Performance",
-    "/admin/customers": "Customers",
+    "/admin/customers": "Customers Analytics",
     "/admin/inventory": "Inventory",
     "/admin/reports": "Reports",
     "/admin/user-management": "User Management",
+    "/admin/order-management": "Order Management",
   };
 
   const currentTitle = pageTitles[location.pathname] || "Dashboard";
 
-  // Define which routes are considered analytics pages
   const analyticsPages = [
     "/admin/sales",
     "/admin/menu-performance",
-    "/admin/reports",
-    "/admin/inventory",
-    "/admin/dashboard",
     "/admin/customers",
   ];
 
-  const showExportButton = analyticsPages.includes(location.pathname);
+  const showExportButton = [
+    "/admin/sales",
+    "/admin/menu-performance",
+    "/admin/customers",
+    "/admin/reports",
+    "/admin/inventory",
+    "/admin/dashboard",
+  ].includes(location.pathname);
 
-  const SidebarContent = (isMobile = false) => (
-    <>
-      <h2 className={`text-2xl font-bold mb-6 ${isMobile ? "text-white" : ""}`}>Beansight ☕</h2>
-      <nav className="space-y-2">
-        <NavLink
-          to="/admin/dashboard"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
+  // Auto-open Dashboard dropdown when on analytics subpages
+  useEffect(() => {
+    if (analyticsPages.includes(location.pathname)) {
+      setDashboardOpen(true);
+    }
+  }, [location.pathname]);
+
+  const SidebarContent = (isMobile = false) => {
+    const linkClasses = (isActive) =>
+      `block p-2 rounded flex items-center gap-2 transition ${
+        isMobile
+          ? isActive
+            ? "bg-yellow-950 text-white"
+            : "text-white hover:bg-yellow-400 hover:text-black"
+          : isActive
+          ? "bg-yellow-950 text-white"
+          : "hover:bg-yellow-950 hover:text-white"
+      }`;
+
+    return (
+      <>
+        <h2
+          className={`text-2xl font-bold mb-6 ${
+            isMobile ? "text-white" : "text-black"
+          }`}
         >
-          <LayoutDashboard size={20} /> Dashboard
-        </NavLink>
-        <NavLink
-          to="/admin/sales"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <BarChart size={20} /> Sales Report
-        </NavLink>
-        <NavLink
-          to="/admin/products"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <PlusCircle size={20} /> Products
-        </NavLink>
-        <NavLink
-          to="/admin/menu-performance"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <PieChart size={20} /> Menu Performance
-        </NavLink>
-        <NavLink
-          to="/admin/user-management"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <PieChart size={20} /> Users
-        </NavLink>
-        <NavLink
-          to="/admin/customers"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <Users size={20} /> Customers
-        </NavLink>
-        <NavLink
-          to="/admin/inventory"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <Boxes size={20} /> Inventory
-        </NavLink>
-        <NavLink
-          to="/admin/reports"
-          className={({ isActive }) =>
-            `block p-2 rounded flex items-center gap-2 transition ${
-              isMobile
-                ? isActive
-                  ? "bg-yellow-950 text-white"
-                  : "text-white hover:bg-yellow-400 hover:text-black"
-                : isActive
-                ? "bg-yellow-950 text-white"
-                : "hover:bg-yellow-950 hover:text-white"
-            }`
-          }
-          onClick={() => setSidebarOpen(false)}
-        >
-          <FileText size={20} /> Reports
-        </NavLink>
-      </nav>
-    </>
-  );
+          Beansight ☕
+        </h2>
+
+        <nav className="space-y-2">
+          {/* Dashboard Dropdown */}
+          <div>
+            <div
+              className={`flex justify-between items-center p-2 rounded cursor-pointer transition ${
+                isMobile
+                  ? "text-white hover:bg-yellow-400 hover:text-black"
+                  : "hover:bg-yellow-950 hover:text-white"
+              }`}
+            >
+              {/* Main Dashboard Link */}
+              <div
+                className="flex items-center gap-2 flex-1"
+                onClick={() => {
+                  navigate("/admin/dashboard");
+                  setSidebarOpen(false);
+                }}
+              >
+                <LayoutDashboard size={20} /> Dashboard
+              </div>
+
+              {/* Dropdown Toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDashboardOpen(!dashboardOpen);
+                }}
+                className="p-1 rounded hover:bg-yellow-800"
+              >
+                {dashboardOpen ? (
+                  <ChevronDown size={18} />
+                ) : (
+                  <ChevronRight size={18} />
+                )}
+              </button>
+            </div>
+
+            {/* Dropdown Links */}
+            {dashboardOpen && (
+              <div className="ml-6 mt-1 space-y-1">
+                <NavLink
+                  to="/admin/sales"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <BarChart size={18} /> Sales Report
+                </NavLink>
+
+                <NavLink
+                  to="/admin/menu-performance"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <PieChart size={18} /> Menu Performance
+                </NavLink>
+
+                <NavLink
+                  to="/admin/customers"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <Users size={18} /> Customers Analytics
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Other main menu links */}
+          <NavLink
+            to="/admin/products"
+            className={({ isActive }) => linkClasses(isActive)}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Boxes size={20} /> Products
+          </NavLink>
+
+          <NavLink
+            to="/admin/order-management"
+            className={({ isActive }) => linkClasses(isActive)}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <ClipboardList size={20} /> Order Management
+          </NavLink>
+
+          <NavLink
+            to="/admin/user-management"
+            className={({ isActive }) => linkClasses(isActive)}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <UserCog size={20} /> User Management
+          </NavLink>
+
+          <NavLink
+            to="/admin/inventory"
+            className={({ isActive }) => linkClasses(isActive)}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Boxes size={20} /> Inventory
+          </NavLink>
+
+          <NavLink
+            to="/admin/reports"
+            className={({ isActive }) => linkClasses(isActive)}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <FileText size={20} /> Reports
+          </NavLink>
+        </nav>
+      </>
+    );
+  };
 
   return (
     <div className="flex min-h-screen">
-
+      {/* Desktop Sidebar */}
       <aside className="w-64 bg-mcyellow text-black p-5 hidden md:block">
         {SidebarContent()}
       </aside>
 
-
+      {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex">
           <div

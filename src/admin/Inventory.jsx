@@ -130,7 +130,6 @@ function InventoryAnalytics() {
   const Modal = ({ show, onClose, title, children }) =>
     show ? (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Removed bg-black bg-opacity-30 from the container */}
         <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative">
           <button
             className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-2xl"
@@ -179,7 +178,6 @@ function InventoryAnalytics() {
         </div>
       </div>
 
-      {/* Search & Filter */}
       <div className="flex flex-col md:flex-row gap-4 items-center">
         <input
           type="text"

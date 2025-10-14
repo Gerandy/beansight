@@ -5,7 +5,8 @@ const initialProducts = [
   {
     id: 1,
     name: "Hot Coffee",
-    description: "Two all-beef patties, special sauce, lettuce, cheese, pickles, onions on a sesame seed bun.",
+    description:
+      "Two all-beef patties, special sauce, lettuce, cheese, pickles, onions on a sesame seed bun.",
     category: "burger",
     price: 120,
     stock: 50,
@@ -35,13 +36,29 @@ function ProductManagement() {
     image: null,
   });
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // change this for how many products per page
+
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+
   // Open modal for add or edit
   const openModal = (product = null) => {
     setEditing(product);
     setFormData(
       product
         ? { ...product }
-        : { name: "", description: "", category: "", price: "", stock: "", image: null }
+        : {
+            name: "",
+            description: "",
+            category: "",
+            price: "",
+            stock: "",
+            image: null,
+          }
     );
     setModalOpen(true);
   };
@@ -50,7 +67,14 @@ function ProductManagement() {
   const closeModal = () => {
     setModalOpen(false);
     setEditing(null);
-    setFormData({ name: "", description: "", category: "", price: "", stock: "", image: null });
+    setFormData({
+      name: "",
+      description: "",
+      category: "",
+      price: "",
+      stock: "",
+      image: null,
+    });
   };
 
   // Handle form input
@@ -68,11 +92,7 @@ function ProductManagement() {
     e.preventDefault();
     if (editing) {
       setProducts((prev) =>
-        prev.map((p) =>
-          p.id === editing.id
-            ? { ...formData, id: editing.id }
-            : p
-        )
+        prev.map((p) => (p.id === editing.id ? { ...formData, id: editing.id } : p))
       );
     } else {
       setProducts((prev) => [
@@ -111,8 +131,16 @@ function ProductManagement() {
     );
   };
 
+  // Pagination controls
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
   return (
-    <div className="min-h-screen  p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Product Management</h1>
@@ -128,52 +156,86 @@ function ProductManagement() {
         {/* Product Table */}
         <div className="bg-white shadow-lg rounded-2xl overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-yellow-950">
+            <thead className="bg-yellow-950 text-white">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold ">Image</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold ">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold ">Category</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold ">Price (₱)</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold ">Stock</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold ">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold">Image</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold">Price (₱)</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold">Stock</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products.length === 0 && (
+              {currentProducts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-8 text-gray-400">
                     No products found.
                   </td>
                 </tr>
+              ) : (
+                currentProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-yellow-50 text-black transition">
+                    <td className="px-4 py-3">{renderImage(product)}</td>
+                    <td className="px-4 py-3 font-medium">{product.name}</td>
+                    <td className="px-4 py-3 capitalize">{product.category}</td>
+                    <td className="px-4 py-3">₱{product.price}</td>
+                    <td className="px-4 py-3">{product.stock}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => openModal(product)}
+                        className="inline-flex items-center p-2 text-yellow-700 hover:text-yellow-900"
+                        title="Edit"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="inline-flex items-center p-2 text-red-600 hover:text-red-800"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
-              {products.map((product) => (
-                <tr key={product.id} className="hover:bg-yellow-50 text-black transition">
-                  <td className="px-4 py-3">{renderImage(product)}</td>
-                  <td className="px-4 py-3 font-medium">{product.name}</td>
-                  <td className="px-4 py-3 capitalize">{product.category}</td>
-                  <td className="px-4 py-3">₱{product.price}</td>
-                  <td className="px-4 py-3">{product.stock}</td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => openModal(product)}
-                      className="inline-flex items-center p-2 text-yellow-700 hover:text-yellow-900"
-                      title="Edit"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="inline-flex items-center p-2 text-red-600 hover:text-red-800"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-6">
+            <button
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-yellow-950 text-white hover:bg-yellow-600"
+              }`}
+            >
+              Previous
+            </button>
+
+            <span className="text-gray-700 font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-yellow-950 text-white hover:bg-yellow-600"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {/* Modal */}
         {modalOpen && (
@@ -315,7 +377,7 @@ function ProductManagement() {
                     </div>
                   )}
                 </div>
-             
+
                 <button
                   type="submit"
                   className="flex items-center justify-center gap-2 bg-yellow-950 hover:bg-yellow-500 text-white font-medium rounded-lg px-6 py-3 w-full transition"
@@ -333,3 +395,4 @@ function ProductManagement() {
 }
 
 export default ProductManagement;
+

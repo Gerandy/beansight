@@ -24,6 +24,7 @@ import Reports from "./admin/reports";
 import Product from "./admin/Products";
 import Pos from "./admin/Pos";
 import UserManagement from "./admin/UserManagement";
+import OrderManagement from "./admin/OrderManagement";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -79,6 +80,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="products" element={<Product />} />
           <Route path="user-management" element={<UserManagement />} />
+          <Route path="order-management" element={<OrderManagement />} />
         </Route>
       </Routes>
     </Router>
