@@ -57,25 +57,25 @@ export default function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-400">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
           <h2 className="text-gray-500 text-xs sm:text-sm">Total Sales Today</h2>
           <p className="text-2xl sm:text-3xl font-bold text-red-600">₱45,320</p>
           <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 12% vs yesterday</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-400">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
           <h2 className="text-gray-500 text-xs sm:text-sm">Total Orders</h2>
           <p className="text-2xl sm:text-3xl font-bold text-red-600">932</p>
           <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 5% this week</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-400">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
           <h2 className="text-gray-500 text-xs sm:text-sm">New Customers</h2>
           <p className="text-2xl sm:text-3xl font-bold text-red-600">87</p>
           <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 9% this month</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-400">
+        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
           <h2 className="text-gray-500 text-xs sm:text-sm">Menu Items Sold</h2>
           <p className="text-2xl sm:text-3xl font-bold text-red-600">1,482</p>
           <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 7% this week</p>

@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 
 function MenuGrid() {
   const foodMenu = [
-    { id: 834, name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
-    { id: 835, name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
-    { id: 836, name: "Dinakdakan", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
-    { id: 837, name: "Longganigg*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
+   { name: "Capucino", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Coffee", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Ice Coffee", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Hot Coffee*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
   ];
 
   const [startIdx, setStartIdx] = useState(0);

@@ -39,7 +39,7 @@ function MyAddresses() {
                 type="radio"
                 name="address"
                 defaultChecked={address.isDefault}
-                className="mt-1 mr-3 accent-yellow-500"
+                className="mt-1 mr-3 accent-amber-950"
               />
               <div>
                 <h2 className="font-bold text-black">{address.label}</h2>
@@ -57,7 +57,7 @@ function MyAddresses() {
 
     
       <div className="mt-6">
-        <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-full">
+        <button className="w-full text-white bg-yellow-950 hover:bg-yellow-800 text-black font-bold py-3 rounded-full">
           Add New Address
         </button>
       </div>

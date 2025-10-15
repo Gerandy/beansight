@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react"; // for the delete icon
+import { Trash2 } from "lucide-react"; 
 
 function MyContactNumbers() {
   const [showForm, setShowForm] = useState(false);
@@ -17,14 +17,13 @@ function MyContactNumbers() {
             </p>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-yellow-400 text-black font-semibold px-6 py-3 rounded-full shadow hover:bg-yellow-500 transition"
+              className="bg-yellow-950 text-white font-semibold px-6 py-3 rounded-full shadow hover:shadow-gray-900 transition"
             >
               Add New Contact Number
             </button>
           </>
         ) : (
           <div className="w-full max-w-md">
-            {/* Number input */}
             <div className="flex items-center mb-4">
               <span className="px-3 py-2 bg-gray-100 border border-r-0 rounded-l-md text-gray-700">
                 +63
@@ -39,7 +38,6 @@ function MyContactNumbers() {
               </button>
             </div>
 
-            {/* Buttons */}
             <button
               disabled
               className="w-full bg-gray-200 text-gray-500 py-2 rounded mb-3 cursor-not-allowed"

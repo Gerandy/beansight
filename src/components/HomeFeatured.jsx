@@ -4,10 +4,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function MenuFeatured() {
   const foodMenu = [
-    { name: "Sige Sige", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Puto Tumbong", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Dinakdakan", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
-    { name: "Longganigg*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Capucino", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Coffee", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Ice Coffee", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
+    { name: "Hot Coffee*", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
     
   ];
 

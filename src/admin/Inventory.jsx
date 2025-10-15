@@ -158,21 +158,21 @@ function InventoryAnalytics() {
 
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
+        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-950">
           <h2 className="text-gray-600 text-sm">Total Inventory Items</h2>
           <p className="text-2xl font-bold text-red-600">{inventoryData.length}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
+        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-950">
           <h2 className="text-gray-600 text-sm">Low Stock Items</h2>
           <p className="text-2xl font-bold text-red-600">{lowStock.length}</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
+        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-950">
           <h2 className="text-gray-600 text-sm">Total Stock</h2>
           <p className="text-2xl font-bold text-red-600">
             {inventoryData.reduce((sum, i) => sum + i.stock, 0)}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
+        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-950">
           <h2 className="text-gray-600 text-sm">Next Scheduled Delivery</h2>
           <p className="text-2xl font-bold text-red-600">Oct 8, 2025</p>
         </div>

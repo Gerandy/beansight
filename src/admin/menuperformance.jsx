@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 function MenuPerformance() {
-  // Cafe & Pastry Shop Data
+
   const categoryData = [
     { name: "Coffee", sales: 620 },
     { name: "Pastries", sales: 480 },
@@ -46,9 +46,9 @@ function MenuPerformance() {
         </div>
       </div>
 
-      {/* Charts Section */}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Bar Chart: Category Performance */}
+
         <div className="bg-white p-6 rounded-2xl shadow-md">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">
             Sales by Category
@@ -64,7 +64,7 @@ function MenuPerformance() {
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart: Category Share */}
+      
         <div className="bg-white p-6 rounded-2xl shadow-md">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">
             Category Sales Share
@@ -108,7 +108,7 @@ function MenuPerformance() {
           </ul>
         </div>
 
-        {/* Low Performing Items */}
+ 
         <div className="bg-white p-6 rounded-2xl shadow-md">
           <h2 className="text-lg font-semibold text-gray-700 mb-4">
             Low Performing Items
