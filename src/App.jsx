@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./App.css";
 import { useState } from "react";
 import MobileMenu from "./components/MobileMenu";
@@ -13,6 +14,7 @@ import MyAddresses from "./components/MyAddresses";
 import MyContactNumbers from "./components/MyContactNumbers";
 import MyFavorites from "./components/MyFavorites";
 import Orders from "./components/sections/Orders";
+import Checkout from "./components/Checkout";
 
 import AdminLayout from "./admin/layouts/Adminlayouts";
 import Dashboard from "./admin/dashboard";
@@ -55,6 +57,7 @@ function App() {
                     element={<ProductDetails />}
                   />
                   <Route path="/orders" element={<Orders />} />
+                  <Route path="/checkout" element={<Checkout />} />
                   <Route path="/Myaccount" element={<Myaccount />}>
                     <Route index element={<Myprofile />} />
                     <Route path="profile" element={<Myprofile />} />

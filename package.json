@@ -15,11 +15,13 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "emailjs-com": "^3.2.0",
+    "framer-motion": "^12.23.24",
     "lucide": "^0.539.0",
     "lucide-react": "^0.539.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.9.3"
+    "react-router-dom": "^7.9.3",
+    "recharts": "^3.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
