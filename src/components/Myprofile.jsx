@@ -76,7 +76,7 @@ function MyProfile() {
             <div className="text-center mt-4">
               <button
                 type="button"
-                className="text-blue-600 underline text-sm"
+                className="text-gray-500 font-bold underline text-base"
                 onClick={() => setShowChangePassword(true)}
               >
                 Change password
@@ -167,7 +167,7 @@ function MyProfile() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-yellow-500 font-bold underline text-base"
+                  className="text-gray-500 font-bold underline text-base"
                   onClick={() => setShowChangePassword(false)}
                 >
                   Cancel
