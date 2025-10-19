@@ -1,5 +1,5 @@
-import MenuCategories from "../MenuCategories";
-import MenuGrid from "../MenuGrid";
+import MenuCategories from "../menu/MenuCategories";
+import MenuGrid from "../menu/MenuGrid";
 
 function Menu({ cartOpen }) {
   return (

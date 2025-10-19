@@ -1,4 +1,4 @@
-import Sidebar from "../MyAccountSidebar";
+import Sidebar from "../myaccount/MyAccountSidebar";
 import { Outlet } from "react-router-dom";
 
 function MyAccount() {

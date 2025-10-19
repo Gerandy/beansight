@@ -8,11 +8,11 @@ import Home from "./components/sections/Home";
 import Menu from "./components/sections/Menu";
 import ProductDetails from "./components/sections/ProductDetails";
 import Myaccount from "./components/sections/Myaccount";
-import Myprofile from "./components/Myprofile";
+import Myprofile from "./components/myaccount/Myprofile";
 import Footer from "./components/sections/Footer";
-import MyAddresses from "./components/MyAddresses";
-import MyContactNumbers from "./components/MyContactNumbers";
-import MyFavorites from "./components/MyFavorites";
+import MyAddresses from "./components/myaccount/MyAddresses";
+import MyContactNumbers from "./components/myaccount/MyContactNumbers";
+import MyFavorites from "./components/myaccount/MyFavorites";
 import Orders from "./components/sections/Orders";
 import Checkout from "./components/Checkout";
 

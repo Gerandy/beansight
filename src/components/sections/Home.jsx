@@ -1,8 +1,8 @@
-import Slider from "../Slider";
-import HomeGrid from "../HomeGrid";
-import HomeCategories from "../HomeCategories";
-import Favorites from "../HomeFavorites";
-import HomeFeatured from "../HomeFeatured";
+import Slider from "../home/Slider";
+import HomeGrid from "../home/HomeGrid";
+import HomeCategories from "../home/HomeCategories";
+import HomeFavorites from "../home/HomeFavorites";
+import HomeFeatured from "../home/HomeFeatured";
 
 
 function Home(){ 
@@ -11,7 +11,7 @@ function Home(){
       <Slider />
       <HomeGrid />
       <HomeCategories />
-      <Favorites />
+      <HomeFavorites />
       <HomeFeatured />
     </div>
     

@@ -50,7 +50,7 @@ export default function Checkout() {
   });
 
   const [shipping, setShipping] = useState({
-    type: "delivery", // or pickup
+    type: "delivery", 
     address: "",
     city: "",
     province: "",
@@ -363,9 +363,7 @@ export default function Checkout() {
   );
 }
 
-// -----------------------------
-// Small reusable components
-// -----------------------------
+
 function Stepper({ step, setStep }) {
   const labels = ["Contact", "Shipping", "Payment", "Review"];
   return (
