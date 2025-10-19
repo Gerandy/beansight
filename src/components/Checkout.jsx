@@ -69,7 +69,7 @@ export default function Checkout() {
   const subtotal = useMemo(() => items.reduce((s, it) => s + it.price * it.qty, 0), [items]);
   const discount = appliedPromo ? appliedPromo.amount : 0;
   const deliveryFee = shipping.type === "delivery" ? 60 : 0;
-  const tax = Math.round((subtotal - discount + deliveryFee) * 0.12);
+  const tax = Math.round((subtotal - discount + deliveryFee) * 0.5);
   const total = subtotal - discount + deliveryFee + tax;
 
   function updateQty(id, delta) {
@@ -146,7 +146,7 @@ export default function Checkout() {
           <div className="hidden md:flex items-center gap-3 text-sm">
             
            <Link to="/menu">
-                <button className="px-4 py-2 rounded-lg bg-orange-500 text-white font-medium shadow-md hover:bg-orange-600 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-transform">
+                <button className="px-4 py-2 rounded-lg bg-yellow-950 text-white font-medium shadow-md hover:bg-yellow-950 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-400 transition-transform">
                     Continue shopping
                 </button>
             </Link>
@@ -231,17 +231,6 @@ export default function Checkout() {
               )}
             </SectionCard>
 
-            {/* Review (summary + place order) */}
-            <div className="flex items-center text-black justify-between gap-3">
-              <div className="text-sm text-gray-500">Not ready to place order? You can save your cart and continue later.</div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => { setStep(Math.max(0, step - 1)); }} className="px-4 py-2 rounded-md border border-gray-200">Back</button>
-                <button onClick={() => { if (step < 3) setStep(s => Math.min(3, s + 1)); else placeOrder(); }} disabled={!infoValid || !shippingValid || (step === 3 && !paymentValid)} className={`px-4 py-2 rounded-md font-semibold ${step < 3 ? 'bg-white border border-orange-400 text-orange-600' : 'bg-orange-600 text-white'} ${(!infoValid || !shippingValid || (step === 3 && !paymentValid)) ? 'opacity-60 cursor-not-allowed' : 'hover:brightness-95'}`}>
-                  {step < 3 ? 'Continue' : loading ? 'Placing order...' : 'Place order'}
-                </button>
-              </div>
-            </div>
-
           </div>
 
           {/* right: summary */}
@@ -284,14 +273,14 @@ export default function Checkout() {
                 <div className="mt-4">
                   <div className="flex gap-2">
                     <input value={promo} onChange={e => setPromo(e.target.value)} placeholder="Promo code" className="flex-1 p-2 border border-gray-200 rounded-md" />
-                    <button onClick={applyPromo} className="px-3 py-2 rounded-md bg-orange-600 text-white">Apply</button>
+                    <button onClick={applyPromo} className="px-3 py-2 rounded-md bg-yellow-950 text-white">Apply</button>
                   </div>
                   {appliedPromo && <div className={`mt-2 text-sm ${appliedPromo.invalid ? 'text-red-500' : 'text-green-600'}`}>{appliedPromo.invalid ? 'Invalid code' : `Applied ${appliedPromo.code} — ₱${appliedPromo.amount}`}</div>}
                 </div>
 
                 <div className="mt-4 flex gap-2">
                   <button onClick={() => { setStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 px-3 py-2 rounded-md border border-gray-200">Edit details</button>
-                  <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-3 py-2 rounded-md bg-orange-600 text-white">Checkout</button>
+                  <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
                 </div>
               </div>
 
@@ -329,7 +318,7 @@ export default function Checkout() {
               <div className="font-semibold">₱{total.toLocaleString()}</div>
             </div>
             <div>
-              <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-6 py-3 rounded-lg bg-orange-600 text-white font-semibold">Place order</button>
+              <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold">Place order</button>
             </div>
           </div>
         </div>
@@ -350,7 +339,7 @@ export default function Checkout() {
                 <div className="mt-4 text-sm">We've emailed a receipt to <span className="font-medium">{info.email}</span>. You can track your order in the Orders page.</div>
                 <div className="mt-6 flex justify-end gap-3">
                   <button onClick={() => setSuccess(null)} className="px-4 py-2 rounded-md border">Close</button>
-                  <a href="#" className="px-4 py-2 rounded-md bg-orange-600 text-white">View order</a>
+                  <a href="#" className="px-4 py-2 rounded-md bg-yellow-950 text-white">View order</a>
                 </div>
               </motion.div>
               <ConfettiLite />
@@ -365,17 +354,17 @@ export default function Checkout() {
 
 
 function Stepper({ step, setStep }) {
-  const labels = ["Contact", "Shipping", "Payment", "Review"];
+  const labels = ["Contact", "Shipping", "Review"];
   return (
-    <div className="bg-white rounded-2xl p-4 shadow flex items-center gap-4">
+    <div className="bg-white rounded-2xl p-4 shadow flex items-center gap-4 justify-center">
       {labels.map((lab, i) => (
         <div key={lab} className="flex items-center gap-3">
-          <button onClick={() => setStep(i)} className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${i <= step ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600'}`}>{i + 1}</button>
+          <button onClick={() => setStep(i)} className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${i <= step ? 'bg-yellow-950 text-white' : 'bg-gray-100 text-gray-600'}`}>{i + 1}</button>
           <div className="hidden md:block">
             <div className={`text-sm ${i <= step ? 'font-semibold text-gray-900' : 'text-gray-400'}`}>{lab}</div>
             <div className="text-xs text-gray-400">{i === step ? 'In progress' : i < step ? 'Done' : 'Pending'}</div>
           </div>
-          {i < labels.length - 1 && <div className={`w-6 h-[2px] ${i < step ? 'bg-orange-600' : 'bg-gray-200'} hidden md:block`} />}
+          {i < labels.length - 1 && <div className={`w-6 h-[2px] ${i < step ? 'bg-yellow-950' : 'bg-gray-200'} hidden md:block`} />}
         </div>
       ))}
     </div>
