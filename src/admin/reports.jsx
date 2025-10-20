@@ -26,13 +26,8 @@ import {
 export default function Reports() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
-  const handleDownloadPDF = () => {
-    alert("Downloading Sales Report as PDF...");
-  };
-
-  const handleExportExcel = () => {
-    alert("Exporting Report to Excel...");
-  };
+  const handleDownloadPDF = () => alert("Downloading Sales Report as PDF...");
+  const handleExportExcel = () => alert("Exporting Report to Excel...");
 
   // Sample Data
   const salesData = [
@@ -44,29 +39,40 @@ export default function Reports() {
   ];
 
   const topMenuData = [
-    { name: "Pancit Bilao", orders: 320 },
-    { name: "Palabok Bilao", orders: 245 },
-    { name: "Spaghetti Bilao", orders: 190 },
-    { name: "Carbonara Bilao", orders: 150 },
+    { name: "Kape", orders: 320 },
+    { name: "Coffee", orders: 245 },
+    { name: "hot Coffee", orders: 190 },
+    { name: "ice Coffee", orders: 150 },
   ];
 
-  const COLORS = ["#4f46e5", "#22c55e", "#facc15", "#f97316"];
+  // Coffee color tones for charts
+  const COLORS = [
+    "var(--color-coffee-400)",
+    "var(--color-coffee-500)",
+    "var(--color-coffee-700)",
+    "var(--color-coffee-300)",
+  ];
 
   return (
-    <div className="p-6 space-y-8 text-gray-800 animate-fadeIn">
-      {/* Page Header */}
+    <div
+      className="p-6 space-y-8 text-[var(--color-coffee-900)] animate-fadeIn"
+      style={{ backgroundColor: "var(--color-coffee-100)" }}
+    >
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold">📊 Reports & Analytics</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-coffee-800)]">
+          ☕ Reports & Analytics
+        </h1>
         <div className="flex gap-2">
           <button
             onClick={handleDownloadPDF}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            className="flex items-center gap-2 bg-[var(--color-coffee-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-700)] shadow-md transition"
           >
             <Download className="w-4 h-4" /> Download PDF
           </button>
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600"
+            className="flex items-center gap-2 bg-[var(--color-coffee-400)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-500)] shadow-md transition"
           >
             <FileSpreadsheet className="w-4 h-4" /> Export Excel
           </button>
@@ -76,7 +82,7 @@ export default function Reports() {
       {/* Date Filter */}
       <div className="flex flex-wrap gap-4 items-end">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-[var(--color-coffee-700)]">
             Start Date
           </label>
           <input
@@ -85,11 +91,11 @@ export default function Reports() {
             onChange={(e) =>
               setDateRange({ ...dateRange, start: e.target.value })
             }
-            className="border rounded-lg px-3 py-2"
+            className="border border-[var(--color-coffee-200)] rounded-lg px-3 py-2 bg-[var(--color-coffee-100)] text-[var(--color-coffee-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-coffee-400)]"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-[var(--color-coffee-700)]">
             End Date
           </label>
           <input
@@ -98,10 +104,10 @@ export default function Reports() {
             onChange={(e) =>
               setDateRange({ ...dateRange, end: e.target.value })
             }
-            className="border rounded-lg px-3 py-2"
+            className="border border-[var(--color-coffee-200)] rounded-lg px-3 py-2 bg-[var(--color-coffee-100)] text-[var(--color-coffee-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-coffee-400)]"
           />
         </div>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button className="bg-[var(--color-coffee-700)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-800)] shadow-sm transition">
           Apply Filter
         </button>
       </div>
@@ -112,32 +118,38 @@ export default function Reports() {
           {
             label: "Total Orders",
             value: "1,245",
-            icon: <ShoppingBag className="text-blue-500" />,
+            icon: <ShoppingBag className="text-[var(--color-coffee-700)]" />,
           },
           {
             label: "Total Revenue",
             value: "₱184,200",
-            icon: <BarChart3 className="text-green-500" />,
+            icon: <BarChart3 className="text-[var(--color-coffee-500)]" />,
           },
           {
             label: "Customers",
             value: "890",
-            icon: <Users className="text-yellow-500" />,
+            icon: <Users className="text-[var(--color-coffee-600)]" />,
           },
           {
             label: "Low Stock Items",
             value: "3",
-            icon: <Package className="text-red-500" />,
+            icon: <Package className="text-[var(--color-coffee-800)]" />,
           },
         ].map((item, i) => (
           <div
             key={i}
-            className="bg-white p-5 rounded-xl shadow-md flex items-center gap-4 border hover:shadow-lg transition"
+            className="bg-white p-5 rounded-xl shadow-sm border border-[var(--color-coffee-200)] hover:shadow-md transition flex items-center gap-4"
           >
-            <div className="p-3 bg-gray-100 rounded-lg">{item.icon}</div>
+            <div className="p-3 bg-[var(--color-coffee-200)] rounded-lg">
+              {item.icon}
+            </div>
             <div>
-              <p className="text-gray-500 text-sm">{item.label}</p>
-              <p className="text-xl font-bold">{item.value}</p>
+              <p className="text-[var(--color-coffee-600)] text-sm font-medium">
+                {item.label}
+              </p>
+              <p className="text-xl font-bold text-[var(--color-coffee-900)]">
+                {item.value}
+              </p>
             </div>
           </div>
         ))}
@@ -145,23 +157,25 @@ export default function Reports() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-xl shadow-md border">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        {/* Sales Bar Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[var(--color-coffee-800)]">
             <BarChart3 /> Monthly Sales Overview
           </h2>
           <ResponsiveContainer width="100%" height={250}>
             <BarChartComp data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1B788" />
+              <XAxis dataKey="month" stroke="var(--color-coffee-700)" />
+              <YAxis stroke="var(--color-coffee-700)" />
               <Tooltip />
-              <Bar dataKey="sales" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="sales" fill="var(--color-coffee-500)" radius={[6, 6, 0, 0]} />
             </BarChartComp>
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-md border">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+        {/* Top Menu Items Pie Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[var(--color-coffee-800)]">
             <PieChart /> Top Performing Menu Items
           </h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -186,57 +200,63 @@ export default function Reports() {
 
       {/* Inventory & Customer Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-xl shadow-md border">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+        {/* Inventory Status */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-[var(--color-coffee-800)]">
             <Package /> Inventory Status
           </h2>
-          <table className="w-full text-left border-t">
+          <table className="w-full text-left border-t border-[var(--color-coffee-200)]">
             <thead>
-              <tr className="text-gray-600">
+              <tr className="text-[var(--color-coffee-600)]">
                 <th className="py-2">Item</th>
                 <th className="py-2">Stock</th>
                 <th className="py-2">Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr className="border-t">
+            <tbody className="text-[var(--color-coffee-800)]">
+              <tr className="border-t border-[var(--color-coffee-200)]">
                 <td>Pancit Noodles</td>
                 <td>5</td>
-                <td className="text-orange-600 font-semibold">Low</td>
+                <td className="text-[var(--color-coffee-600)] font-semibold">Low</td>
               </tr>
-              <tr className="border-t">
+              <tr className="border-t border-[var(--color-coffee-200)]">
                 <td>Plastic Containers</td>
                 <td>2</td>
-                <td className="text-red-600 font-semibold">Critical</td>
+                <td className="text-[var(--color-coffee-700)] font-semibold">Critical</td>
               </tr>
-              <tr className="border-t">
+              <tr className="border-t border-[var(--color-coffee-200)]">
                 <td>Utensils</td>
                 <td>25</td>
-                <td className="text-green-600 font-semibold">OK</td>
+                <td className="text-[var(--color-coffee-500)] font-semibold">OK</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-md border">
-          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+        {/* Customer Summary */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
+          <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-[var(--color-coffee-800)]">
             <Users /> Customer Summary
           </h2>
-          <ul className="space-y-1 text-gray-700">
-            <li>Total Customers: <strong>890</strong></li>
-            <li>New This Month: <strong>45</strong></li>
-            <li>Repeat Customers: <strong>520</strong></li>
+          <ul className="space-y-1 text-[var(--color-coffee-800)]">
+            <li>
+              Total Customers: <strong>890</strong>
+            </li>
+            <li>
+              New This Month: <strong>45</strong>
+            </li>
+            <li>
+              Repeat Customers: <strong>520</strong>
+            </li>
           </ul>
         </div>
       </div>
 
-      {/* Footer Timestamp */}
-      <div className="text-sm text-gray-500 flex items-center gap-2 pt-4 border-t">
+      {/* Footer */}
+      <div className="text-sm text-[var(--color-coffee-700)] flex items-center gap-2 pt-4 border-t border-[var(--color-coffee-200)]">
         <Calendar className="w-4 h-4" />
-        <span>Last updated: October 14, 2025</span>
+        <span>Last updated: October 20, 2025</span>
       </div>
     </div>
   );
 }
-
-

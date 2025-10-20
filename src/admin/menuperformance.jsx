@@ -1,7 +1,17 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 function MenuPerformance() {
-
   const categoryData = [
     { name: "Coffee", sales: 620 },
     { name: "Pastries", sales: 480 },
@@ -24,49 +34,53 @@ function MenuPerformance() {
     { name: "Egg Salad Sandwich", sold: 8 },
   ];
 
-  const COLORS = ["#DA291C", "#FFC72C", "#FF8C42", "#FFB347", "#F7C948"];
-
   return (
-    <div className="p-6 space-y-8 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">☕ Menu Performance</h1>
+    <div className="p-6 space-y-8 min-h-screen font-[var(--font-sans)]">
+      <h1 className="text-3xl font-bold text-[var(--color-coffee-900)] mb-6">
+        ☕ Menu Performance
+      </h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
-          <h2 className="text-gray-600 text-sm">Top Category</h2>
-          <p className="text-2xl font-bold text-red-600">Coffee</p>
+        <div className="p-6 rounded-[var(--radius-2xl)] bg-white border-l-4 border-[var(--color-coffee-600)]">
+          <h2 className="text-[var(--color-coffee-700)] text-sm">Top Category</h2>
+          <p className="text-2xl font-bold text-[var(--color-coffee-800)]">Coffee</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
-          <h2 className="text-gray-600 text-sm">Total Items Sold</h2>
-          <p className="text-2xl font-bold text-red-600">1,500</p>
+        <div className="p-6 rounded-[var(--radius-2xl)] bg-white border-l-4 border-[var(--color-coffee-600)]">
+          <h2 className="text-[var(--color-coffee-700)] text-sm">Total Items Sold</h2>
+          <p className="text-2xl font-bold text-[var(--color-coffee-800)]">1,500</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-md border-l-4 border-yellow-400">
-          <h2 className="text-gray-600 text-sm">Avg. Sales per Item</h2>
-          <p className="text-2xl font-bold text-red-600">₱210</p>
+        <div className="p-6 rounded-[var(--radius-2xl)] bg-white border-l-4 border-[var(--color-coffee-600)]">
+          <h2 className="text-[var(--color-coffee-700)] text-sm">Avg. Sales per Item</h2>
+          <p className="text-2xl font-bold text-[var(--color-coffee-800)]">₱210</p>
         </div>
       </div>
 
-
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+        <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
+          <h2 className="text-lg font-semibold text-[var(--color-coffee-800)] mb-4">
             Sales by Category
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={categoryData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="sales" fill="#DA291C" radius={[5, 5, 0, 0]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-coffee-200)" />
+              <XAxis dataKey="name" stroke="var(--color-coffee-700)" />
+              <YAxis stroke="var(--color-coffee-700)" />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "var(--color-coffee-50)",
+                  border: "1px solid var(--color-coffee-200)",
+                  color: "var(--color-coffee-900)",
+                }}
+              />
+              <Bar dataKey="sales" fill="var(--color-coffee-600)" radius={[5, 5, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-      
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+        <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
+          <h2 className="text-lg font-semibold text-[var(--color-coffee-800)] mb-4">
             Category Sales Share
           </h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -77,15 +91,22 @@ function MenuPerformance() {
                 cy="50%"
                 labelLine={false}
                 outerRadius={100}
-                fill="#DA291C"
                 dataKey="sales"
                 label={({ name }) => name}
               >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
+                <Cell fill="var(--color-coffee-400)" />
+                <Cell fill="var(--color-coffee-500)" />
+                <Cell fill="var(--color-coffee-600)" />
+                <Cell fill="var(--color-coffee-700)" />
+                <Cell fill="var(--color-coffee-800)" />
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "var(--color-coffee-50)",
+                  border: "1px solid var(--color-coffee-200)",
+                  color: "var(--color-coffee-900)",
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -93,31 +114,29 @@ function MenuPerformance() {
 
       {/* Top & Low Performing Items */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Top Items */}
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+        <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
+          <h2 className="text-lg font-semibold text-[var(--color-coffee-800)] mb-4">
             Top 5 Best-Selling Items
           </h2>
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-[var(--color-coffee-200)]">
             {topItems.map((item, index) => (
               <li key={index} className="flex justify-between py-3">
-                <span className="font-medium text-gray-800">{item.name}</span>
-                <span className="text-gray-500">{item.sold} sold</span>
+                <span className="font-medium text-[var(--color-coffee-900)]">{item.name}</span>
+                <span className="text-[var(--color-coffee-700)]">{item.sold} sold</span>
               </li>
             ))}
           </ul>
         </div>
 
- 
-        <div className="bg-white p-6 rounded-2xl shadow-md">
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+        <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
+          <h2 className="text-lg font-semibold text-[var(--color-coffee-800)] mb-4">
             Low Performing Items
           </h2>
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-[var(--color-coffee-200)]">
             {lowPerformingItems.map((item, index) => (
               <li key={index} className="flex justify-between py-3">
-                <span className="font-medium text-gray-800">{item.name}</span>
-                <span className="text-gray-500">{item.sold} sold</span>
+                <span className="font-medium text-[var(--color-coffee-900)]">{item.name}</span>
+                <span className="text-[var(--color-coffee-700)]">{item.sold} sold</span>
               </li>
             ))}
           </ul>
@@ -128,3 +147,4 @@ function MenuPerformance() {
 }
 
 export default MenuPerformance;
+

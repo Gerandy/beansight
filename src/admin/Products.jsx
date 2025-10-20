@@ -279,7 +279,7 @@ export default function ProductManagement() {
                 role="article"
               >
                 <div className="flex items-start gap-4">
-                  <ProductImage product={p} className="w-28 h-20 flex-shrink-0" />
+                  <ProductImage product={p} className="w-15 h-20 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>

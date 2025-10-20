@@ -2,7 +2,6 @@ import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   BarChart,
-  PlusCircle,
   PieChart,
   Users,
   Boxes,
@@ -20,20 +19,6 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
-
-  const pageTitles = {
-    "/admin/dashboard": "Dashboard",
-    "/admin/sales": "Sales Report",
-    "/admin/products": "Products",
-    "/admin/menu-performance": "Menu Performance",
-    "/admin/customers": "Customers Analytics",
-    "/admin/inventory": "Inventory",
-    "/admin/reports": "Reports",
-    "/admin/user-management": "User Management",
-    "/admin/order-management": "Order Management",
-  };
-
-  const currentTitle = pageTitles[location.pathname] || "Dashboard";
 
   const analyticsPages = [
     "/admin/sales",
@@ -89,7 +74,6 @@ export default function AdminLayout() {
                   : "hover:bg-yellow-950 hover:text-white"
               }`}
             >
-              {/* Main Dashboard Link */}
               <div
                 className="flex items-center gap-2 flex-1"
                 onClick={() => {
@@ -100,7 +84,6 @@ export default function AdminLayout() {
                 <LayoutDashboard size={20} /> Dashboard
               </div>
 
-              {/* Dropdown Toggle */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -116,7 +99,6 @@ export default function AdminLayout() {
               </button>
             </div>
 
-            {/* Dropdown Links */}
             {dashboardOpen && (
               <div className="ml-6 mt-1 space-y-1">
                 <NavLink
@@ -146,7 +128,7 @@ export default function AdminLayout() {
             )}
           </div>
 
-          {/* Other main menu links */}
+          {/* Main Menu Links */}
           <NavLink
             to="/admin/products"
             className={({ isActive }) => linkClasses(isActive)}
@@ -220,8 +202,7 @@ export default function AdminLayout() {
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-8 overflow-auto w-full">
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-black text-2xl font-bold">{currentTitle}</h1>
+        <header className="flex justify-end items-center mb-6">
           <div className="flex items-center gap-2">
             <button
               className="md:hidden p-2 rounded bg-yellow-950 text-white hover:bg-yellow-900"
@@ -242,6 +223,3 @@ export default function AdminLayout() {
     </div>
   );
 }
-
-// .animate-slide-in { animation: slideIn 0.2s ease; }
-// @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }

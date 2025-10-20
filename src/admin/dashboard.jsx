@@ -37,8 +37,6 @@ const customerData = [
   { name: "New", value: 35 },
 ];
 
-const COLORS = ["#DA291C", "#FFC72C"];
-
 const topItems = [
   { id: 1, name: "Kape", sales: 520 },
   { id: 2, name: "Coffee", sales: 410 },
@@ -51,83 +49,101 @@ export default function Dashboard() {
   return (
     <div className="p-2 sm:p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Title */}
-      <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">
+      <h1 className="text-2xl sm:text-3xl font-bold text-coffee-900 mb-2 sm:mb-4">
         ☕ Dashboard Overview
       </h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
-          <h2 className="text-gray-500 text-xs sm:text-sm">Total Sales Today</h2>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">₱45,320</p>
-          <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 12% vs yesterday</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
-          <h2 className="text-gray-500 text-xs sm:text-sm">Total Orders</h2>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">932</p>
-          <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 5% this week</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
-          <h2 className="text-gray-500 text-xs sm:text-sm">New Customers</h2>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">87</p>
-          <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 9% this month</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-yellow-950">
-          <h2 className="text-gray-500 text-xs sm:text-sm">Menu Items Sold</h2>
-          <p className="text-2xl sm:text-3xl font-bold text-red-600">1,482</p>
-          <p className="text-green-600 text-xs sm:text-sm mt-1">▲ 7% this week</p>
-        </div>
+        {[
+          {
+            title: "Total Sales Today",
+            value: "₱45,320",
+            change: "▲ 12% vs yesterday",
+          },
+          {
+            title: "Total Orders",
+            value: "932",
+            change: "▲ 5% this week",
+          },
+          {
+            title: "New Customers",
+            value: "87",
+            change: "▲ 9% this month",
+          },
+          {
+            title: "Menu Items Sold",
+            value: "1,482",
+            change: "▲ 7% this week",
+          },
+        ].map((card, i) => (
+          <div
+            key={i}
+            className="bg-coffee-50 rounded-2xl shadow-md p-4 sm:p-6 border-l-4 border-coffee-700 hover:shadow-soft-xl transition"
+          >
+            <h2 className="text-coffee-700 text-xs sm:text-sm">{card.title}</h2>
+            <p className="text-2xl sm:text-3xl font-bold text-coffee-800">{card.value}</p>
+            <p className="text-green-600 text-xs sm:text-sm mt-1">{card.change}</p>
+          </div>
+        ))}
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Sales Trend */}
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+        <div className="bg-coffee-50 rounded-2xl shadow-md p-4 sm:p-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-700">
+            <h2 className="text-base sm:text-lg font-semibold text-coffee-800">
               📊 Sales Report (₱)
             </h2>
             <a
               href="/admin/sales"
-              className="text-yellow-950 text-sm hover:underline"
+              className="text-coffee-600 text-sm hover:underline"
             >
               View Details →
             </a>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1B788" />
+              <XAxis dataKey="day" stroke="#8E5A3A" />
+              <YAxis stroke="#8E5A3A" />
               <Tooltip />
-              <Line type="monotone" dataKey="sales" stroke="#DA291C" strokeWidth={3} />
+              <Line
+                type="monotone"
+                dataKey="sales"
+                stroke="#8E5A3A"
+                strokeWidth={3}
+                dot={{ fill: "#C28F5E", r: 5 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Menu Performance */}
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+        <div className="bg-coffee-50 rounded-2xl shadow-md p-4 sm:p-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-700">
+            <h2 className="text-base sm:text-lg font-semibold text-coffee-800">
               🍔 Menu Performance (%)
             </h2>
             <a
               href="/admin/menu-performance"
-              className="text-yellow-950 text-sm hover:underline"
+              className="text-coffee-600 text-sm hover:underline"
             >
               View Details →
             </a>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={categoryData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="category" />
-              <YAxis />
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1B788" />
+              <XAxis dataKey="category" stroke="#8E5A3A" />
+              <YAxis stroke="#8E5A3A" />
               <Tooltip />
-              <Bar dataKey="value" fill="#FFC72C" radius={[8, 8, 0, 0]} />
+              <Bar
+                dataKey="value"
+                fill="#C28F5E"
+                radius={[8, 8, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -136,14 +152,14 @@ export default function Dashboard() {
       {/* Customer Analytics + Top Selling Items */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Customer Analytics */}
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
+        <div className="bg-coffee-50 rounded-2xl shadow-md p-4 sm:p-6">
           <div className="flex justify-between items-center mb-2 sm:mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-700">
+            <h2 className="text-base sm:text-lg font-semibold text-coffee-800">
               👥 Customer Analytics
             </h2>
             <a
               href="/admin/customers"
-              className="text-yellow-950 text-sm hover:underline"
+              className="text-coffee-600 text-sm hover:underline"
             >
               View Details →
             </a>
@@ -156,31 +172,29 @@ export default function Dashboard() {
                 cy="50%"
                 labelLine={false}
                 outerRadius={90}
-                fill="#8884d8"
                 dataKey="value"
               >
-                {customerData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
+                <Cell fill="#8E5A3A" />
+                <Cell fill="#E1B788" />
               </Pie>
               <Tooltip />
               <Legend verticalAlign="bottom" height={36} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="text-center text-gray-600 text-sm mt-2">
+          <div className="text-center text-coffee-700 text-sm mt-2">
             Returning customers: <b>65%</b> | New customers: <b>35%</b>
           </div>
         </div>
 
         {/* Top Selling Items */}
-        <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
-          <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-700">
+        <div className="bg-coffee-50 rounded-2xl shadow-md p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-coffee-800">
             🏆 Top Selling Items
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[350px]">
               <thead>
-                <tr className="bg-red-50 text-gray-700">
+                <tr className="bg-coffee-200 text-coffee-800">
                   <th className="py-2 px-4 rounded-l-lg">#</th>
                   <th className="py-2 px-4">Item</th>
                   <th className="py-2 px-4 rounded-r-lg">Sales</th>
@@ -190,11 +204,11 @@ export default function Dashboard() {
                 {topItems.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b border-gray-200 text-black hover:bg-yellow-950 hover:text-white transition"
+                    className="border-b border-coffee-100 text-coffee-900 hover:bg-coffee-700 hover:text-white transition"
                   >
                     <td className="py-2 px-4">{item.id}</td>
                     <td className="py-2 px-4">{item.name}</td>
-                    <td className="py-2 px-4 text-red-600 font-semibold">{item.sales}</td>
+                    <td className="py-2 px-4 font-semibold">{item.sales}</td>
                   </tr>
                 ))}
               </tbody>
@@ -205,4 +219,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

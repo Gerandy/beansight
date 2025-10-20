@@ -12,6 +12,7 @@ const customers = [
   { id: 3, name: "Eve Black", email: "eve@gmail.com", status: "Suspended" },
 ];
 
+// Avatar component
 function Avatar({ name }) {
   const initials = name
     .split(" ")
@@ -19,27 +20,28 @@ function Avatar({ name }) {
     .join("")
     .toUpperCase();
   return (
-    <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-200 text-blue-800 font-bold mr-2">
+    <span className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-coffee-200 text-coffee-700 font-bold mr-2">
       {initials}
     </span>
   );
 }
 
+// Confirm modal
 function ConfirmModal({ open, onClose, onConfirm, message }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-80 text-black">
-        <div className="mb-4">{message}</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-soft-xl p-6 w-80 text-gray-900 border border-coffee-100">
+        <div className="mb-4 text-center">{message}</div>
         <div className="flex justify-end gap-2">
           <button
-            className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
+            className="px-4 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="px-4 py-1 rounded bg-red-500 hover:bg-red-600 text-white"
+            className="px-4 py-1 rounded bg-coffee-600 hover:bg-coffee-700 text-white font-medium"
             onClick={onConfirm}
           >
             Confirm
@@ -50,6 +52,7 @@ function ConfirmModal({ open, onClose, onConfirm, message }) {
   );
 }
 
+// User modal
 function UserModal({ open, onClose, onSave, user, isAdmin }) {
   const [form, setForm] = useState(
     user || { name: "", email: "", role: isAdmin ? "Staff" : undefined, status: "Active" }
@@ -62,25 +65,27 @@ function UserModal({ open, onClose, onSave, user, isAdmin }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-96 text-black">
-        <h3 className="text-lg font-bold mb-4">{user ? "Edit User" : `Add ${isAdmin ? "Admin/Staff" : "Customer"}`}</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-coffee-900/30 bg-gradient-to-br from-coffee-900/20 to-coffee-700/10 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-soft-xl p-6 w-96 text-gray-900 border border-coffee-100">
+        <h3 className="text-lg font-bold mb-4 text-coffee-700">
+          {user ? "Edit User" : `Add ${isAdmin ? "Admin/Staff" : "Customer"}`}
+        </h3>
         <div className="space-y-3">
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-400"
             placeholder="Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-400"
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           {isAdmin && (
             <select
-              className="w-full border rounded px-3 py-2"
+              className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-400"
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
             >
@@ -89,7 +94,7 @@ function UserModal({ open, onClose, onSave, user, isAdmin }) {
             </select>
           )}
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-400"
             value={form.status}
             onChange={(e) => setForm({ ...form, status: e.target.value })}
           >
@@ -100,13 +105,13 @@ function UserModal({ open, onClose, onSave, user, isAdmin }) {
         </div>
         <div className="flex justify-end gap-2 mt-6">
           <button
-            className="px-4 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
+            className="px-4 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="px-4 py-1 rounded bg-green-500 hover:bg-green-600 text-white"
+            className="px-4 py-1 rounded bg-coffee-600 hover:bg-coffee-700 text-white font-medium"
             onClick={() => onSave(form)}
           >
             Save
@@ -117,22 +122,24 @@ function UserModal({ open, onClose, onSave, user, isAdmin }) {
   );
 }
 
+// Toast
 function Toast({ message, type, onClose }) {
   if (!message) return null;
   return (
     <div
-      className={`fixed top-6 right-6 z-50 px-4 py-2 rounded shadow-lg text-white ${
-        type === "success" ? "bg-green-500" : "bg-red-500"
+      className={`fixed top-6 right-6 z-50 px-4 py-2 rounded-xl shadow-lg text-white font-medium ${
+        type === "success" ? "bg-coffee-600" : "bg-red-500"
       }`}
     >
       {message}
-      <button className="ml-4" onClick={onClose}>
+      <button className="ml-4 font-bold" onClick={onClose}>
         ✕
       </button>
     </div>
   );
 }
 
+// Table
 function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState("name");
@@ -168,12 +175,12 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
+    <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-coffee-100">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
         <input
           type="text"
           placeholder="Search..."
-          className="border rounded-lg px-3 py-2 text-sm focus:outline-none text-black focus:ring-2 focus:ring-blue-400 w-full sm:w-64"
+          className="border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-coffee-400 w-full sm:w-64"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -181,7 +188,7 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
           }}
         />
         <button
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold shadow transition w-full sm:w-auto"
+          className="bg-coffee-600 hover:bg-coffee-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition w-full sm:w-auto"
           onClick={onAdd}
         >
           + Add {isAdmin ? "Admin/Staff" : "Customer"}
@@ -189,9 +196,9 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-sm text-black">
+        <table className="min-w-full text-sm text-gray-900">
           <thead>
-            <tr className="bg-gray-100 text-gray-700">
+            <tr className="bg-coffee-50 text-coffee-700">
               <th className="py-2 px-4 text-left font-semibold cursor-pointer select-none" onClick={() => handleSort("name")}>
                 Name {sortKey === "name" && (sortAsc ? "▲" : "▼")}
               </th>
@@ -220,7 +227,7 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
               paged.map((user) => (
                 <tr
                   key={user.id}
-                  className="odd:bg-white even:bg-gray-50 hover:bg-gray-100 transition text-black"
+                  className="odd:bg-white even:bg-coffee-50 hover:bg-coffee-100 transition"
                 >
                   <td className="py-2 px-4 font-medium flex items-center gap-2">
                     <Avatar name={user.name} />
@@ -232,7 +239,7 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           user.role === "Admin"
-                            ? "bg-blue-100 text-blue-700"
+                            ? "bg-coffee-100 text-coffee-700"
                             : "bg-gray-100 text-gray-700"
                         }`}
                       >
@@ -257,7 +264,7 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
                   </td>
                   <td className="py-2 px-4 flex gap-2 flex-wrap">
                     <button
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
+                      className="bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
                       onClick={() => onEdit(user)}
                     >
                       Edit
@@ -303,12 +310,11 @@ function UserTable({ users, isAdmin, onEdit, onDelete, onAdd, onStatusToggle }) 
   );
 }
 
+// MAIN COMPONENT
 export default function UserManagement() {
   const [adminList, setAdminList] = useState(admins);
   const [customerList, setCustomerList] = useState(customers);
-
   const [activeTab, setActiveTab] = useState("admins");
-
   const [modalOpen, setModalOpen] = useState(false);
   const [modalUser, setModalUser] = useState(null);
   const [modalIsAdmin, setModalIsAdmin] = useState(false);
@@ -361,6 +367,7 @@ export default function UserManagement() {
     setDeleteUser(user);
     setDeleteIsAdmin(isAdmin);
   };
+
   const confirmDelete = () => {
     if (deleteIsAdmin) {
       setAdminList((prev) => prev.filter((u) => u.id !== deleteUser.id));
@@ -392,7 +399,7 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6 bg-coffee-100">
       <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: "" })} />
       <UserModal
         open={modalOpen}
@@ -407,45 +414,46 @@ export default function UserManagement() {
         onConfirm={confirmDelete}
         message={`Are you sure you want to delete "${deleteUser?.name}"?`}
       />
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-soft-xl p-8 border border-coffee-100">
         <header className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-2">User Management</h1>
-          <p className="text-gray-600">
-            Manage admins, staff, and customer accounts.
+          <h1 className="text-3xl font-extrabold text-coffee-800 mb-2">User Management</h1>
+          <p className="text-coffee-600">
+            Manage admins, staff, and customer accounts efficiently.
           </p>
         </header>
 
         {/* Tabs */}
-        <div className="flex border-b mb-6">
+        <div className="flex border-b border-coffee-200 mb-6">
           <button
             onClick={() => setActiveTab("admins")}
-            className={`px-4 py-2 font-semibold flex items-center gap-2 ${
+            className={`px-4 py-2 font-semibold flex items-center gap-2 transition ${
               activeTab === "admins"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500 hover:text-gray-800"
+                ? "border-b-2 border-coffee-600 text-coffee-700"
+                : "text-coffee-400 hover:text-coffee-700"
             }`}
           >
             Admins / Staff
-            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-coffee-100 text-coffee-700 text-xs px-2 py-0.5 rounded-full">
               {adminList.length}
             </span>
           </button>
           <button
             onClick={() => setActiveTab("customers")}
-            className={`px-4 py-2 font-semibold flex items-center gap-2 ${
+            className={`px-4 py-2 font-semibold flex items-center gap-2 transition ${
               activeTab === "customers"
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500 hover:text-gray-800"
+                ? "border-b-2 border-coffee-600 text-coffee-700"
+                : "text-coffee-400 hover:text-coffee-700"
             }`}
           >
             Customers
-            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-coffee-100 text-coffee-700 text-xs px-2 py-0.5 rounded-full">
               {customerList.length}
             </span>
           </button>
         </div>
 
-        {/* Table display */}
+        {/* Tables */}
         {activeTab === "admins" ? (
           <UserTable
             users={adminList}
