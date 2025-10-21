@@ -6,7 +6,7 @@ function Menu({ cartOpen }) {
     <div
       className="flex flex-col min-h-screen transition-all duration-300"
       style={{
-        marginRight: cartOpen ? "380px" : "0", // Adjust width to match sidebar
+        marginRight: cartOpen ? "380px" : "0", 
       }}
     >
       <MenuCategories />
