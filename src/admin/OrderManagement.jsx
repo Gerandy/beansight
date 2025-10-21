@@ -1,4 +1,17 @@
 import React, { useState } from "react";
+import {
+  Download,
+  Eye,
+  Trash2,
+  RefreshCw,
+  Filter,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Coffee,
+  PackageCheck,
+  Timer,
+} from "lucide-react";
 
 const initialOrders = [
   { id: 1, type: "Online", status: "Pending", customer: "Alice", items: ["Latte"], date: "2025-10-13 09:15" },
@@ -8,9 +21,9 @@ const initialOrders = [
 
 const statuses = ["Pending", "Preparing", "Completed"];
 const statusColors = {
-  Pending: "bg-coffee-200 text-coffee-900",
+  Pending: "bg-amber-100 text-amber-800",
   Preparing: "bg-coffee-400 text-white",
-  Completed: "bg-coffee-600 text-white",
+  Completed: "bg-coffee-700 text-white",
 };
 
 export default function OrderManagement() {
@@ -24,20 +37,31 @@ export default function OrderManagement() {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  // Filtering
-  const filteredOrders = filter === "All" ? orders : orders.filter((o) => o.status === filter);
-  const typeFilteredOrders = typeFilter === "All" ? filteredOrders : filteredOrders.filter((o) => o.type === typeFilter);
-  const searchedOrders = typeFilteredOrders.filter((o) => o.customer.toLowerCase().includes(search.toLowerCase()));
+  const filteredOrders =
+    filter === "All" ? orders : orders.filter((o) => o.status === filter);
+  const typeFilteredOrders =
+    typeFilter === "All"
+      ? filteredOrders
+      : filteredOrders.filter((o) => o.type === typeFilter);
+  const searchedOrders = typeFilteredOrders.filter((o) =>
+    o.customer.toLowerCase().includes(search.toLowerCase())
+  );
   const totalPages = Math.ceil(searchedOrders.length / pageSize);
-  const paginatedOrders = searchedOrders.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedOrders = searchedOrders.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
-  // Select logic
   const toggleSelectOrder = (id) =>
-    setSelectedOrders((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    setSelectedOrders((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
 
   const toggleSelectAll = () => {
     const visibleIds = paginatedOrders.map((o) => o.id);
-    const allSelected = visibleIds.every((id) => selectedOrders.includes(id));
+    const allSelected = visibleIds.every((id) =>
+      selectedOrders.includes(id)
+    );
     setSelectedOrders(
       allSelected
         ? selectedOrders.filter((id) => !visibleIds.includes(id))
@@ -49,13 +73,22 @@ export default function OrderManagement() {
     const order = orders.find((o) => o.id === id);
     if (order.status === newStatus) return;
     if (window.confirm(`Change status from "${order.status}" to "${newStatus}"?`)) {
-      setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+      setOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
+      );
     }
   };
 
   const handleExportCSV = () => {
     const header = ["ID", "Type", "Customer", "Items", "Status", "Date/Time"];
-    const rows = searchedOrders.map((o) => [o.id, o.type, o.customer, o.items.join("; "), o.status, o.date]);
+    const rows = searchedOrders.map((o) => [
+      o.id,
+      o.type,
+      o.customer,
+      o.items.join("; "),
+      o.status,
+      o.date,
+    ]);
     const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -77,7 +110,8 @@ export default function OrderManagement() {
   };
 
   const handleDeleteOrder = (id) => {
-    if (window.confirm("Delete this order?")) setOrders((prev) => prev.filter((o) => o.id !== id));
+    if (window.confirm("Delete this order?"))
+      setOrders((prev) => prev.filter((o) => o.id !== id));
   };
 
   const handleBulkDelete = () => {
@@ -88,23 +122,48 @@ export default function OrderManagement() {
     }
   };
 
-  const handleBulkStatusUpdate = () => {
-    if (selectedOrders.length === 0) return;
-    const newStatus = prompt("Enter new status (Pending, Preparing, Completed):");
-    if (newStatus && statuses.includes(newStatus)) {
-      setOrders((prev) => prev.map((o) => (selectedOrders.includes(o.id) ? { ...o, status: newStatus } : o)));
-      setSelectedOrders([]);
-    } else if (newStatus) alert("Invalid status!");
+  const totalStats = {
+    total: orders.length,
+    pending: orders.filter((o) => o.status === "Pending").length,
+    completed: orders.filter((o) => o.status === "Completed").length,
   };
 
   return (
     <div className="min-h-screen p-8 bg-coffee-100 text-coffee-900">
-      <div className="max-w-7xl mx-auto rounded-2xl bg-white shadow-soft-xl border border-coffee-100 p-8">
-        <h2 className="text-3xl font-bold mb-8 text-center text-coffee-800">☕ Order Management</h2>
+      <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg border border-coffee-200 p-8">
+        <h2 className="text-3xl font-bold mb-8 text-center text-coffee-800 flex items-center justify-center gap-2">
+          <Coffee className="w-7 h-7 text-coffee-600" /> Order Management
+        </h2>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="bg-coffee-50 border border-coffee-200 rounded-xl p-4 flex items-center gap-3">
+            <PackageCheck className="text-coffee-600" />
+            <div>
+              <p className="text-sm text-coffee-700">Total Orders</p>
+              <p className="text-2xl font-bold">{totalStats.total}</p>
+            </div>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+            <Timer className="text-amber-600" />
+            <div>
+              <p className="text-sm text-amber-700">Pending</p>
+              <p className="text-2xl font-bold">{totalStats.pending}</p>
+            </div>
+          </div>
+          <div className="bg-coffee-600 text-white rounded-xl p-4 flex items-center gap-3">
+            <PackageCheck />
+            <div>
+              <p className="text-sm">Completed</p>
+              <p className="text-2xl font-bold">{totalStats.completed}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap justify-between gap-4 mb-6 items-center">
-          <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+          <div className="flex flex-wrap gap-3 items-center">
+            <Filter className="text-coffee-700 w-5 h-5" />
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -128,20 +187,23 @@ export default function OrderManagement() {
               <option value="Walk-in">Walk-in</option>
             </select>
 
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Customer"
-              className="border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-coffee-400"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 text-coffee-400 w-4 h-4" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search customer..."
+                className="pl-10 border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-coffee-400"
+              />
+            </div>
           </div>
 
           <button
             onClick={handleExportCSV}
-            className="bg-coffee-600 hover:bg-coffee-700 text-white px-5 py-2 rounded-xl font-semibold shadow transition"
+            className="flex items-center gap-2 bg-coffee-600 hover:bg-coffee-700 text-white px-5 py-2 rounded-xl font-semibold shadow transition"
           >
-            ⬇️ Export CSV
+            <Download size={18} /> Export CSV
           </button>
         </div>
 
@@ -150,15 +212,14 @@ export default function OrderManagement() {
           <div className="flex gap-3 mb-4">
             <button
               onClick={handleBulkDelete}
-              className="bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
+              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
             >
-              🗑️ Delete Selected ({selectedOrders.length})
+              <Trash2 size={16} /> Delete Selected ({selectedOrders.length})
             </button>
             <button
-              onClick={handleBulkStatusUpdate}
-              className="bg-coffee-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-coffee-600 transition"
+              className="flex items-center gap-2 bg-coffee-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-coffee-600 transition"
             >
-              🔁 Update Status
+              <RefreshCw size={16} /> Update Status
             </button>
           </div>
         )}
@@ -168,30 +229,45 @@ export default function OrderManagement() {
           <table className="w-full text-left text-sm">
             <thead className="bg-coffee-100 text-coffee-800">
               <tr>
-                <th className="px-4 py-3 font-semibold border-b border-coffee-200">
+                <th className="px-4 py-3">
                   <input
                     type="checkbox"
-                    checked={paginatedOrders.length > 0 && paginatedOrders.every((o) => selectedOrders.includes(o.id))}
+                    checked={
+                      paginatedOrders.length > 0 &&
+                      paginatedOrders.every((o) =>
+                        selectedOrders.includes(o.id)
+                      )
+                    }
                     onChange={toggleSelectAll}
                   />
                 </th>
-                {["ID", "Type", "Customer", "Items", "Status", "Date/Time", "Actions"].map((h) => (
-                  <th key={h} className="px-4 py-3 font-semibold border-b border-coffee-200">
-                    {h}
-                  </th>
-                ))}
+                {["ID", "Type", "Customer", "Items", "Status", "Date/Time", "Actions"].map(
+                  (h) => (
+                    <th key={h} className="px-4 py-3 font-semibold">
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
               {paginatedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="text-center py-6 font-medium text-coffee-700">
+                  <td
+                    colSpan="10"
+                    className="text-center py-6 font-medium text-coffee-700"
+                  >
                     No orders found.
                   </td>
                 </tr>
               ) : (
-                paginatedOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-coffee-50 transition border-b border-coffee-100">
+                paginatedOrders.map((order, i) => (
+                  <tr
+                    key={order.id}
+                    className={`${
+                      i % 2 === 0 ? "bg-white" : "bg-coffee-50"
+                    } hover:bg-coffee-100 transition`}
+                  >
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
@@ -204,7 +280,9 @@ export default function OrderManagement() {
                     <td className="px-4 py-3">{order.customer}</td>
                     <td className="px-4 py-3">{order.items.join(", ")}</td>
                     <td className="px-4 py-3">
-                      <span className={`${statusColors[order.status]} px-3 py-1 rounded-full text-xs font-semibold`}>
+                      <span
+                        className={`${statusColors[order.status]} px-3 py-1 rounded-full text-xs font-semibold`}
+                      >
                         {order.status}
                       </span>
                     </td>
@@ -212,15 +290,15 @@ export default function OrderManagement() {
                     <td className="px-4 py-3 flex gap-2">
                       <button
                         onClick={() => handleShowDetails(order)}
-                        className="bg-coffee-100 border border-coffee-200 hover:bg-coffee-200 px-3 py-1 rounded-lg text-sm font-medium transition"
+                        className="flex items-center gap-1 bg-coffee-100 border border-coffee-200 hover:bg-coffee-200 px-3 py-1 rounded-lg text-sm font-medium transition"
                       >
-                        View
+                        <Eye size={14} /> View
                       </button>
                       <button
                         onClick={() => handleDeleteOrder(order.id)}
-                        className="bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1 rounded-lg text-sm font-medium transition"
+                        className="flex items-center gap-1 bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1 rounded-lg text-sm font-medium transition"
                       >
-                        Delete
+                        <Trash2 size={14} /> Delete
                       </button>
                     </td>
                   </tr>
@@ -236,11 +314,11 @@ export default function OrderManagement() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className={`px-4 py-2 border border-coffee-300 rounded-xl bg-coffee-100 hover:bg-coffee-200 transition ${
+              className={`flex items-center gap-1 px-4 py-2 border border-coffee-300 rounded-xl bg-coffee-100 hover:bg-coffee-200 transition ${
                 page === 1 ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              Prev
+              <ChevronLeft size={16} /> Prev
             </button>
             <span className="font-medium">
               Page {page} of {totalPages}
@@ -248,11 +326,11 @@ export default function OrderManagement() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className={`px-4 py-2 border border-coffee-300 rounded-xl bg-coffee-100 hover:bg-coffee-200 transition ${
+              className={`flex items-center gap-1 px-4 py-2 border border-coffee-300 rounded-xl bg-coffee-100 hover:bg-coffee-200 transition ${
                 page === totalPages ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
-              Next
+              Next <ChevronRight size={16} />
             </button>
           </div>
         )}
@@ -260,12 +338,17 @@ export default function OrderManagement() {
 
       {/* Modal */}
       {showModal && selectedOrder && (
-        <div className="fixed inset-0 backdrop-blur-md bg-coffee-900/30 bg-gradient-to-br from-coffee-900/20 to-coffee-700/10 flex justify-center items-center z-50" onClick={handleCloseModal}>
+        <div
+          className="fixed inset-0 backdrop-blur-md bg-coffee-900/40 flex justify-center items-center z-50"
+          onClick={handleCloseModal}
+        >
           <div
-            className="bg-white text-coffee-900 rounded-2xl shadow-soft-xl p-8 max-w-md w-full mx-4"
+            className="bg-white text-coffee-900 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl font-bold mb-4 text-center text-coffee-700">Order Details</h3>
+            <h3 className="text-2xl font-bold mb-4 text-center text-coffee-700">
+              Order Details
+            </h3>
             <div className="space-y-2 text-sm">
               <p><strong>ID:</strong> {selectedOrder.id}</p>
               <p><strong>Type:</strong> {selectedOrder.type}</p>
@@ -273,7 +356,9 @@ export default function OrderManagement() {
               <p><strong>Items:</strong> {selectedOrder.items.join(", ")}</p>
               <p>
                 <strong>Status:</strong>{" "}
-                <span className={`${statusColors[selectedOrder.status]} px-3 py-1 rounded-full text-xs font-semibold`}>
+                <span
+                  className={`${statusColors[selectedOrder.status]} px-3 py-1 rounded-full text-xs font-semibold`}
+                >
                   {selectedOrder.status}
                 </span>
               </p>

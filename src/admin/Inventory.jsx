@@ -9,6 +9,18 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import {
+  X,
+  Check,
+  Coffee,
+  Package,
+  Layers,
+  Tag,
+  Ruler,
+  AlertTriangle,
+  Pencil,
+} from "lucide-react";
+
 const generateId = (() => {
   let id = 1000;
   return () => id++;
@@ -112,19 +124,19 @@ function InventoryAnalytics() {
 
   const Modal = ({ show, onClose, title, children }) =>
     show ? (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="bg-coffee-50 rounded-2xl shadow-xl w-full max-w-lg p-6 relative border border-coffee-200">
-          <button
-            className="absolute top-3 right-3 text-coffee-700 hover:text-accent-500 text-2xl"
-            onClick={onClose}
-          >
-            &times;
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+        <div className="bg-coffee-50/90 backdrop-blur-md border border-coffee-200/50 rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fadeIn">
+          <button className="absolute top-3 right-3 text-coffee-700 hover:text-accent-500" onClick={onClose}>
+            <X className="w-6 h-6" />
           </button>
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">{title}</h2>
+          <h2 className="text-2xl font-semibold text-coffee-800 mb-6 flex items-center gap-2">
+            <Coffee className="w-6 h-6 text-coffee-600" /> {title}
+          </h2>
           {children}
         </div>
       </div>
     ) : null;
+
 
   return (
     <div className="p-8 space-y-8 min-h-screen bg-coffee-100 text-coffee-800 font-sans">
@@ -291,13 +303,13 @@ function InventoryAnalytics() {
                     </td>
                     <td className="px-4 py-3 flex gap-2">
                       <button
-                        className="bg-coffee-500 text-white px-3 py-1 rounded-lg hover:bg-coffee-600"
+                        className="bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1"
                         onClick={() => handleEditClick(item)}
                       >
-                        Edit
+                        <Pencil size={12} /> Edit
                       </button>
                       <button
-                        className="bg-red-600 text-coffee-50 px-3 py-1 rounded-lg hover:brightness-90"
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
                         onClick={() => handleDelete(item.id)}
                       >
                         Delete
@@ -358,49 +370,132 @@ function InventoryAnalytics() {
     </div>
   );
 
-  function renderForm(type) {
-    const handleSubmit = type === "Add" ? handleAddItem : handleEditSave;
-    return (
-      <form className="space-y-4 text-coffee-900" onSubmit={handleSubmit}>
-        {[
-          { label: "Item Name", name: "item", type: "text" },
-          { label: "Stock", name: "stock", type: "number" },
-          { label: "Unit", name: "unit", type: "text" },
-          { label: "Category", name: "category", type: "text" },
-          { label: "Reorder Level", name: "reorderLevel", type: "number" },
-        ].map((field, i) => (
-          <div key={i}>
-            <label className="block mb-1">{field.label}</label>
-            <input
-              type={field.type}
-              name={field.name}
-              className="border border-coffee-300 rounded-lg px-3 py-2 w-full bg-coffee-50"
-              value={form[field.name]}
-              onChange={handleInputChange}
-              required
-            />
+    function renderForm(type) {
+      const handleSubmit = type === "Add" ? handleAddItem : handleEditSave;
+
+      const categoryOptions = ["Coffee", "Dairy", "Pastry", "Tea", "Condiments", "Bakery"];
+      const unitOptions = ["kg", "pcs", "liters", "bottles", "jars"];
+
+      return (
+        <form className="space-y-5 text-coffee-900" onSubmit={handleSubmit}>
+          {/* Item Name */}
+          <div>
+            <label className="block mb-1 text-coffee-700 font-medium">Item Name</label>
+            <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+              <Package className="w-5 h-5 text-coffee-500 mr-2" />
+              <input
+                type="text"
+                name="item"
+                placeholder="e.g., Espresso Beans"
+                className="bg-transparent py-2.5 w-full outline-none"
+                value={form.item}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
           </div>
-        ))}
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="px-4 py-2 rounded-lg bg-coffee-200 hover:bg-coffee-300"
-            onClick={() => (type === "Add" ? setShowAddModal(false) : setShowEditModal(false))}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className={`px-4 py-2 rounded-lg text-white ${
-              type === "Add" ? "bg-coffee-700 hover:bg-coffee-800" : "bg-accent-500 hover:brightness-90"
-            }`}
-          >
-            {type === "Add" ? "Add Item" : "Save Changes"}
-          </button>
-        </div>
-      </form>
-    );
-  }
+
+          {/* Stock */}
+          <div>
+            <label className="block mb-1 text-coffee-700 font-medium">Stock</label>
+            <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+              <Layers className="w-5 h-5 text-coffee-500 mr-2" />
+              <input
+                type="number"
+                name="stock"
+                placeholder="e.g., 120"
+                className="bg-transparent py-2.5 w-full outline-none"
+                value={form.stock}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block mb-1 text-coffee-700 font-medium">Category</label>
+            <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+              <Tag className="w-5 h-5 text-coffee-500 mr-2" />
+              <select
+                name="category"
+                className="bg-transparent py-2.5 w-full outline-none"
+                value={form.category}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Select Category</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Unit */}
+          <div>
+            <label className="block mb-1 text-coffee-700 font-medium">Unit</label>
+            <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+              <Ruler className="w-5 h-5 text-coffee-500 mr-2" />
+              <select
+                name="unit"
+                className="bg-transparent py-2.5 w-full outline-none"
+                value={form.unit}
+                onChange={handleInputChange}
+                required
+              >
+                <option value="">Select Unit</option>
+                {unitOptions.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Reorder Level */}
+          <div>
+            <label className="block mb-1 text-coffee-700 font-medium">Reorder Level</label>
+            <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+              <AlertTriangle className="w-5 h-5 text-coffee-500 mr-2" />
+              <input
+                type="number"
+                name="reorderLevel"
+                placeholder="e.g., 30"
+                className="bg-transparent py-2.5 w-full outline-none"
+                value={form.reorderLevel}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-3">
+            <button
+              type="button"
+              className="px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2"
+              onClick={() => (type === "Add" ? setShowAddModal(false) : setShowEditModal(false))}
+            >
+              <X className="w-4 h-4" /> Cancel
+            </button>
+            <button
+              type="submit"
+              className={`px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 ${
+                type === "Add" ? "bg-coffee-700 hover:bg-coffee-800" : "bg-accent-500 hover:brightness-90"
+              }`}
+            >
+              <Check className="w-4 h-4" />
+              {type === "Add" ? "Add Item" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      );
+    }
+
 }
 
 export default InventoryAnalytics;

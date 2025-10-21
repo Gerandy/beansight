@@ -35,7 +35,7 @@ export default function AdminLayout() {
     "/admin/dashboard",
   ].includes(location.pathname);
 
-  // Auto-open Dashboard dropdown when on analytics subpages
+
   useEffect(() => {
     if (analyticsPages.includes(location.pathname)) {
       setDashboardOpen(true);

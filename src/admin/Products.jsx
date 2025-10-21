@@ -331,24 +331,25 @@ export default function ProductManagement() {
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-coffee-900/30 bg-gradient-to-br from-coffee-900/20 to-coffee-700/10 px-4 transition-all">
-
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+          <div className="bg-coffee-50/90 backdrop-blur-md border border-coffee-200/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-scroll scrollbar-hide p-8 relative animate-fadeIn">
+            
             {/* Close Button */}
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+              className="absolute top-4 right-4 text-coffee-700 hover:text-accent-500 transition"
               title="Close"
             >
               <X size={22} />
             </button>
 
-            {/* Modal Header */}
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+            {/* Header */}
+            <h2 className="text-2xl font-semibold text-coffee-800 mb-2 flex items-center gap-2">
+              <Upload className="w-6 h-6 text-coffee-600" />
               {editing ? "Edit Product" : "Add New Product"}
             </h2>
-            <p className="text-gray-500 mb-6 text-sm">
-              Add product details and upload a photo. Images are previewed locally.
+            <p className="text-sm text-coffee-600 mb-6">
+              Add product details and upload a photo. Preview updates instantly.
             </p>
 
             {/* Form */}
@@ -356,29 +357,25 @@ export default function ProductManagement() {
               {/* Name & Category */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name
-                  </label>
+                  <label className="block text-sm font-medium text-coffee-700 mb-1">Name</label>
                   <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleInput}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
                     placeholder="e.g. Caramel Latte"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
+                  <label className="block text-sm font-medium text-coffee-700 mb-1">Category</label>
                   <select
                     name="category"
                     value={form.category}
                     onChange={handleInput}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
                     required
                   >
                     <option value="">Select category</option>
@@ -393,15 +390,13 @@ export default function ProductManagement() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-coffee-700 mb-1">Description</label>
                 <textarea
                   name="description"
                   value={form.description}
                   onChange={handleInput}
                   rows="3"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                  className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
                   placeholder="e.g. A refreshing iced coffee with rich flavor..."
                   required
                 ></textarea>
@@ -410,29 +405,26 @@ export default function ProductManagement() {
               {/* Price & Stock */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price (₱)
-                  </label>
+                  <label className="block text-sm font-medium text-coffee-700 mb-1">Price (₱)</label>
                   <input
                     type="number"
                     name="price"
                     value={form.price}
                     onChange={handleInput}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
                     placeholder="e.g. 120"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Stock
-                  </label>
+                  <label className="block text-sm font-medium text-coffee-700 mb-1">Stock</label>
                   <input
                     type="number"
                     name="stock"
                     value={form.stock}
                     onChange={handleInput}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-black focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
+                    className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
                     placeholder="e.g. 50"
                     required
                   />
@@ -441,15 +433,11 @@ export default function ProductManagement() {
 
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Image
-                </label>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg py-8 cursor-pointer hover:bg-gray-100 transition text-gray-600">
-                  <Upload className="mb-2 text-gray-500" />
+                <label className="block text-sm font-medium text-coffee-700 mb-1">Image</label>
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-coffee-300 rounded-xl py-8 cursor-pointer bg-white/60 hover:bg-coffee-50 transition text-coffee-700">
+                  <Upload className="mb-2 text-coffee-500" />
                   <span>
-                    {form.image
-                      ? form.image.name || "Image selected"
-                      : "Click to upload"}
+                    {form.image ? form.image.name || "Image selected" : "Click to upload"}
                   </span>
                   <input
                     type="file"
@@ -460,7 +448,7 @@ export default function ProductManagement() {
                   />
                 </label>
 
-                {/* Image Preview */}
+                {/* Preview */}
                 {form.image && (
                   <div className="mt-3 flex items-center gap-2">
                     <img
@@ -470,12 +458,12 @@ export default function ProductManagement() {
                           : form.image
                       }
                       alt="Preview"
-                      className="w-16 h-16 object-cover rounded-lg shadow-sm"
+                      className="w-16 h-16 object-cover rounded-xl border border-coffee-200 shadow-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, image: null })}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 transition"
                       title="Remove image"
                     >
                       <X size={18} />
@@ -484,20 +472,21 @@ export default function ProductManagement() {
                 )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4">
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 pt-6 bg-coffee-50/90 backdrop-blur-sm pb-4">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="px-5 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+                  className="px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
                 >
-                  Cancel
+                  <X className="w-4 h-4" /> Cancel
                 </button>
+
                 <button
                   type="submit"
-                  className="flex items-center gap-2 bg-yellow-950 hover:bg-yellow-700 text-white font-medium rounded-lg px-6 py-2 transition"
+                  className="px-5 py-2.5 rounded-xl text-white font-medium flex items-center gap-2 transition bg-coffee-700 hover:bg-coffee-800"
                 >
-                  <Save size={18} />
+                  <Save className="w-4 h-4" />
                   {editing ? "Update Product" : "Save Product"}
                 </button>
               </div>
@@ -505,6 +494,8 @@ export default function ProductManagement() {
           </div>
         </div>
       )}
+
+
 
 
     </div>
