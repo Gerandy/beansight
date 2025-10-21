@@ -28,7 +28,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Space Grotesk", sans-serif;
-  background: #f5e9d3;
+  background: #FBF0E4;
   color: #f3f4f6;
 }
 
@@ -71,7 +71,7 @@ body {
 }
 
 
-/* ✅ Scroll reveal animation classes */
+
 .reveal {
   opacity: 0;
   transform: translateY(20px);
@@ -82,5 +82,32 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+@keyframes fadeDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.navbar-animate {
+  animation: fadeDown 0.6s ease-out forwards;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 

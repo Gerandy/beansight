@@ -12,7 +12,7 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
 
     return(
         <>
-        <nav className="fixed top-0 w-full z-40 bg-yellow-950 border-b border-white/10 shadow-lg" >
+        <nav className="fixed top-0 w-full z-40 bg-yellow-950 border-b border-white/10 shadow-lg navbar-animate">
           <div className="max-w-5xl mx-auto px-4">
             <div className="flex justify-between items-center h-16">
 

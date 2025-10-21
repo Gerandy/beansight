@@ -1,9 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import logo from "../../assets/ahjinlogo.png";
 import { useCart } from "../CartContext";
- 
 
 function ProductDetails() {
   const { id } = useParams();
@@ -13,7 +12,7 @@ function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [drinkIdx, setDrinkIdx] = useState(0);
 
-  const { addToCart } = useCart(); // ✅ Get addToCart from context
+  const { addToCart } = useCart();
 
   const product = {
     id,
@@ -37,7 +36,6 @@ function ProductDetails() {
   const canScrollLeft = drinkIdx > 0;
   const canScrollRight = drinkIdx < product.drinks.length - visibleDrinks;
 
-  // ✅ Handle Add to Cart
   const handleAddToCart = () => {
     const selectedSize = product.sizes.find((s) => s.id === size);
     const totalPrice = product.price + (selectedSize?.extra || 0);
@@ -50,14 +48,14 @@ function ProductDetails() {
       image: product.image,
     };
 
-    addToCart(cartItem); // ✅ Add to cart context
+    addToCart(cartItem);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-yellow-100 text-gray-800">
+    <div className="min-h-screen bg-gradient-to-br  text-coffee-900">
       <div className="max-w-6xl mx-auto py-10 px-6">
         <button
-          className="mb-6 flex items-center text-yellow-600 hover:text-yellow-700 font-medium transition"
+          className="mb-6 flex items-center text-coffee-600 hover:text-coffee-700 font-medium transition"
           onClick={() => navigate(-1)}
         >
           <ChevronLeft size={20} className="mr-1" />
@@ -65,57 +63,59 @@ function ProductDetails() {
         </button>
 
         <div className="flex flex-col lg:flex-row gap-10">
-          {/* LEFT — Product Image + Basic Info */}
-          <div className="flex-1 bg-white rounded-3xl shadow-lg p-8 flex flex-col items-center">
+          {/* LEFT — Product Image + Info */}
+          <div className="flex-1 bg-white rounded-2xl shadow-[var(--shadow-soft-xl)] p-8 flex flex-col items-center">
             <img
               src={product.image}
               alt={product.name}
-              className="w-72 h-72 object-contain rounded-2xl shadow-md"
+              className="w-72 h-72 object-contain rounded-xl shadow-md"
             />
-            <h2 className="text-3xl font-bold mt-6 text-gray-900">
+            <h2 className="text-3xl font-bold mt-6 text-coffee-900">
               {product.name}
             </h2>
-            <p className="text-2xl font-semibold text-yellow-600 mt-2">
+            <p className="text-2xl font-semibold text-coffee-600 mt-2">
               ₱ {product.price.toFixed(2)}
             </p>
 
             {/* Quantity Selector */}
-            <div className="flex items-center mt-6 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+            <div className="flex items-center mt-6 bg-coffee-100 rounded-full overflow-hidden">
               <button
-                className="px-4 py-2 text-2xl text-gray-700 hover:bg-yellow-100"
+                className="px-4 py-2 text-2xl text-coffee-800 hover:bg-coffee-200"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
               >
                 −
               </button>
-              <span className="px-6 py-2 text-lg font-semibold bg-white">
+              <span className="px-6 py-2 text-lg font-semibold bg-white text-coffee-800">
                 {quantity}
               </span>
               <button
-                className="px-4 py-2 text-2xl text-gray-700 hover:bg-yellow-100"
+                className="px-4 py-2 text-2xl text-coffee-800 hover:bg-coffee-200"
                 onClick={() => setQuantity(quantity + 1)}
               >
                 +
               </button>
             </div>
 
-            {/* ✅ Add to Cart Button */}
+            {/* Add to Cart Button */}
             <button
               onClick={handleAddToCart}
-              className="mt-6 bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-10 py-3 rounded-full text-lg shadow-lg transition transform hover:scale-105"
+              className="mt-6 bg-coffee-700 hover:bg-coffee-800 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md transition transform hover:scale-105"
             >
               Add to My Bag
             </button>
           </div>
 
           {/* RIGHT — Customization */}
-          <div className="flex-1 bg-white rounded-3xl shadow-lg p-8">
-            <h3 className="font-bold text-2xl mb-4 text-gray-900">
+          <div className="flex-1 bg-white rounded-2xl shadow-[var(--shadow-soft-lg)] p-8">
+            <h3 className="font-bold text-2xl mb-4 text-coffee-900">
               Customize your Order
             </h3>
 
             {/* Size Options */}
             <div className="mb-10">
-              <h4 className="font-semibold text-lg mb-3">Meal Size</h4>
+              <h4 className="font-semibold text-lg mb-3 text-coffee-800">
+                Meal Size
+              </h4>
               <div className="flex flex-wrap gap-4">
                 {["solo", "medium", "large"].map((s) => (
                   <button
@@ -123,8 +123,8 @@ function ProductDetails() {
                     onClick={() => setSize(s)}
                     className={`px-5 py-3 rounded-xl border-2 text-base font-medium transition ${
                       size === s
-                        ? "border-yellow-500 bg-yellow-100 text-yellow-700"
-                        : "border-gray-200 hover:border-yellow-400"
+                        ? "border-coffee-600 bg-coffee-100 text-coffee-700"
+                        : "border-coffee-200 hover:border-coffee-400"
                     }`}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -135,10 +135,12 @@ function ProductDetails() {
 
             {/* Drink Options */}
             <div className="mb-10">
-              <h4 className="font-semibold text-lg mb-3">Choose your Drink</h4>
+              <h4 className="font-semibold text-lg mb-3 text-coffee-800">
+                Choose your Drink
+              </h4>
               <div className="flex items-center">
                 <button
-                  className="p-2 rounded-full bg-gray-100 hover:bg-yellow-100 mr-2 disabled:opacity-40"
+                  className="p-2 rounded-full bg-coffee-100 hover:bg-coffee-200 mr-2 disabled:opacity-40"
                   onClick={() => setDrinkIdx(drinkIdx - 1)}
                   disabled={!canScrollLeft}
                 >
@@ -153,8 +155,8 @@ function ProductDetails() {
                         onClick={() => setDrink(d.id)}
                         className={`cursor-pointer border-2 rounded-2xl p-4 min-w-[120px] text-center shadow-sm transition transform hover:scale-105 ${
                           drink === d.id
-                            ? "border-yellow-500 bg-yellow-50"
-                            : "border-gray-100"
+                            ? "border-coffee-600 bg-coffee-100"
+                            : "border-coffee-100 hover:border-coffee-300"
                         }`}
                       >
                         <img
@@ -162,9 +164,11 @@ function ProductDetails() {
                           alt={d.name}
                           className="w-20 h-20 mx-auto mb-2 object-contain"
                         />
-                        <p className="font-medium text-sm">{d.name}</p>
+                        <p className="font-medium text-sm text-coffee-800">
+                          {d.name}
+                        </p>
                         {d.isNew && (
-                          <span className="text-xs text-red-500 font-semibold">
+                          <span className="text-xs text-coffee-600 font-semibold">
                             NEW
                           </span>
                         )}
@@ -172,7 +176,7 @@ function ProductDetails() {
                     ))}
                 </div>
                 <button
-                  className="p-2 rounded-full bg-gray-100 hover:bg-yellow-100 ml-2 disabled:opacity-40"
+                  className="p-2 rounded-full bg-coffee-100 hover:bg-coffee-200 ml-2 disabled:opacity-40"
                   onClick={() => setDrinkIdx(drinkIdx + 1)}
                   disabled={!canScrollRight}
                 >
@@ -183,7 +187,9 @@ function ProductDetails() {
 
             {/* Drink Size Options */}
             <div>
-              <h4 className="font-semibold text-lg mb-3">Drink Size</h4>
+              <h4 className="font-semibold text-lg mb-3 text-coffee-800">
+                Drink Size
+              </h4>
               <div className="flex gap-6 flex-wrap">
                 {product.sizes.map((s) => (
                   <div
@@ -191,13 +197,13 @@ function ProductDetails() {
                     onClick={() => setSize(s.id)}
                     className={`cursor-pointer border-2 rounded-xl p-4 min-w-[120px] text-center transition transform hover:scale-105 ${
                       size === s.id
-                        ? "border-yellow-500 bg-yellow-50"
-                        : "border-gray-200 hover:border-yellow-300"
+                        ? "border-coffee-600 bg-coffee-100"
+                        : "border-coffee-200 hover:border-coffee-400"
                     }`}
                   >
-                    <div className="w-10 h-16 bg-gray-200 rounded mx-auto mb-2"></div>
-                    <p className="font-semibold">{s.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <div className="w-10 h-16 bg-coffee-50 rounded mx-auto mb-2"></div>
+                    <p className="font-semibold text-coffee-800">{s.name}</p>
+                    <p className="text-xs text-coffee-500">
                       (+₱{s.extra.toFixed(0)})
                     </p>
                   </div>

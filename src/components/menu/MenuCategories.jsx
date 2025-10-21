@@ -40,7 +40,7 @@ function MenuCategories() {
   };
 
   return (
-    <div className="relative bg-lime-50 shadow-sm border-b sticky top-16 z-20">
+    <div className="relative coffee-50 shadow-sm border-b sticky top-16 z-20">
       {showArrows && (
         <button
           onClick={() => scroll("left")}
