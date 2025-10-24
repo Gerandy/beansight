@@ -29,7 +29,7 @@ function Home() {
   }, []);
 
   return (
-    <div className="space-y-20">
+    <div>
       <div className="reveal">
         <Slider />
       </div>

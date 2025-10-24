@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Link, useLocation } from "react-router-dom";
 import "./App.css";
 import { useState } from "react";
 import MobileMenu from "./components/MobileMenu";
@@ -16,6 +15,7 @@ import MyFavorites from "./components/myaccount/MyFavorites";
 import Orders from "./components/sections/Orders";
 import Checkout from "./components/Checkout";
 
+// ----- Admin -----
 import AdminLayout from "./admin/layouts/Adminlayouts";
 import Dashboard from "./admin/dashboard";
 import Sales from "./admin/sales";
@@ -24,9 +24,15 @@ import Customers from "./admin/CustomerAnalytics";
 import Inventory from "./admin/Inventory";
 import Reports from "./admin/reports";
 import Product from "./admin/Products";
-import Pos from "./admin/Pos";
 import UserManagement from "./admin/UserManagement";
 import OrderManagement from "./admin/OrderManagement";
+import Pos from "./admin/Pos";
+
+// ----- Staff (POS) -----
+import StaffLayout from "./staff/layouts/StaffLayout";
+import PosPage from "./staff/POSPage";
+import OnlineOrders from "./staff/components/OnlineOrders";
+import History from "./staff/components/OrderSummary"; // or a dedicated History.jsx if you create one
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -84,6 +90,15 @@ function App() {
           <Route path="products" element={<Product />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="order-management" element={<OrderManagement />} />
+          <Route path="pos" element={<Pos />} />
+        </Route>
+
+        {/* ---------- Staff Site (POS) ---------- */}
+        <Route path="/staff" element={<StaffLayout />}>
+          <Route index element={<PosPage />} />
+          <Route path="pos" element={<PosPage />} />
+          <Route path="online-orders" element={<OnlineOrders />} />
+          <Route path="history" element={<History />} />
         </Route>
       </Routes>
     </Router>
@@ -91,3 +106,4 @@ function App() {
 }
 
 export default App;
+

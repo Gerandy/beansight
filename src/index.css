@@ -59,6 +59,22 @@ body {
   .animate-loading-bar {
     animation: loading 0.8s ease infinite;
   }
+
+  /* dropdown mount animation: slide down + fade */
+  @keyframes slideDownFade {
+    0% {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-dropdown {
+    animation: slideDownFade 180ms ease-out forwards;
+  }
 }
 
 
@@ -68,6 +84,14 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none; 
   scrollbar-width: none;     
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 

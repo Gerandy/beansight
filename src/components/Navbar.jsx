@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect } from "react"
 import logo from "../assets/ahjinlogo.png"
-import cartLogo from "../assets/ahjinlogo.png"
+import { Handbag } from "lucide-react"
 import CartSidebar from "./CartSidebar";
 
 function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
@@ -12,7 +12,7 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
 
     return(
         <>
-        <nav className="fixed top-0 w-full z-40 bg-yellow-950 border-b border-white/10 shadow-lg navbar-animate">
+        <nav className="fixed top-0 w-full z-40 bg-gradient-to-r from-coffee-700 to-coffee-600 border-b border-white/10 shadow-lg navbar-animate">
           <div className="max-w-5xl mx-auto px-4">
             <div className="flex justify-between items-center h-16">
 
@@ -22,8 +22,8 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center group cursor-pointer">
                           <img className="h-12 w-12 mr-2 group-hover:scale-105" src={logo} alt="logo" />
-                          <span className="text-white group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Solace</span>
-                          <span className="text-orange-200  group-hover:text-white transition-colors duration-400 group-hover:scale-105">.Cafe</span>
+                          <span className="text-white group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Bean</span>
+                          <span className="text-orange-200  group-hover:text-white transition-colors duration-400 group-hover:scale-105">.Sight</span>
                         </div>
                     </div>                
                 </a>
@@ -80,8 +80,9 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                   <button
                     onClick={() => setCartOpen((prev) => !prev)}
                     className="relative"
+                    aria-label="Open cart"
                   >
-                    <img src={cartLogo} alt="Cart" className="h-8 w-8 hover:scale-110 transition-transform" />
+                    <Handbag className="h-8 w-8 hover:scale-110 transition-transform" />
                     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2">
                       0
                     </span>
