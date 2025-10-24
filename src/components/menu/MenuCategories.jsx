@@ -52,12 +52,12 @@ function MenuCategories() {
 
       <div
         ref={scrollRef}
-        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth"
+        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-white"
       >
         {categories.map((cat, idx) => (
           <button
             key={idx}
-            className="text-sm font-medium text-gray-700 hover:text-yellow-950 whitespace-nowrap"
+            className="text-sm font-medium text-gray-700 hover:text-yellow-950 whitespace-nowrap hover:cursor-pointer"
           >
             {cat}
           </button>
