@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect } from "react"
 import logo from "../assets/ahjinlogo.png"
-import { Handbag } from "lucide-react"
+import {Handbag} from "lucide-react";
 import CartSidebar from "./CartSidebar";
 
 function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
@@ -22,8 +22,8 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center group cursor-pointer">
                           <img className="h-12 w-12 mr-2 group-hover:scale-105" src={logo} alt="logo" />
-                          <span className="text-white group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-105 mr-1">Bean</span>
-                          <span className="text-orange-200  group-hover:text-white transition-colors duration-400 group-hover:scale-105">.Sight</span>
+                          <span className="text-white group-hover:text-orange-200 transition-colors duration-400 group-hover:scale-100 mr-1">Bean</span>
+                          <span className="text-orange-200  group-hover:text-white transition-colors duration-400 group-hover:scale-100">Sight</span>
                         </div>
                     </div>                
                 </a>
@@ -32,19 +32,19 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                 </div>
 
                 <div className="hidden md:flex items-center space-x-8">
-                  <Link to="/" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-100 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Home
                   </Link>
-                  <Link to="/menu" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/menu" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-100 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Menu
                   </Link>
-                  <Link to="/orders" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
+                  <Link to="/orders" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-100 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                     Orders
                   </Link>
 
                   {/*MyAccount*/}
                   <div className="relative group inline-block">
-                      <Link to="/Myaccount" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-110 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
+                      <Link to="/Myaccount" className="font-sans font-bold text-xl relative text-orange-100 hover:text-white transition-colors hover:scale-100 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-white after:transition-all after:duration-100 hover:after:w-full">
                         MyAccount
                       </Link>
                       <div className="absolute hidden group-hover:block bg-white shadow-lg rounded-md top-full w-52 right-0">
@@ -82,7 +82,7 @@ function Navbar({menuOpen, setMenuOpen, cartOpen, setCartOpen}) {
                     className="relative"
                     aria-label="Open cart"
                   >
-                    <Handbag className="h-8 w-8 hover:scale-110 transition-transform" />
+                    <Handbag className="text-orange-100 h-8 w-8 hover:text-white hover:scale-105 transition-transform hover:cursor-pointer" />
                     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2">
                       0
                     </span>
