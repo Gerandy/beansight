@@ -48,7 +48,7 @@ function MenuFeatured() {
        <Link to={`/menu/product-details/${item.id}`} key={item.id}>
       <MenuCard 
         name={item.name}
-        price={"₱" + item.price}
+        price={item.price}
         img={item.img}
       />
       </Link>
