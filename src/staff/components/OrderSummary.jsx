@@ -12,14 +12,20 @@ import {
 } from "lucide-react";
 
 export default function OrderSummary({ cartItems = [], onComplete = () => {}, onClear = () => {} }) {
-  const TAX_RATE = 0.12;
 
-  // STATES
   const [paymentType, setPaymentType] = useState("cash");
   const [cashGiven, setCashGiven] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [discountType, setDiscountType] = useState("none"); 
   const [tip, setTip] = useState(0);
   const [customerName, setCustomerName] = useState("");
+
+  
+  const discountTypes = {
+    none: { label: "No Discount", value: 0 },
+    senior: { label: "Senior Citizen", value: 20 },
+    pwd: { label: "PWD", value: 20 },
+    employee: { label: "Employee", value: 10 }
+  };
 
   // COMPUTATIONS
   const subtotal = useMemo(
@@ -27,11 +33,9 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     [cartItems]
   );
 
-  const discountAmount = (subtotal * discount) / 100;
+  const discountAmount = (subtotal * discountTypes[discountType].value) / 100;
   const tipAmount = (subtotal * tip) / 100;
-  const taxableAmount = subtotal - discountAmount + tipAmount;
-  const tax = taxableAmount * TAX_RATE;
-  const total = taxableAmount + tax;
+  const total = subtotal - discountAmount + tipAmount; 
   const change = Number(cashGiven || 0) - total;
 
   // ACTIONS
@@ -44,9 +48,9 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       id: `POS-${Date.now()}`,
       items: cartItems,
       subtotal,
-      discount,
+      discountType,
+      discountAmount,
       tip,
-      tax,
       total,
       paymentType,
       cashGiven: paymentType === "cash" ? Number(cashGiven) : null,
@@ -59,6 +63,31 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
 
   const handlePrint = () => window.print();
   const handleClear = () => onClear?.();
+
+
+  const renderDiscountSection = () => (
+    <div className="flex justify-between items-center">
+      <span className="text-[var(--color-coffee-700)] flex items-center gap-1">
+        <Percent size={14} /> Discount
+      </span>
+      <div className="flex items-center gap-2">
+        <select
+          value={discountType}
+          onChange={(e) => setDiscountType(e.target.value)}
+          className="border border-[var(--color-coffee-200)] rounded-md px-2 py-1 text-sm"
+        >
+          {Object.entries(discountTypes).map(([key, { label }]) => (
+            <option key={key} value={key}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <span className="text-[var(--color-coffee-600)]">
+          -₱{discountAmount.toFixed(2)}
+        </span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="border-t pt-5 mt-4 text-[var(--color-coffee-900)]">
@@ -82,24 +111,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
           <span className="font-medium">₱{subtotal.toFixed(2)}</span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--color-coffee-700)] flex items-center gap-1">
-            <Percent size={14} /> Discount
-          </span>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              className="w-16 border border-[var(--color-coffee-200)] rounded-md px-2 py-1 text-sm"
-            />
-            <span className="text-[var(--color-coffee-600)]">
-              -₱{discountAmount.toFixed(2)}
-            </span>
-          </div>
-        </div>
+        {renderDiscountSection()}
 
         <div className="flex justify-between items-center">
           <span className="text-[var(--color-coffee-700)]">Tip</span>
@@ -118,11 +130,6 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="flex justify-between">
-          <span className="text-[var(--color-coffee-700)]">Tax (12%)</span>
-          <span>₱{tax.toFixed(2)}</span>
         </div>
 
         <div className="flex justify-between items-center border-t border-[var(--color-coffee-200)] pt-3 mt-3">

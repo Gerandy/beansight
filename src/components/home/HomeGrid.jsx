@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 
 function MenuGrid() {
   const foodMenu = [
-    { id: 1, name: "Capucino", price: "₱175.00", img: "src/assets/ahjinlogo.png" },
-    { id: 2, name: "Coffee", price: "₱145.00", img: "src/assets/ahjinlogo.png" },
-    { id: 3, name: "Ice Coffee", price: "₱174.00", img: "src/assets/ahjinlogo.png" },
-    { id: 4, name: "Hot Coffee", price: "₱138.00", img: "src/assets/ahjinlogo.png" },
+    { id: 1, name: "Capucino", price: "175.00", img: "src/assets/ahjinlogo.png" },
+    { id: 2, name: "Coffee", price: "145.00", img: "src/assets/ahjinlogo.png" },
+    { id: 3, name: "Ice Coffee", price: "174.00", img: "src/assets/ahjinlogo.png" },
+    { id: 4, name: "Hot Coffee", price: "138.00", img: "src/assets/ahjinlogo.png" },
   ];
 
   const scrollRef = useRef(null);

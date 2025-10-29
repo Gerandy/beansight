@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <footer className="bg-yellow-950 py-8">
+    <footer className="bg-gradient-to-r from-coffee-700 to-coffee-600  py-8">
       <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
 
         
@@ -22,7 +22,7 @@ function Footer() {
 
         
         <div className="text-center md:text-left flex items-center gap-4">
-          <p className="text-red-600 font-bold">For news and updates, follow us</p>
+          <p className="text-white font-bold">For news and updates, follow us</p>
           <div className="flex items-center">
             <image src="src/assets/1.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />
             <image src="src/assets/2.png" alt="Social Media Icons" className="h-8 mt-2 mx-auto md:mx-0" />

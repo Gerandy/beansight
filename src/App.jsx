@@ -32,7 +32,7 @@ import Pos from "./admin/Pos";
 import StaffLayout from "./staff/layouts/StaffLayout";
 import PosPage from "./staff/POSPage";
 import OnlineOrders from "./staff/components/OnlineOrders";
-import History from "./staff/components/OrderSummary"; // or a dedicated History.jsx if you create one
+import History from "./staff/components/History";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
