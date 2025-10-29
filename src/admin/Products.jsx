@@ -1,4 +1,3 @@
-// ProductManagement.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import {
   Upload,
@@ -46,9 +45,9 @@ export default function ProductManagement() {
   const [sortBy, setSortBy] = useState("Newest");
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(12); // adjust for desired page size
-  const [view, setView] = useState("cards"); // "cards" | "table"
-  // selection for table + bulk actions
+  const [pageSize, setPageSize] = useState(12); 
+  const [view, setView] = useState("cards"); 
+
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -57,13 +56,10 @@ export default function ProductManagement() {
     description: "",
     category: "",
     price: "",
-    stock: "",
+    availability: true,
     image: null,
   });
 
-  // Responsive grid columns are handled by tailwind classes in JSX
-
-  // Derived lists (search + filter + sort)
   const filtered = useMemo(() => {
     const q = debouncedQuery || "";
     let arr = products.slice();
@@ -83,8 +79,11 @@ export default function ProductManagement() {
       arr.sort((a, b) => Number(a.price) - Number(b.price));
     } else if (sortBy === "Price: High → Low") {
       arr.sort((a, b) => Number(b.price) - Number(a.price));
-    } else if (sortBy === "Stock: Low → High") {
-      arr.sort((a, b) => Number(a.stock) - Number(b.stock));
+    } else if (sortBy === "Availability: Available first") {
+      arr.sort((a, b) => {
+        if (a.availability === b.availability) return 0;
+        return a.availability ? -1 : 1;
+      });
     } else {
       // Newest first by id timestamp-ish
       arr.sort((a, b) => b.id - a.id);
@@ -102,7 +101,7 @@ export default function ProductManagement() {
 
   // KPI values
   const totalProducts = products.length;
-  const totalStock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const totalAvailable = products.reduce((sum, p) => sum + (p.availability ? 1 : 0), 0);
 
   // Open modal for add/edit
   const openModal = (product = null) => {
@@ -133,6 +132,9 @@ export default function ProductManagement() {
     const { name, value, files } = e.target;
     if (name === "image") {
       setForm((s) => ({ ...s, image: files?.[0] || null }));
+    } else if (name === "availability") {
+      // select returns string "true" / "false"
+      setForm((s) => ({ ...s, availability: value === "true" }));
     } else {
       setForm((s) => ({ ...s, [name]: value }));
     }
@@ -300,7 +302,7 @@ export default function ProductManagement() {
               <span className="text-2xl">☕</span> Product Management
             </h1>
             <p className="mt-2 text-sm text-coffee-700 max-w-xl">
-              Manage menu items, pricing, stock and images. Clean, responsive layout designed for quick scanning.
+              Manage menu items, pricing, availability and images. Clean, responsive layout designed for quick scanning.
             </p>
           </div>
 
@@ -311,8 +313,8 @@ export default function ProductManagement() {
                 <div className="text-lg font-semibold text-coffee-800">{totalProducts}</div>
               </div>
               <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
-                <div className="text-xs text-coffee-600">Total stock</div>
-                <div className="text-lg font-semibold text-coffee-800">{totalStock}</div>
+                <div className="text-xs text-coffee-600">Available</div>
+                <div className="text-lg font-semibold text-coffee-800">{totalAvailable}</div>
               </div>
             </div>
 
@@ -365,7 +367,7 @@ export default function ProductManagement() {
                 <option>Newest</option>
                 <option>Price: Low → High</option>
                 <option>Price: High → Low</option>
-                <option>Stock: Low → High</option>
+                <option>Availability: Available first</option>
               </select>
               <button
                 onClick={() => {
@@ -427,7 +429,9 @@ export default function ProductManagement() {
 
                       <div className="text-right">
                         <div className="text-sm font-semibold text-coffee-800">₱{p.price}</div>
-                        <div className="text-xs text-coffee-600 mt-1">Stock: {p.stock}</div>
+                        <div className="text-xs text-coffee-600 mt-1">
+                          {p.availability ? "Available" : "Not available"}
+                        </div>
                       </div>
                     </div>
 
@@ -486,7 +490,7 @@ export default function ProductManagement() {
                     <th className="px-4 py-3 text-sm font-medium">Item</th>
                     <th className="px-4 py-3 text-sm font-medium">Category</th>
                     <th className="px-4 py-3 text-sm font-medium">Price</th>
-                    <th className="px-4 py-3 text-sm font-medium">Stock</th>
+                    <th className="px-4 py-3 text-sm font-medium">Availability</th>
                     <th className="px-4 py-3 text-sm font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -495,10 +499,10 @@ export default function ProductManagement() {
                   {paginated.map((p, idx) => {
                     const selected = selectedIds.has(p.id);
                     const rowBg = idx % 2 === 0 ? "bg-white" : "bg-coffee-50/30";
-                    // stock badge colors
-                    let stockClass = "bg-green-50 text-green-800";
-                    if (Number(p.stock) <= 5) stockClass = "bg-red-50 text-red-700";
-                    else if (Number(p.stock) <= 20) stockClass = "bg-yellow-50 text-yellow-800";
+                    // availability badge colors
+                    const availabilityClass = p.availability
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-700";
 
                     return (
                       <tr key={p.id} className={`${rowBg} hover:bg-coffee-50/60 transition`} >
@@ -525,7 +529,9 @@ export default function ProductManagement() {
                         <td className="px-4 py-3 text-sm text-coffee-700">{p.category}</td>
                         <td className="px-4 py-3 text-sm text-coffee-800">₱{p.price}</td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${stockClass}`}>{p.stock}</span>
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${availabilityClass}`}>
+                            {p.availability ? "Available" : "Not available"}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
@@ -650,7 +656,7 @@ export default function ProductManagement() {
                   ></textarea>
                 </div>
 
-                {/* Price & Stock */}
+                {/* Price & Availability */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-coffee-700 mb-1">Price (₱)</label>
@@ -666,16 +672,17 @@ export default function ProductManagement() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-coffee-700 mb-1">Stock</label>
-                    <input
-                      type="number"
-                      name="stock"
-                      value={form.stock}
+                    <label className="block text-sm font-medium text-coffee-700 mb-1">Availability</label>
+                    <select
+                      name="availability"
+                      value={String(form.availability)}
                       onChange={handleInput}
                       className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
-                      placeholder="e.g. 50"
                       required
-                    />
+                    >
+                      <option value="true">Available</option>
+                      <option value="false">Not available</option>
+                    </select>
                   </div>
                 </div>
 

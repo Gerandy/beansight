@@ -1,7 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 @import "tailwindcss";
 
-/* ✅ Custom theme (Tailwind v4 replaces tailwind.config.js) */
+
 @theme {
+  --font-display: "BBH Sans Hegart", sans-serif;
   --color-coffee-50: #FEF9F5;
   --color-coffee-100: #FBF0E4;
   --color-coffee-200: #F6E3CC;
@@ -30,6 +32,18 @@ body {
   font-family: "Space Grotesk", sans-serif;
   background: #FBF0E4;
   color: #f3f4f6;
+}
+
+/* use Bebas Neue for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.logo-font {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  font-weight: 1000;
 }
 
 /* ✅ Custom animations and utility layer */
@@ -132,6 +146,3 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
-
-
-
