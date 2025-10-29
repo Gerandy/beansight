@@ -14,32 +14,33 @@ import {
   Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { db } from "../firebase";
 
-/* sample initial data */
-const initialProducts = [
-  {
-    id: 1,
-    name: "Hot Coffee",
-    description: "Freshly brewed premium Arabica — smooth, nutty, warming.",
-    category: "Beverage",
-    price: 120,
-    stock: 50,
-    image: null,
-  },
-  {
-    id: 2,
-    name: "Iced Coffee",
-    description: "Cold brew with a touch of milk — bright and refreshing.",
-    category: "Beverage",
-    price: 150,
-    stock: 30,
-    image: null,
-  },
-  // add more demo items if you like
-];
+
 
 export default function ProductManagement() {
-  const [products, setProducts] = useState(initialProducts);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "Inventory"));
+        const productList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+
+
+  const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
@@ -116,7 +117,9 @@ export default function ProductManagement() {
         category: "",
         price: "",
         stock: "",
-        image: null,
+        img: "",
+        isNew: true,
+        availablity: true,
       });
     }
     setModalOpen(true);
@@ -135,20 +138,42 @@ export default function ProductManagement() {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editing) {
-      setProducts((prev) => prev.map((p) => (p.id === editing.id ? { ...form, id: editing.id } : p)));
-    } else {
-      const newItem = { ...form, id: Date.now() };
-      setProducts((prev) => [newItem, ...prev]);
+    try {
+      if (editing) {
+        // Update existing document
+        const productRef = doc(db, "Inventory", editing.id);
+        await updateDoc(productRef, form);
+      } else {
+        // Add new document
+        const docRef = await addDoc(collection(db, "Inventory"), form);
+      }
+      
+      // Fetch updated products list
+      const querySnapshot = await getDocs(collection(db, "Inventory"));
+      const productList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProducts(productList);
+      
+      closeModal();
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Error saving product. Please try again.");
     }
-    closeModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Delete this product?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      try {
+        await deleteDoc(doc(db, "Inventory", id));
+        setProducts(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Error deleting product. Please try again.");
+      }
     }
   };
 
@@ -248,11 +273,21 @@ export default function ProductManagement() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
-    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
-    clearSelection();
+    
+    try {
+      const deletePromises = Array.from(selectedIds).map(id => 
+        deleteDoc(doc(db, "Inventory", id))
+      );
+      await Promise.all(deletePromises);
+      setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+      clearSelection();
+    } catch (error) {
+      console.error("Error bulk deleting products:", error);
+      alert("Error deleting products. Please try again.");
+    }
   };
 
   return (
