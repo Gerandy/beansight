@@ -34,7 +34,7 @@ body {
   color: #f3f4f6;
 }
 
-/* use Bebas Neue for headings */
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   letter-spacing: 0.02em;
@@ -46,7 +46,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 1000;
 }
 
-/* ✅ Custom animations and utility layer */
+
 @layer utilities {
   @keyframes blink {
     0%, 100% {
