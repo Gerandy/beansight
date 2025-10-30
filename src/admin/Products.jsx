@@ -13,31 +13,38 @@ import {
   Eye,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
 
 
-const initialProducts = [
-  {
-    id: 1,
-    name: "Hot Coffee",
-    description: "Freshly brewed premium Arabica — smooth, nutty, warming.",
-    category: "Beverage",
-    price: 120,
-    availability: true,
-    image: null,
-  },
-  {
-    id: 2,
-    name: "Iced Coffee",
-    description: "Cold brew with a touch of milk — bright and refreshing.",
-    category: "Beverage",
-    price: 150,
-    availability: false,
-    image: null,
-  },
-];
 
 export default function ProductManagement() {
-  const [products, setProducts] = useState(initialProducts);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "Inventory"));
+        const productList = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Ensure availability is a boolean from Firestore
+            availability: data.availability === true
+          };
+        });
+        setProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+
+
+  const [products, setProducts] = useState([]);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
@@ -53,8 +60,9 @@ export default function ProductManagement() {
     name: "",
     description: "",
     category: "",
+    availability: "",
     price: "",
-    availability: true,
+    availability: true, // Set default to true
     image: null,
   });
 
@@ -105,16 +113,27 @@ export default function ProductManagement() {
   const openModal = (product = null) => {
     if (product) {
       setEditing(product);
-      setForm({ ...product });
+      // ensure we keep availability as boolean when editing
+      setForm({ 
+        name: product.name ?? "",
+        description: product.description ?? "",
+        category: product.category ?? "",
+        price: product.price ?? "",
+        availability: product.availability === true, // boolean
+        image: product.image ?? null,
+        id: product.id
+      });
     } else {
       setEditing(null);
+      // default new product form - availability explicitly boolean true
       setForm({
         name: "",
         description: "",
         category: "",
         price: "",
         availability: true,
-        image: null,
+        img: "",
+        isNew: true,
       });
     }
     setModalOpen(true);
@@ -124,32 +143,63 @@ export default function ProductManagement() {
     setEditing(null);
   };
 
+  // handle inputs (convert availability string -> boolean, handle file)
   const handleInput = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value, files, type } = e.target;
     if (name === "image") {
       setForm((s) => ({ ...s, image: files?.[0] || null }));
     } else if (name === "availability") {
-      // select returns string "true" / "false"
+      // select returns "true" or "false" strings — convert to boolean
       setForm((s) => ({ ...s, availability: value === "true" }));
+    } else if (type === "number") {
+      setForm((s) => ({ ...s, [name]: value }));
     } else {
       setForm((s) => ({ ...s, [name]: value }));
     }
   };
 
-  const handleSave = (e) => {
+  // Save (ensure availability is boolean before sending to Firestore)
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (editing) {
-      setProducts((prev) => prev.map((p) => (p.id === editing.id ? { ...form, id: editing.id } : p)));
-    } else {
-      const newItem = { ...form, id: Date.now() };
-      setProducts((prev) => [newItem, ...prev]);
+    try {
+      const productData = {
+        ...form,
+        availability: !!form.availability, // force boolean
+        price: form.price === "" ? 0 : Number(form.price),
+      };
+
+      if (editing) {
+        const productRef = doc(db, "Inventory", editing.id);
+        await updateDoc(productRef, productData);
+      } else {
+        await addDoc(collection(db, "Inventory"), productData);
+      }
+
+      // refresh list after save
+      const querySnapshot = await getDocs(collection(db, "Inventory"));
+      const productList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        availability: doc.data().availability === true
+      }));
+      setProducts(productList);
+
+      closeModal();
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("Error saving product. Please try again.");
     }
-    closeModal();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Delete this product?")) {
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      try {
+        await deleteDoc(doc(db, "Inventory", id));
+        setProducts(prev => prev.filter(p => p.id !== id));
+      } catch (error) {
+        console.error("Error deleting product:", error);
+        alert("Error deleting product. Please try again.");
+      }
     }
   };
 
@@ -206,7 +256,7 @@ export default function ProductManagement() {
       if (url) URL.revokeObjectURL(url);
     };
   }, [form.image]);
-
+//testing
   // categories for filter dropdown based on data
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p.category || "Uncategorized"));
@@ -249,11 +299,81 @@ export default function ProductManagement() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const bulkDelete = () => {
+  const bulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!window.confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
-    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
-    clearSelection();
+    
+    try {
+      const deletePromises = Array.from(selectedIds).map(id => 
+        deleteDoc(doc(db, "Inventory", id))
+      );
+      await Promise.all(deletePromises);
+      setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+      clearSelection();
+    } catch (error) {
+      console.error("Error bulk deleting products:", error);
+      alert("Error deleting products. Please try again.");
+    }
+  };
+
+  // Add a function to toggle availability directly from the UI
+  const toggleAvailability = async (productId, currentAvailability) => {
+    try {
+      const productRef = doc(db, "Inventory", productId);
+      
+      // First, get the latest data from Firestore
+      const docSnap = await getDoc(productRef);
+      if (docSnap.exists()) {
+        const firestoreAvailability = docSnap.data().availability === true;
+        
+        // Update only if the Firestore state matches our local state
+        if (firestoreAvailability === currentAvailability) {
+          await updateDoc(productRef, {
+            availability: !currentAvailability
+          });
+
+          // Update local state
+          setProducts(prev => prev.map(p => {
+            if (p.id === productId) {
+              return { ...p, availability: !currentAvailability };
+            }
+            return p;
+          }));
+        } else {
+          // If states don't match, refresh the product list
+          const querySnapshot = await getDocs(collection(db, "Inventory"));
+          const productList = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            availability: doc.data().availability === true
+          }));
+          setProducts(productList);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating availability:", error);
+      alert("Error updating availability. Please try again.");
+    }
+  };
+
+  // Add this function to check availability from Firestore
+  const checkAvailability = async (productId) => {
+    try {
+      const productRef = doc(db, "Inventory", productId);
+      const docSnap = await getDoc(productRef);
+      
+      if (docSnap.exists()) {
+        // Update local state to match Firestore
+        setProducts(prev => prev.map(p => {
+          if (p.id === productId) {
+            return { ...p, availability: docSnap.data().availability === true };
+          }
+          return p;
+        }));
+      }
+    } catch (error) {
+      console.error("Error checking availability:", error);
+    }
   };
 
   return (
@@ -393,9 +513,21 @@ export default function ProductManagement() {
 
                       <div className="text-right">
                         <div className="text-sm font-semibold text-coffee-800">₱{p.price}</div>
-                        <div className="text-xs text-coffee-600 mt-1">
+                        <button
+                          onClick={async () => {
+                            // First check current status from database
+                            await checkAvailability(p.id);
+                            // Then toggle availability
+                            await toggleAvailability(p.id, p.availability);
+                          }}
+                          className={`text-xs mt-1 px-2 py-1 rounded-full ${
+                            p.availability 
+                              ? "bg-green-50 text-green-700" 
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
                           {p.availability ? "Available" : "Not available"}
-                        </div>
+                        </button>
                       </div>
                     </div>
 
@@ -645,7 +777,7 @@ export default function ProductManagement() {
                       required
                     >
                       <option value="true">Available</option>
-                      <option value="false">Not available</option>
+                      <option value="false">Not Available</option>
                     </select>
                   </div>
                 </div>

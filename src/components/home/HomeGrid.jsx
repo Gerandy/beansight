@@ -1,28 +1,36 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import MenuCard from "./HomeCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
 function MenuGrid() {
-  const foodMenu = [
-    { id: 1, name: "Capucino", price: "175.00", img: "src/assets/ahjinlogo.png" },
-    { id: 2, name: "Coffee", price: "145.00", img: "src/assets/ahjinlogo.png" },
-    { id: 3, name: "Ice Coffee", price: "174.00", img: "src/assets/ahjinlogo.png" },
-    { id: 4, name: "Hot Coffee", price: "138.00", img: "src/assets/ahjinlogo.png" },
-  ];
-
+  const [foodMenu, setFoodMenu] = useState([]);
   const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      const querySnapshot = await getDocs(collection(db, "Inventory"));
+      const items = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setFoodMenu(items);
+    };
+
+    fetchMenu();
+  }, []);
 
   const handleScroll = (direction) => {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
 
     const scrollAmount = scrollContainer.offsetWidth * 0.8;
-    if (direction === "left") {
-      scrollContainer.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-    } else {
-      scrollContainer.scrollBy({ left: scrollAmount, behavior: "smooth" });
-    }
+    scrollContainer.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -35,7 +43,11 @@ function MenuGrid() {
       <div className="hidden lg:grid grid-cols-4 gap-6">
         {foodMenu.map((item) => (
           <Link to={`/menu/product-details/${item.id}`} key={item.id}>
-            <MenuCard name={item.name} price={item.price} img={item.img} />
+            <MenuCard
+              name={item.name}
+              price={`${item.price}`}
+              img={item.img}
+            />
           </Link>
         ))}
       </div>
@@ -55,7 +67,13 @@ function MenuGrid() {
         >
           {foodMenu.map((item) => (
             <div key={item.id} className="min-w-[160px] flex-shrink-0">
-              <MenuCard name={item.name} price={item.price} img={item.img} />
+              <Link to={`/menu/product-details/${item.id}`}>
+                <MenuCard
+                  name={item.name}
+                  price={`${item.price}`}
+                  img={item.img}
+                />
+              </Link>
             </div>
           ))}
         </div>
@@ -72,6 +90,3 @@ function MenuGrid() {
 }
 
 export default MenuGrid;
-
-
-

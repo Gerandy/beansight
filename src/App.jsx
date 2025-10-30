@@ -58,10 +58,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/home" element={<Home />} />
                   <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
-                  <Route
-                    path="/menu/product-details/:id/"
-                    element={<ProductDetails />}
-                  />
+                  <Route path="/menu/product-details/:id" element={<ProductDetails />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/Myaccount" element={<Myaccount />}>

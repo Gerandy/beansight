@@ -1,23 +1,35 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Search, PlusCircle, Star, PackageX } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase"; 
 
-const demoProducts = [
-  { id: 1, name: "Iced Coffee", price: 120, category: "Drinks", image: "/assets/coffee1.jpg", bestseller: true },
-  { id: 2, name: "Hot Latte", price: 140, category: "Drinks", image: "/assets/latte.jpg" },
-  { id: 3, name: "Blueberry Muffin", price: 80, category: "Bakery", image: "/assets/muffin.jpg" },
-  { id: 4, name: "Ham Sandwich", price: 150, category: "Meals", image: "/assets/sandwich.jpg" },
-];
-
-export default function ProductGrid({ category = "All", onAdd = () => {}, products = demoProducts }) {
+export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]); // ✅ now fetched
+
+  useEffect(() => {
+    const loadInventory = async () => {
+      const snapshot = await getDocs(collection(db, "inventory"));
+
+      const items = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setProducts(items);
+    };
+
+    loadInventory();
+  }, []);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const matchCategory = category === "All" || p.category === category;
-      const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = p.item?.toLowerCase().includes(search.toLowerCase());
       return matchCategory && matchSearch;
     });
   }, [products, category, search]);
+
 
   return (
     <div className="text-coffee-900">
@@ -66,8 +78,8 @@ export default function ProductGrid({ category = "All", onAdd = () => {}, produc
 
             {/* Product Details */}
             <div className="mt-3 flex-1">
-              <h3 className="font-semibold text-sm sm:text-base">{p.name}</h3>
-              <p className="text-xs text-coffee-600">{p.category}</p>
+              <h3>{p.name}</h3>
+              <p>{p.category}</p>
             </div>
 
             {/* Price + Add Button */}
