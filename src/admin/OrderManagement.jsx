@@ -3,7 +3,6 @@ import {
   Download,
   Eye,
   Trash2,
-  RefreshCw,
   Filter,
   Search,
   ChevronLeft,
@@ -11,43 +10,59 @@ import {
   Coffee,
   PackageCheck,
   Timer,
+  ArrowUpDown,
 } from "lucide-react";
 
 const initialOrders = [
-  { id: 1, type: "Online", status: "Pending", customer: "Alice", items: ["Latte"], date: "2025-10-13 09:15" },
-  { id: 2, type: "Walk-in", status: "Preparing", customer: "Bob", items: ["Espresso", "Muffin"], date: "2025-10-13 09:30" },
+  { id: 1, type: "Online", status: "Cancelled", customer: "Alice", items: ["Latte"], date: "2025-10-13 09:15" },
+  { id: 2, type: "Walk-in", status: "Cancelled", customer: "Bob", items: ["Espresso", "Muffin"], date: "2025-10-13 09:30" },
   { id: 3, type: "Online", status: "Completed", customer: "Charlie", items: ["Cappuccino"], date: "2025-10-13 10:00" },
+  { id: 4, type: "Walk-in", status: "Cancelled", customer: "Daisy", items: ["Mocha"], date: "2025-09-20 11:45" },
+  { id: 5, type: "Online", status: "Completed", customer: "Eve", items: ["Americano"], date: "2025-08-05 08:00" },
 ];
 
-const statuses = ["Pending", "Preparing", "Completed"];
 const statusColors = {
-  Pending: "bg-amber-100 text-amber-800",
-  Preparing: "bg-coffee-400 text-white",
+  Cancelled: "bg-red-100 text-red-700",
   Completed: "bg-coffee-700 text-white",
 };
 
 export default function OrderManagement() {
   const [orders, setOrders] = useState(initialOrders);
-  const [filter, setFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("None");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  const filteredOrders =
-    filter === "All" ? orders : orders.filter((o) => o.status === filter);
   const typeFilteredOrders =
-    typeFilter === "All"
-      ? filteredOrders
-      : filteredOrders.filter((o) => o.type === typeFilter);
+    typeFilter === "All" ? orders : orders.filter((o) => o.type === typeFilter);
+
   const searchedOrders = typeFilteredOrders.filter((o) =>
     o.customer.toLowerCase().includes(search.toLowerCase())
   );
-  const totalPages = Math.ceil(searchedOrders.length / pageSize);
-  const paginatedOrders = searchedOrders.slice(
+
+  // 🧭 Sorting Logic
+  const sortedOrders = [...searchedOrders].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+
+    switch (sortBy) {
+      case "Month":
+        return dateB.getMonth() - dateA.getMonth();
+      case "Day":
+        return dateB.getDate() - dateA.getDate();
+      case "Time":
+        return dateB.getTime() - dateA.getTime();
+      default:
+        return 0;
+    }
+  });
+
+  const totalPages = Math.ceil(sortedOrders.length / pageSize);
+  const paginatedOrders = sortedOrders.slice(
     (page - 1) * pageSize,
     page * pageSize
   );
@@ -59,9 +74,7 @@ export default function OrderManagement() {
 
   const toggleSelectAll = () => {
     const visibleIds = paginatedOrders.map((o) => o.id);
-    const allSelected = visibleIds.every((id) =>
-      selectedOrders.includes(id)
-    );
+    const allSelected = visibleIds.every((id) => selectedOrders.includes(id));
     setSelectedOrders(
       allSelected
         ? selectedOrders.filter((id) => !visibleIds.includes(id))
@@ -69,24 +82,13 @@ export default function OrderManagement() {
     );
   };
 
-  const handleStatusChange = (id, newStatus) => {
-    const order = orders.find((o) => o.id === id);
-    if (order.status === newStatus) return;
-    if (window.confirm(`Change status from "${order.status}" to "${newStatus}"?`)) {
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o))
-      );
-    }
-  };
-
   const handleExportCSV = () => {
-    const header = ["ID", "Type", "Customer", "Items", "Status", "Date/Time"];
-    const rows = searchedOrders.map((o) => [
+    const header = ["ID", "Type", "Customer", "Items", "Date/Time"];
+    const rows = sortedOrders.map((o) => [
       o.id,
       o.type,
       o.customer,
       o.items.join("; "),
-      o.status,
       o.date,
     ]);
     const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
@@ -124,7 +126,7 @@ export default function OrderManagement() {
 
   const totalStats = {
     total: orders.length,
-    pending: orders.filter((o) => o.status === "Pending").length,
+    cancelled: orders.filter((o) => o.status === "Cancelled").length,
     completed: orders.filter((o) => o.status === "Completed").length,
   };
 
@@ -144,13 +146,15 @@ export default function OrderManagement() {
               <p className="text-2xl font-bold">{totalStats.total}</p>
             </div>
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-            <Timer className="text-amber-600" />
+
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+            <Timer className="text-red-600" />
             <div>
-              <p className="text-sm text-amber-700">Pending</p>
-              <p className="text-2xl font-bold">{totalStats.pending}</p>
+              <p className="text-sm text-red-700">Cancelled</p>
+              <p className="text-2xl font-bold">{totalStats.cancelled}</p>
             </div>
           </div>
+
           <div className="bg-coffee-600 text-white rounded-xl p-4 flex items-center gap-3">
             <PackageCheck />
             <div>
@@ -160,22 +164,10 @@ export default function OrderManagement() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters + Sort */}
         <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
           <div className="flex flex-wrap gap-3 items-center">
             <Filter className="text-coffee-700 w-5 h-5" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-coffee-400"
-            >
-              <option value="All">All Statuses</option>
-              {statuses.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
 
             <select
               value={typeFilter}
@@ -197,6 +189,20 @@ export default function OrderManagement() {
                 className="pl-10 border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-coffee-400"
               />
             </div>
+
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="text-coffee-600 w-5 h-5" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-2 focus:ring-2 focus:ring-coffee-400"
+              >
+                <option value="None">No Sort</option>
+                <option value="Month">Month</option>
+                <option value="Day">Day</option>
+                <option value="Time">Time</option>
+              </select>
+            </div>
           </div>
 
           <button
@@ -206,23 +212,6 @@ export default function OrderManagement() {
             <Download size={18} /> Export CSV
           </button>
         </div>
-
-        {/* Bulk Actions */}
-        {selectedOrders.length > 0 && (
-          <div className="flex gap-3 mb-4">
-            <button
-              onClick={handleBulkDelete}
-              className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-red-600 transition"
-            >
-              <Trash2 size={16} /> Delete Selected ({selectedOrders.length})
-            </button>
-            <button
-              className="flex items-center gap-2 bg-coffee-500 text-white px-4 py-2 rounded-xl font-semibold hover:bg-coffee-600 transition"
-            >
-              <RefreshCw size={16} /> Update Status
-            </button>
-          </div>
-        )}
 
         {/* Table */}
         <div className="overflow-x-auto rounded-xl border border-coffee-200 shadow-sm">
@@ -241,7 +230,7 @@ export default function OrderManagement() {
                     onChange={toggleSelectAll}
                   />
                 </th>
-                {["ID", "Type", "Customer", "Items", "Status", "Date/Time", "Actions"].map(
+                {["ID", "Type", "Customer", "Items", "Date/Time", "Actions"].map(
                   (h) => (
                     <th key={h} className="px-4 py-3 font-semibold">
                       {h}
@@ -279,13 +268,6 @@ export default function OrderManagement() {
                     <td className="px-4 py-3">{order.type}</td>
                     <td className="px-4 py-3">{order.customer}</td>
                     <td className="px-4 py-3">{order.items.join(", ")}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`${statusColors[order.status]} px-3 py-1 rounded-full text-xs font-semibold`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
                     <td className="px-4 py-3">{order.date}</td>
                     <td className="px-4 py-3 flex gap-2">
                       <button
@@ -349,21 +331,29 @@ export default function OrderManagement() {
             <h3 className="text-2xl font-bold mb-4 text-center text-coffee-700">
               Order Details
             </h3>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-3 text-sm">
               <p><strong>ID:</strong> {selectedOrder.id}</p>
               <p><strong>Type:</strong> {selectedOrder.type}</p>
               <p><strong>Customer:</strong> {selectedOrder.customer}</p>
               <p><strong>Items:</strong> {selectedOrder.items.join(", ")}</p>
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className={`${statusColors[selectedOrder.status]} px-3 py-1 rounded-full text-xs font-semibold`}
+              
+              <div>
+                <strong>Status:</strong>
+                <select
+                  value={selectedOrder.status}
+                  onChange={(e) =>
+                    setSelectedOrder((prev) => ({ ...prev, status: e.target.value }))
+                  }
+                  className={`ml-2 border border-coffee-200 bg-coffee-50 text-coffee-800 rounded-xl px-3 py-1 focus:ring-2 focus:ring-coffee-400`}
                 >
-                  {selectedOrder.status}
-                </span>
-              </p>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
               <p><strong>Date/Time:</strong> {selectedOrder.date}</p>
             </div>
+
             <button
               onClick={handleCloseModal}
               className="mt-6 w-full bg-coffee-600 hover:bg-coffee-700 text-white py-2 rounded-xl font-semibold transition"
@@ -373,6 +363,7 @@ export default function OrderManagement() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

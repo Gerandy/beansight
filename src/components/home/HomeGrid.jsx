@@ -16,7 +16,7 @@ function MenuGrid() {
         id: doc.id,
         ...doc.data(),
       }));
-      setFoodMenu(items);
+      setFoodMenu(items.slice(0, 5));
     };
 
     fetchMenu();
@@ -26,10 +26,17 @@ function MenuGrid() {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
 
-    const scrollAmount = scrollContainer.offsetWidth * 0.8;
-    scrollContainer.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
+    // Scroll two cards at a time
+    const cardWidth = scrollContainer.offsetWidth;
+    const currentScroll = scrollContainer.scrollLeft;
+    
+    const newScroll = direction === "left" 
+      ? currentScroll - cardWidth 
+      : currentScroll + cardWidth;
+
+    scrollContainer.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
     });
   };
 
@@ -40,7 +47,7 @@ function MenuGrid() {
       <p className="text-gray-700 mb-4 text-sm sm:text-base">Food Options for you!</p>
 
       {/* Desktop Grid */}
-      <div className="hidden lg:grid grid-cols-4 gap-6">
+      <div className="hidden lg:grid grid-cols-5 gap-4">
         {foodMenu.map((item) => (
           <Link to={`/menu/product-details/${item.id}`} key={item.id}>
             <MenuCard
@@ -63,19 +70,24 @@ function MenuGrid() {
 
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 scroll-smooth no-scrollbar mx-8"
+          className="flex w-full overflow-hidden mx-8"
         >
-          {foodMenu.map((item) => (
-            <div key={item.id} className="min-w-[160px] flex-shrink-0">
-              <Link to={`/menu/product-details/${item.id}`}>
-                <MenuCard
-                  name={item.name}
-                  price={`${item.price}`}
-                  img={item.img}
-                />
-              </Link>
-            </div>
-          ))}
+          <div className="flex transition-transform duration-300 ease-out">
+            {foodMenu.map((item) => (
+              <div 
+                key={item.id} 
+                className="w-[calc((100vw-96px)/2)] px-2 flex-shrink-0"
+              >
+                <Link to={`/menu/product-details/${item.id}`}>
+                  <MenuCard
+                    name={item.name}
+                    price={`${item.price}`}
+                    img={item.img}
+                  />
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
 
         <button

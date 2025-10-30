@@ -33,6 +33,7 @@ import StaffLayout from "./staff/layouts/StaffLayout";
 import PosPage from "./staff/POSPage";
 import OnlineOrders from "./staff/components/OnlineOrders";
 import History from "./staff/components/History";
+import StaffProduct from "./staff/components/StaffProduct";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -96,6 +97,7 @@ function App() {
           <Route path="pos" element={<PosPage />} />
           <Route path="online-orders" element={<OnlineOrders />} />
           <Route path="history" element={<History />} />
+          <Route path="products" element={<StaffProduct />} />
         </Route>
       </Routes>
     </Router>

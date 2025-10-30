@@ -141,7 +141,7 @@ export default function AdminLayout() {
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <ClipboardList size={20} /> Order Management
+              <ClipboardList size={20} /> Order History
             </NavLink>
 
             <NavLink
@@ -150,14 +150,6 @@ export default function AdminLayout() {
               onClick={() => setSidebarOpen(false)}
             >
               <UserCog size={20} /> User Management
-            </NavLink>
-
-            <NavLink
-              to="/admin/inventory"
-              className={({ isActive }) => linkClasses(isActive)}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Boxes size={20} /> Inventory
             </NavLink>
 
             <NavLink
