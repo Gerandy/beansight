@@ -25,10 +25,9 @@ function CartSidebar({ cartOpen, onClose }) {
     <div className="relative">
       {/* SIDEBAR */}
       <div
-        className={`fixed right-0 w-96 h-[calc(100vh-4rem)] bg-lime-50 shadow-lg border-l border-gray-200 z-50 transform transition-transform duration-300 ${
+        className={`fixed top-16 right-0 w-full md:w-96 h-[calc(100vh-4rem)] bg-lime-50 shadow-lg border-l border-gray-200 z-40 transform transition-transform duration-300 ${
           cartOpen ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ top: "4rem" }}
       >
         {/* HEADER */}
         <div className="p-3 m-3 flex items-center justify-between border-b border-gray-400 rounded-md">

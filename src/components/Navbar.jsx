@@ -69,7 +69,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
                 className="relative z-40 hover:scale-110 transition-transform"
                 aria-label="Open cart"
               >
-                <Handbag className="text-orange-100 h-8 w-8 hover:text-white transition-colors" />
+                <Handbag className="text-orange-100 h-6 w-6 md:h-8 md:w-8 hover:text-white transition-colors" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2">
                   0
                 </span>

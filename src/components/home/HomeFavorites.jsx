@@ -21,7 +21,7 @@ function Favorites() {
   if (favorites.length === 0) {
     return (
       <div className="max-w-[1050px] mx-auto p-6 relative">
-        <h1 className="text-gray-950 text-4xl font-bold">Favorites</h1>
+        <h1 className="text-gray-950 text-4xl sm:text-3xl lg:text-4xl font-bold">Favorites</h1>
         <div className="bg-white rounded-xl shadow p-4 items-center">
             <p className="text-gray-950 mb-6 text-center">Add your favorites!</p>
         </div>

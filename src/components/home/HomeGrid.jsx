@@ -43,8 +43,8 @@ function MenuGrid() {
   return (
     <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
       {/* Header */}
-      <h1 className="text-gray-950 text-2xl sm:text-3xl font-bold">Hello, User!</h1>
-      <p className="text-gray-700 mb-4 text-sm sm:text-base">Food Options for you!</p>
+      <h1 className="text-gray-950 text-4xl sm:text-3xl lg:text-4xl font-bold">Hello, User!</h1>
+      <p className="text-gray-700 mb-4 text-sm sm:text-base lg:text-lg">Food Options for you!</p>
 
       {/* Desktop Grid */}
       <div className="hidden lg:grid grid-cols-5 gap-4">
