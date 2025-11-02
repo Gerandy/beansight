@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <footer className="bg-gradient-to-r from-coffee-700 to-coffee-600  py-8">
+    <footer className="bg-gradient-to-r from-coffee-700 to-coffee-600 mt-20  py-8">
       <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
 
         

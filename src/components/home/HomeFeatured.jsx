@@ -41,7 +41,7 @@ function MenuFeatured() {
   };
 
   return (
-    <div className="max-w-[1050px] mx-auto mb-20 px-4 py-6 relative">
+    <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
       {/* Header */}
       <h1 className="text-gray-950 text-4xl sm:text-3xl lg:text-4xl font-bold">Featured</h1>
       <p className="text-gray-700 mb-4 text-sm sm:text-base lg:text-lg">Discover what might be your next favorites</p>

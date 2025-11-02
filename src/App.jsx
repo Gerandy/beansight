@@ -14,6 +14,9 @@ import MyContactNumbers from "./components/myaccount/MyContactNumbers";
 import MyFavorites from "./components/myaccount/MyFavorites";
 import Orders from "./components/sections/Orders";
 import Checkout from "./components/Checkout";
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/Signup";
+import RequireAuth from "./components/auth/RequireAuth";
 
 // ----- Admin -----
 import AdminLayout from "./admin/layouts/Adminlayouts";
@@ -62,7 +65,16 @@ function App() {
                   <Route path="/menu/product-details/:id" element={<ProductDetails />} />
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/checkout" element={<Checkout />} />
-                  <Route path="/Myaccount" element={<Myaccount />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route
+                    path="/Myaccount"
+                    element={
+                      <RequireAuth>
+                        <Myaccount />
+                      </RequireAuth>
+                    }
+                  >
                     <Route index element={<Myprofile />} />
                     <Route path="profile" element={<Myprofile />} />
                     <Route path="addresses" element={<MyAddresses />} />
