@@ -26,7 +26,7 @@ function Home() {
     return () => observer.disconnect();
   }, []);
 
-  // react to auth changes from other tabs
+ 
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "authToken") setIsAuthed(!!e.newValue);

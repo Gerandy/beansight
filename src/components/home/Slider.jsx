@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const slides = [
   { image: "src/assets/ahjinlogo.png" },
@@ -9,8 +9,12 @@ function Slider() {
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [direction, setDirection] = useState("right");
-  const [waveBtn, setWaveBtn] = useState(""); // "left" or "right"
+  const [waveBtn, setWaveBtn] = useState(""); 
   const [next, setNext] = useState(0);
+
+  // autoplay setup
+  const AUTO_INTERVAL = 3000; // ms
+  const timerRef = useRef(null);
 
   const startSwipe = (dir) => {
     if (animating) return;
@@ -35,6 +39,17 @@ function Slider() {
     setTimeout(() => setWaveBtn(""), 350);
   };
 
+  // start/refresh autoplay whenever current changes
+  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      startSwipe("right");
+    }, AUTO_INTERVAL);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [current]);
+
   // animation classes for image
   const getCurrentImgClass = () => {
     if (!animating) return "z-10";
@@ -50,7 +65,20 @@ function Slider() {
   return (
     <div className="w-full flex justify-center items-center bg-transparent" style={{marginTop: '88px'}}>
       <div className="relative w-full max-w-2xl lg:max-w-5xl mx-auto px-4">
-        <div className="relative w-full aspect-[2.8/1] bg-white rounded-2xl shadow-xl flex items-center justify-center overflow-hidden">
+        <div
+          className="group relative w-full aspect-[2.8/1] bg-white rounded-2xl shadow-xl flex items-center justify-center overflow-hidden"
+          onMouseEnter={() => {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+          }}
+          onMouseLeave={() => {
+            if (!timerRef.current) {
+              timerRef.current = setInterval(() => startSwipe("right"), AUTO_INTERVAL);
+            }
+          }}
+        >
           {/* Previous button */}
           <button
             onClick={() => handleBtnClick("left", () => startSwipe("left"))}
@@ -60,9 +88,8 @@ function Slider() {
               absolute left-4 top-1/2 -translate-y-1/2 z-30
               bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
               text-3xl shadow-lg
-              transition
-              active:scale-90
-              hover:cursor-pointer
+              transition-opacity duration-200 active:scale-90 hover:cursor-pointer
+              opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
             `}
           >
             <span
@@ -98,9 +125,8 @@ function Slider() {
               absolute right-4 top-1/2 -translate-y-1/2 z-20
               bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
               text-3xl shadow-lg
-              transition
-              active:scale-90
-              hover:cursor-pointer
+              transition-opacity duration-200 active:scale-90 hover:cursor-pointer
+              opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto
             `}
           >
             <span

@@ -14,12 +14,12 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
   }, [menuOpen]);
 
   const location = useLocation();
-  // Re-check auth on route changes
+
   useEffect(() => {
     setIsAuthed(!!localStorage.getItem("authToken"));
   }, [location.pathname]);
 
-  // Also react to auth changes from other tabs
+
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "authToken") setIsAuthed(!!e.newValue);
@@ -28,7 +28,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Close login modal once authenticated
+
   useEffect(() => {
     if (isAuthed) setLoginOpen(false);
   }, [isAuthed]);
