@@ -15,7 +15,7 @@ function MenuCategories() {
     { name: "Specials", img: "src/assets/ahjinlogo.png" },
   ];
 
-  const GAP_PX = 32; // gap-8 (bigger spacing like the reference)
+  const GAP_PX = 32;
   const [visibleCount, setVisibleCount] = useState(
     typeof window !== "undefined" && window.innerWidth >= 1024 ? 5 : 3
   );
@@ -27,10 +27,9 @@ function MenuCategories() {
     const vp = viewportRef.current;
     if (!vp) return;
 
-    const isDesktop = window.innerWidth >= 1024; // lg
+    const isDesktop = window.innerWidth >= 1024;
     const nextVisible = isDesktop ? 5 : 3;
 
-    // exact width so only 'nextVisible' items fit in the viewport
     const available = vp.clientWidth;
     const widthPerCard = Math.floor(
       (available - GAP_PX * (nextVisible - 1)) / nextVisible
@@ -40,7 +39,7 @@ function MenuCategories() {
     setCardWidth(widthPerCard);
 
     const newMaxStart = Math.max(0, categories.length - nextVisible);
-    setStartIdx((s) => Math.min(s, newMaxStart)); // clamp after resize
+    setStartIdx((s) => Math.min(s, newMaxStart));
   };
 
   useEffect(() => {
@@ -73,15 +72,17 @@ function MenuCategories() {
 
   return (
     <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
-      <h1 className="text-gray-950 text-4xl sm:text-3xl lg:text-4xl font-bold">Menu</h1>
-      <p className="text-gray-700 mb-4 text-sm sm:text-base lg:text-lg">
+      <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold">
+        Menu
+      </h1>
+      <p className="text-coffee-700 mb-4 text-sm sm:text-base lg:text-lg">
         What are you craving for today?
       </p>
 
       <div className="flex items-center">
         <button
           onClick={() => handleScroll("left")}
-          className="rounded-full shadow p-2 mr-2 bg-[#6e4a2d] text-white disabled:opacity-40"
+          className="rounded-full shadow p-2 mr-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors"
           aria-label="Scroll left"
           disabled={startIdx === 0}
         >
@@ -106,9 +107,8 @@ function MenuCategories() {
                 className="flex flex-col items-center select-none"
                 style={{ width: `${cardWidth}px` }}
               >
-                {/* Yellow circle like reference; larger on desktop */}
                 <div
-                  className="rounded-full flex items-center justify-center bg-white"
+                  className="rounded-full flex items-center justify-center bg-coffee-50 border-2 border-coffee-200"
                   style={{
                     width: isDesktop ? 160 : 96,
                     height: isDesktop ? 160 : 96,
@@ -124,7 +124,7 @@ function MenuCategories() {
                   />
                 </div>
                 <p
-                  className="mt-3 text-center font-bold text-gray-900"
+                  className="mt-3 text-center font-bold text-coffee-900"
                   style={{ fontSize: isDesktop ? 18 : 14, lineHeight: 1.2 }}
                 >
                   {cat.name}
@@ -136,7 +136,7 @@ function MenuCategories() {
 
         <button
           onClick={() => handleScroll("right")}
-          className="rounded-full shadow p-2 ml-2 bg-[#6e4a2d] text-white disabled:opacity-40"
+          className="rounded-full shadow p-2 ml-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors"
           aria-label="Scroll right"
           disabled={startIdx >= maxStart}
         >

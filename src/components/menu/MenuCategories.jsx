@@ -40,24 +40,24 @@ function MenuCategories() {
   };
 
   return (
-    <div className="relative coffee-50 shadow-sm border-b sticky top-16 z-20">
+    <div className="relative bg-coffee-50 shadow-sm border-b border-coffee-200 sticky top-16 z-20">
       {showArrows && (
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
         >
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
       )}
 
       <div
         ref={scrollRef}
-        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-white"
+        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-coffee-50"
       >
         {categories.map((cat, idx) => (
           <button
             key={idx}
-            className="text-sm font-medium text-gray-700 hover:text-yellow-950 whitespace-nowrap hover:cursor-pointer"
+            className="text-sm font-medium text-coffee-700 hover:text-coffee-900 whitespace-nowrap hover:cursor-pointer transition-colors"
           >
             {cat}
           </button>
@@ -67,9 +67,9 @@ function MenuCategories() {
       {showArrows && (
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-lime-50 shadow-md p-2 rounded-full z-30"
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
         >
-          <ChevronRight className="w-5 h-5 text-gray-600" />
+          <ChevronRight className="w-5 h-5" />
         </button>
       )}
     </div>

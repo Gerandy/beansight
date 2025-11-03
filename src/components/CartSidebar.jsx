@@ -46,7 +46,7 @@ function CartSidebar({ cartOpen, onClose }) {
         </div>
 
         {/* CART ITEMS */}
-        <div className="flex flex-col h-[70%] overflow-y-auto px-4">
+        <div className="flex flex-col h-[calc(100%-180px)] overflow-y-auto px-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
           <h2 className="text-center font-bold text-lg text-black border-b border-gray-400 pb-2 mb-3">
             My Bag
           </h2>

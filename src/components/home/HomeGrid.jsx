@@ -26,7 +26,6 @@ function MenuGrid() {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
 
-    // Scroll two cards at a time
     const cardWidth = scrollContainer.offsetWidth;
     const currentScroll = scrollContainer.scrollLeft;
     
@@ -41,10 +40,12 @@ function MenuGrid() {
   };
 
   return (
-    <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
+    <div className="max-w-[1050px] mx-auto px-4 py-8 relative">
       {/* Header */}
-      <h1 className="text-gray-950 text-4xl sm:text-3xl lg:text-4xl font-bold">Hello, User!</h1>
-      <p className="text-gray-700 mb-4 text-sm sm:text-base lg:text-lg">Food Options for you!</p>
+      <div className="mb-6">
+        <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold mb-2">Hello, User!</h1>
+        <p className="text-coffee-600 text-sm sm:text-base lg:text-lg">Food Options for you!</p>
+      </div>
 
       {/* Desktop Grid */}
       <div className="hidden lg:grid grid-cols-5 gap-4">
@@ -63,7 +64,7 @@ function MenuGrid() {
       <div className="flex items-center lg:hidden relative">
         <button
           onClick={() => handleScroll("left")}
-          className="absolute left-0 z-10 bg-yellow-950 text-white rounded-full shadow p-2"
+          className="absolute left-0 z-10 bg-coffee-700 text-white rounded-full shadow p-2 hover:bg-coffee-800 transition-colors"
         >
           <ChevronLeft size={18} />
         </button>
@@ -92,7 +93,7 @@ function MenuGrid() {
 
         <button
           onClick={() => handleScroll("right")}
-          className="absolute right-0 z-10 bg-yellow-950 text-white rounded-full shadow p-2"
+          className="absolute right-0 z-10 bg-coffee-700 text-white rounded-full shadow p-2 hover:bg-coffee-800 transition-colors"
         >
           <ChevronRight size={18} />
         </button>
