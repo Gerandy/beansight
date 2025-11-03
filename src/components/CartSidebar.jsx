@@ -59,7 +59,7 @@ function CartSidebar({ cartOpen, onClose }) {
             cart.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between mb-4 border-b pb-3"
+                className="flex items-center justify-between mb-4 border-b border-gray-400 pb-3"
               >
                 <div className="flex items-center gap-3">
                   <img
@@ -74,16 +74,16 @@ function CartSidebar({ cartOpen, onClose }) {
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button
-                        className="border rounded px-2"
+                        className="border rounded px-2 text-gray-800"
                         onClick={() =>
                           updateQuantity(item.id, Math.max(1, item.quantity - 1))
                         }
                       >
                         −
                       </button>
-                      <span>{item.quantity}</span>
+                      <span className="text-gray-800">{item.quantity}</span>
                       <button
-                        className="border rounded px-2"
+                        className="border rounded px-2 text-gray-800"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       >
                         +
