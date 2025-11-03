@@ -3,20 +3,19 @@ import { Link, useLocation } from "react-router-dom";
 function Sidebar() {
   const location = useLocation();
 
-  // Helper to check if the link is active
   const isActive = (path) => location.pathname.endsWith(path);
 
   return (
-    <div className="w-56 border-r border-r-gray-200 h-full p-4">
-      <h2 className="font-bold text-black text-xl mb-4">My Account</h2>
+    <div className="w-full lg:w-56 border-r border-coffee-200 h-full p-4 bg-coffee-50">
+      <h2 className="font-bold text-coffee-900 text-xl mb-4">My Account</h2>
       <ul className="space-y-2">
         <li>
           <Link
             to="profile"
-            className={`block px-3 py-2 rounded-md font-medium ${
+            className={`block px-3 py-2 rounded-md font-medium transition-colors ${
               isActive("profile")
-                ? "text-white bg-yellow-950"
-                : "text-black hover:bg-yellow-950 hover:text-white"
+                ? "text-white bg-coffee-700"
+                : "text-coffee-800 hover:bg-coffee-700 hover:text-white"
             }`}
           >
             My Profile
@@ -25,10 +24,10 @@ function Sidebar() {
         <li>
           <Link
             to="addresses"
-            className={`block px-3 py-2 rounded-md ${
+            className={`block px-3 py-2 rounded-md font-medium transition-colors ${
               isActive("addresses")
-                ? "text-white bg-yellow-950"
-                : "text-black hover:bg-yellow-950 hover:text-white"
+                ? "text-white bg-coffee-700"
+                : "text-coffee-800 hover:bg-coffee-700 hover:text-white"
             }`}
           >
             My Addresses
@@ -37,10 +36,10 @@ function Sidebar() {
         <li>
           <Link
             to="contacts"
-            className={`block px-3 py-2 rounded-md ${
+            className={`block px-3 py-2 rounded-md font-medium transition-colors ${
               isActive("contacts")
-                ? "text-white bg-yellow-950"
-                : "text-black hover:bg-yellow-950 hover:text-white"
+                ? "text-white bg-coffee-700"
+                : "text-coffee-800 hover:bg-coffee-700 hover:text-white"
             }`}
           >
             My Contact Numbers
@@ -49,10 +48,10 @@ function Sidebar() {
         <li>
           <Link
             to="favorites"
-            className={`block px-3 py-2 rounded-md ${
+            className={`block px-3 py-2 rounded-md font-medium transition-colors ${
               isActive("favorites")
-                ? "text-white bg-yellow-950"
-                : "text-black hover:bg-yellow-950 hover:text-white"
+                ? "text-white bg-coffee-700"
+                : "text-coffee-800 hover:bg-coffee-700 hover:text-white"
             }`}
           >
             My Favorites

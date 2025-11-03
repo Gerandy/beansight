@@ -1,41 +1,24 @@
 import React from "react";
+import { Heart } from "lucide-react";
 
 function MyFavorites() {
   return (
-    <div className="flex flex-col bg-white rounded-xl min-h-[500px] box-border">
-      <div className="px-8 pt-8 pb-4 border-b border-gray-200">
-        <h1 className="text-4xl border-b text-black font-bold mb-10">My Favorites</h1>
+    <div className="flex flex-col bg-coffee-50 rounded-xl min-h-[500px] border border-coffee-200">
+      <div className="px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 pb-4 border-b border-coffee-200">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl text-coffee-900 font-bold">
+          My Favorites
+        </h1>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
-        <svg
-          width="150"
-          height="120"
-          viewBox="0 0 150 120"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <rect
-            x="20"
-            y="40"
-            width="110"
-            height="60"
-            rx="10"
-            stroke="#FFC107"
-            strokeWidth="6"
-            fill="none"
-          />
-          <path
-            d="M75 80l-13-13a8 8 0 1113-10 8 8 0 1113 10L75 80z"
-            fill="#FFC107"
-          />
-          <rect x="40" y="100" width="70" height="10" rx="5" fill="#fff" />
-          <path d="M75 100l-10 10h20l-10-10z" fill="#FFC107" />
-        </svg>
-        <div className="mt-4 text-gray-900 text-base text-center">
-          Add your favorites here so you can access
-          <br />
-          them quickly when craving strikes!
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] p-4">
+        <div className="w-32 h-32 sm:w-40 sm:h-40 bg-coffee-100 rounded-full flex items-center justify-center mb-6">
+          <Heart size={64} className="text-coffee-400" />
         </div>
+        <div className="text-coffee-800 text-sm sm:text-base text-center max-w-md">
+          Add your favorites here so you can access them quickly when craving strikes!
+        </div>
+        <button className="mt-6 px-6 py-3 bg-coffee-700 text-white rounded-lg font-semibold hover:bg-coffee-800 transition-colors text-sm sm:text-base">
+          Browse Menu
+        </button>
       </div>
     </div>
   );
