@@ -82,14 +82,15 @@ export default function History() {
 		{ value: "status", label: "Status" },
 	];
 
+	// Replace getStatusClasses with theme-based classes
 	const getStatusClasses = (s) =>
 		s === "Completed"
-			? "bg-green-600 text-white"
+			? "bg-[var(--color-coffee-600)] text-white"
 			: s === "Pending"
-			? "bg-yellow-500 text-white"
+			? "bg-[var(--color-coffee-400)] text-[var(--color-coffee-900)]"
 			: s === "Cancelled"
-			? "bg-red-500 text-white"
-			: "bg-gray-400 text-white";
+			? "bg-red-200 text-red-800"
+			: "bg-[var(--color-coffee-200)] text-[var(--color-coffee-900)]";
 
 	const StatusBadge = ({ status }) => (
 		<span
@@ -131,7 +132,7 @@ export default function History() {
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
 					<div>
 						<h2 className="text-2xl font-semibold text-[var(--color-coffee-800)]">
-							📜 Order History
+							 📜 Order History
 						</h2>
 						<p className="text-sm text-[var(--color-coffee-700)]">
 							Past orders and receipts — search, sort, and view details.

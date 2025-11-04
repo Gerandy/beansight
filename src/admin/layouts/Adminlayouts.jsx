@@ -207,7 +207,7 @@ export default function AdminLayout() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-8 pt-0 overflow-auto w-full">
+      <main className="flex-1 min-w-0 p-3 sm:p-6 md:p-8 pt-0 overflow-auto w-full">
         <header className="flex justify-end items-center">
           <div className="flex items-center gap-2">
             <button

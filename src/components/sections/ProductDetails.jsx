@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useCart } from "../CartContext";
@@ -12,6 +12,7 @@ function ProductDetails() {
 
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("Medium"); // default size
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -41,6 +42,7 @@ function ProductDetails() {
       price: product.price,
       quantity,
       image: product.img || logo,
+      size: selectedSize, // include size
     };
 
     addToCart(cartItem);
@@ -107,6 +109,33 @@ function ProductDetails() {
           <div className="flex-1 bg-white rounded-2xl shadow p-8 text-coffee-800">
             <h3 className="text-xl font-bold mb-4">Product Information</h3>
             <p><strong>Category:</strong> {product.category || "Uncategorized"}</p>
+
+            {/* Customization: Size */}
+            <div className="mt-6">
+              <label className="block font-semibold mb-2">Size</label>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="size"
+                    value="Medium"
+                    checked={selectedSize === "Medium"}
+                    onChange={() => setSelectedSize("Medium")}
+                  />
+                  Medium
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="size"
+                    value="Large"
+                    checked={selectedSize === "Large"}
+                    onChange={() => setSelectedSize("Large")}
+                  />
+                  Large
+                </label>
+              </div>
+            </div>
           </div>
 
         </div>

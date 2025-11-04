@@ -377,21 +377,20 @@ export default function ProductManagement() {
   };
 
   return (
-    <div className="min-h-screen text-black bg-coffee-100 p-6 sm:p-8 lg:p-10">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen text-black bg-coffee-100 p-2 sm:p-4 md:p-6 lg:p-10">
+      <div className="mx-auto max-w-screen-2xl w-full">
         {/* Header with title + KPIs */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-coffee-900 flex items-center gap-3">
-              <span className="text-2xl">☕</span> Product Management
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-coffee-900 flex items-center gap-3">
+              <span className="text-xl sm:text-2xl">☕</span> Product Management
             </h1>
-            <p className="mt-2 text-sm text-coffee-700 max-w-xl">
+            <p className="mt-2 text-xs sm:text-sm text-coffee-700 max-w-xl">
               Manage menu items, pricing, availability and images. Clean, responsive layout designed for quick scanning.
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <div className="hidden md:flex items-center gap-3 shrink-0">
               <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
                 <div className="text-xs text-coffee-600">Total items</div>
                 <div className="text-lg font-semibold text-coffee-800">{totalProducts}</div>
@@ -401,10 +400,9 @@ export default function ProductManagement() {
                 <div className="text-lg font-semibold text-coffee-800">{totalAvailable}</div>
               </div>
             </div>
-
             <button
               onClick={() => openModal()}
-              className="flex items-center gap-2 bg-coffee-700 text-white px-4 py-2 rounded-2xl shadow hover:bg-coffee-600 transition"
+              className="flex items-center gap-2 bg-coffee-700 text-white px-4 py-2 rounded-2xl shadow hover:bg-coffee-600 transition w-full sm:w-auto"
             >
               <Plus size={16} /> Add Product
             </button>
@@ -412,8 +410,8 @@ export default function ProductManagement() {
         </div>
 
         {/* Controls */}
-        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 shadow-soft-lg">
-          <div className="flex items-center gap-3 w-full md:w-1/2">
+        <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-5 flex flex-col lg:flex-row lg:flex-wrap lg:items-center lg:justify-between gap-3 md:gap-4 mb-4 md:mb-6 shadow-soft-lg w-full">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3 w-full lg:w-1/2 min-w-0">
             <div className="relative flex items-center w-full">
               <Search className="absolute left-3 text-coffee-500" />
               <input
@@ -423,8 +421,7 @@ export default function ProductManagement() {
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-coffee-200 focus:ring-2 focus:ring-coffee-200 outline-none bg-white"
               />
             </div>
-
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:self-stretch">
               <Filter className="text-coffee-600" />
               <select
                 value={categoryFilter}
@@ -440,7 +437,7 @@ export default function ProductManagement() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 justify-end w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 sm:gap-3 justify-end w-full lg:w-auto flex-wrap min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm text-coffee-600 hidden md:block">Sort</span>
               <select
@@ -467,7 +464,7 @@ export default function ProductManagement() {
             </div>
 
             {/* View toggle */}
-            <div className="ml-3 inline-flex items-center rounded-xl border border-coffee-200 bg-white">
+            <div className="inline-flex items-center rounded-xl border border-coffee-200 bg-white shrink-0">
               <button
                 onClick={() => setView("cards")}
                 className={`px-3 py-2 ${view === "cards" ? "bg-coffee-100" : ""}`}
@@ -495,32 +492,34 @@ export default function ProductManagement() {
             </button>
           </div>
         ) : view === "cards" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-4 sm:gap-6 
+                  grid-cols-[repeat(auto-fit,minmax(330px,1fr))] 
+                  md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] 
+                  xl:grid-cols-[repeat(auto-fit,minmax(420px,1fr))]">
             {paginated.map((p) => (
               <article
                 key={p.id}
-                className="bg-white rounded-2xl shadow-soft-lg p-4 flex flex-col"
+                className="bg-white rounded-2xl shadow-soft-lg p-4 flex flex-col h-full min-w-0"
                 role="article"
               >
-                <div className="flex items-start gap-4">
-                  <ProductImage product={p} className="w-15 h-20 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-coffee-900">{p.name}</h3>
-                        <div className="text-xs text-coffee-600 mt-1 line-clamp-2">{p.description}</div>
+                <div className="flex items-start gap-3 sm:gap-4 flex-wrap sm:flex-nowrap">
+                  <ProductImage product={p} className="w-24 h-20 sm:w-28 sm:h-20 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    {/* Stack header until lg so text never gets crushed */}
+                    <div className="flex flex-col lg:flex-row items-start lg:items-start justify-between gap-2 lg:gap-3 w-full">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base sm:text-lg font-semibold text-coffee-900 line-clamp-2 break-normal">{p.name}</h3>
+                        {/* show a bit more text on small screens */}
+                        <div className="text-xs text-coffee-600 mt-1 line-clamp-3 md:line-clamp-2 break-normal">{p.description}</div>
                       </div>
-
-                      <div className="text-right">
+                      <div className="text-right flex-shrink-0 pl-1 sm:pl-2 min-w-[120px] xl:min-w-[132px] self-end lg:self-auto w-full lg:w-auto mt-1 lg:mt-0">
                         <div className="text-sm font-semibold text-coffee-800">₱{p.price}</div>
                         <button
                           onClick={async () => {
-                            // First check current status from database
                             await checkAvailability(p.id);
-                            // Then toggle availability
                             await toggleAvailability(p.id, p.availability);
                           }}
-                          className={`text-xs mt-1 px-2 py-1 rounded-full ${
+                          className={`text-xs mt-1 px-2 py-1 rounded-full whitespace-nowrap ${
                             p.availability 
                               ? "bg-green-50 text-green-700" 
                               : "bg-red-50 text-red-600"
@@ -531,7 +530,7 @@ export default function ProductManagement() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between gap-3">
+                    <div className="mt-4 flex items-center justify-between gap-3 flex-wrap w-full min-w-0">
                       <div className="inline-flex items-center gap-2">
                         <span className="px-2 py-1 rounded-full bg-coffee-50 text-coffee-700 text-xs">{p.category}</span>
                       </div>
@@ -543,7 +542,7 @@ export default function ProductManagement() {
                           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-coffee-200 hover:shadow transition"
                         >
                           <Edit size={16} />
-                          <span className="hidden sm:inline text-sm">Edit</span>
+                          <span className="hidden lg:inline text-sm">Edit</span>
                         </button>
 
                         <button
@@ -552,7 +551,7 @@ export default function ProductManagement() {
                           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition"
                         >
                           <Trash2 size={16} />
-                          <span className="hidden sm:inline text-sm">Delete</span>
+                          <span className="hidden lg:inline text-sm">Delete</span>
                         </button>
                       </div>
                     </div>
@@ -649,11 +648,11 @@ export default function ProductManagement() {
         )}
          {/* Pagination controls */}
          {filtered.length > pageSize && (
-           <div className="mt-6 flex items-center justify-center gap-3">
+           <div className="mt-6 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
              <button onClick={() => setPage((s) => Math.max(1, s - 1))} disabled={page === 1} className="px-3 py-1 rounded border">Prev</button>
              <div className="px-3 py-1">Page {page} / {totalPages}</div>
              <button onClick={() => setPage((s) => Math.min(totalPages, s + 1))} disabled={page === totalPages} className="px-3 py-1 rounded border">Next</button>
-             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="ml-3 rounded border px-2">
+             <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="sm:ml-3 rounded border px-2">
                <option value={6}>6</option>
                <option value={12}>12</option>
                <option value={24}>24</option>
@@ -682,7 +681,7 @@ export default function ProductManagement() {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 12, opacity: 0, scale: 0.995 }}
               transition={{ duration: 0.18 }}
-              className="bg-coffee-50/90 backdrop-blur-md border border-coffee-200/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-scroll scrollbar-hide p-8 relative"
+              className="bg-coffee-50/90 backdrop-blur-md border border-coffee-200/50 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide p-4 sm:p-6 md:p-8 relative"
             >
               {/* Close Button */}
               <button

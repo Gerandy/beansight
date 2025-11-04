@@ -4,10 +4,12 @@ import logo from "../assets/ahjinlogo.png";
 import { Handbag } from "lucide-react";
 import CartSidebar from "./CartSidebar";
 import Login from "./auth/Login";
+import { useCart } from "./CartContext"; // <-- Import your cart context
 
 function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
   const [isAuthed, setIsAuthed] = useState(!!localStorage.getItem("authToken"));
   const [loginOpen, setLoginOpen] = useState(false);
+  const { cart } = useCart(); // <-- Get cart from context
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -46,6 +48,9 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
       setLoginOpen(true);
     }
   };
+
+  // Calculate total quantity in cart
+  const cartCount = cart?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
 
   return (
     <>
@@ -166,7 +171,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
               >
                 <Handbag className="text-orange-100 h-6 w-6 md:h-8 md:w-8 hover:text-white transition-colors" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2">
-                  0
+                  {cartCount}
                 </span>
               </button>
 

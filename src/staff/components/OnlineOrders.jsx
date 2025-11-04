@@ -28,16 +28,20 @@ export default function OnlineOrders() {
   // toggle expand
   const toggleExpand = (id) => setExpanded((e) => (e.includes(id) ? e.filter((x) => x !== id) : [...e, id]));
 
-  // StatusBadge component
+  // StatusBadge component with theme colors
   const StatusBadge = ({ status }) => {
     const map = {
-      Pending: "bg-coffee-200 text-coffee-800",
-      Preparing: "bg-sky-100 text-sky-800",
-      Ready: "bg-coffee-500 text-white",
-      Completed: "bg-slate-100 text-slate-800",
-      Cancelled: "bg-red-100 text-red-800",
+      Pending: "bg-coffee-300 text-coffee-800",      // light brown bg, dark text
+      Preparing: "bg-coffee-100 text-coffee-700",    // lighter bg, coffee text
+      Ready: "bg-coffee-500 text-white",             // main coffee bg, white text
+      Completed: "bg-coffee-200 text-coffee-800",    // subtle bg, dark text
+      Cancelled: "bg-red-100 text-red-700",          // red for cancelled
     };
-    return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${map[status] || "bg-gray-100 text-gray-700"}`}>{status}</span>;
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${map[status] || "bg-gray-100 text-gray-700"}`}>
+        {status}
+      </span>
+    );
   };
 
   // sorting helpers: returns comparator for key
@@ -178,13 +182,13 @@ export default function OnlineOrders() {
                         <td className="py-3 px-4 text-center"><StatusBadge status={order.status} /></td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <button onClick={() => toggleExpand(order.id)} className="px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded hover:bg-coffee-50 transition-colors">
+                            <button onClick={() => toggleExpand(order.id)} className="px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow">
                               {expanded.includes(order.id) ? "Hide" : "Details"}
                             </button>
 
-                            {order.status === "Pending" && <button onClick={() => handleStatusChange(order.id, "Preparing")} className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded hover:bg-coffee-700 transition-colors">Accept</button>}
-                            {order.status === "Preparing" && <button onClick={() => handleStatusChange(order.id, "Ready")} className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Ready</button>}
-                            {order.status === "Ready" && <button onClick={() => handleStatusChange(order.id, "Completed")} className="px-3 py-1.5 text-xs bg-slate-600 text-white rounded hover:bg-slate-700 transition-colors">Complete</button>}
+                            {order.status === "Pending" && <button onClick={() => handleStatusChange(order.id, "Preparing")} className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors">Accept</button>}
+                            {order.status === "Preparing" && <button onClick={() => handleStatusChange(order.id, "Ready")} className="px-3 py-1.5 text-xs bg-coffee-500 text-white rounded-full hover:bg-coffee-600 font-semibold shadow transition-colors">Ready</button>}
+                            {order.status === "Ready" && <button onClick={() => handleStatusChange(order.id, "Completed")} className="px-3 py-1.5 text-xs bg-coffee-800 text-white rounded-full hover:bg-coffee-900 font-semibold shadow transition-colors">Complete</button>}
                           </div>
                         </td>
                       </tr>
@@ -243,14 +247,14 @@ export default function OnlineOrders() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <button onClick={() => toggleExpand(order.id)} className="text-xs px-3 py-1.5 bg-white border border-coffee-200 rounded hover:bg-coffee-50 transition-colors">
+                    <button onClick={() => toggleExpand(order.id)} className="text-xs px-3 py-1.5 bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow">
                       {expanded.includes(order.id) ? "Hide" : "Details"}
                     </button>
 
                     <div className="flex gap-2">
-                      {order.status === "Pending" && <button onClick={() => handleStatusChange(order.id, "Preparing")} className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded hover:bg-coffee-700 transition-colors">Accept</button>}
-                      {order.status === "Preparing" && <button onClick={() => handleStatusChange(order.id, "Ready")} className="px-3 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Ready</button>}
-                      {order.status === "Ready" && <button onClick={() => handleStatusChange(order.id, "Completed")} className="px-3 py-1.5 text-xs bg-slate-600 text-white rounded hover:bg-slate-700 transition-colors">Complete</button>}
+                      {order.status === "Pending" && <button onClick={() => handleStatusChange(order.id, "Preparing")} className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors">Accept</button>}
+                      {order.status === "Preparing" && <button onClick={() => handleStatusChange(order.id, "Ready")} className="px-3 py-1.5 text-xs bg-coffee-500 text-white rounded-full hover:bg-coffee-600 font-semibold shadow transition-colors">Ready</button>}
+                      {order.status === "Ready" && <button onClick={() => handleStatusChange(order.id, "Completed")} className="px-3 py-1.5 text-xs bg-coffee-800 text-white rounded-full hover:bg-coffee-900 font-semibold shadow transition-colors">Complete</button>}
                     </div>
                   </div>
 
