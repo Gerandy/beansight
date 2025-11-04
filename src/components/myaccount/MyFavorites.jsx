@@ -1,5 +1,6 @@
 import React from "react";
 import { Heart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function MyFavorites() {
   return (
@@ -16,9 +17,12 @@ function MyFavorites() {
         <div className="text-coffee-800 text-sm sm:text-base text-center max-w-md">
           Add your favorites here so you can access them quickly when craving strikes!
         </div>
-        <button className="mt-6 px-6 py-3 bg-coffee-700 text-white rounded-lg font-semibold hover:bg-coffee-800 transition-colors text-sm sm:text-base">
+        <Link 
+          to="/menu" 
+          className="mt-6 px-6 py-3 bg-coffee-700 text-white rounded-lg font-semibold hover:bg-coffee-800 transition-colors text-sm sm:text-base"
+        >
           Browse Menu
-        </button>
+        </Link>
       </div>
     </div>
   );
