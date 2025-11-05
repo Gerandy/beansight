@@ -60,7 +60,6 @@ export default function ProductManagement() {
     name: "",
     description: "",
     category: "",
-    availability: "",
     price: "",
     availability: true, // Set default to true
     image: null,
