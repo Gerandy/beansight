@@ -48,10 +48,17 @@ function ProductDetails() {
     addToCart(cartItem);
   };
 
-  if (!product) return <div className="text-center mt-10">Loading product...</div>;
+  if (!product) return (
+    <div className="min-h-screen bg-gradient-to-br from-coffee-50 to-coffee-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-700 mx-auto mb-4"></div>
+        <p className="text-coffee-700 font-medium">Loading product...</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br text-coffee-900">
+    <div className="min-h-screen bg-gradient-to-br from-coffee-50 to-coffee-100 text-coffee-900">
       <div className="max-w-6xl mx-auto py-10 px-6">
 
         {/* Back Button */}
@@ -108,8 +115,10 @@ function ProductDetails() {
           {/* RIGHT — Product Info / Category */}
           <div className="flex-1 bg-white rounded-2xl shadow p-8 text-coffee-800">
             <h3 className="text-xl font-bold mb-4">Product Information</h3>
-            <p><strong>Category:</strong> {product.category || "Uncategorized"}</p>
-
+            <div className="space-y-4">
+              <p><strong className="text-coffee-700">Category:</strong> {product.category || "Uncategorized"}</p>
+              {product.description && <p><strong className="text-coffee-700">Description:</strong> {product.description}</p>}
+            </div>
             {/* Customization: Size */}
             <div className="mt-6">
               <label className="block font-semibold mb-2">Size</label>

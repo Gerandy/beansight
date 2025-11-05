@@ -24,7 +24,6 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     none: { label: "No Discount", value: 0 },
     senior: { label: "Senior Citizen", value: 20 },
     pwd: { label: "PWD", value: 20 },
-    employee: { label: "Employee", value: 10 }
   };
 
   // COMPUTATIONS
@@ -112,25 +111,6 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         </div>
 
         {renderDiscountSection()}
-
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--color-coffee-700)]">Tip</span>
-          <div className="flex gap-2">
-            {[0, 5, 10].map((t) => (
-              <button
-                key={t}
-                onClick={() => setTip(t)}
-                className={`px-2 py-1 rounded-md border text-xs transition-all duration-150 ${
-                  tip === t
-                    ? "bg-[var(--color-coffee-600)] text-white"
-                    : "hover:bg-[var(--color-coffee-100)] border-[var(--color-coffee-300)]"
-                }`}
-              >
-                {t}%
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="flex justify-between items-center border-t border-[var(--color-coffee-200)] pt-3 mt-3">
           <span className="text-lg font-semibold text-[var(--color-coffee-800)]">
