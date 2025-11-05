@@ -123,17 +123,6 @@ export default function OnlineOrders() {
                 <option value="status">Then: Status</option>
               </select>
             </div>
-
-            <button 
-              onClick={() => { 
-                navigator.clipboard?.writeText(JSON.stringify(orders)); 
-                setToast({ message: "Orders copied to clipboard", tone: "info" }); 
-                setTimeout(()=>setToast(null),2000); 
-              }} 
-              className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm rounded-md border border-coffee-200 bg-white text-coffee-800 hover:bg-coffee-100 transition-colors"
-            >
-              Export
-            </button>
           </div>
         </div>
 
