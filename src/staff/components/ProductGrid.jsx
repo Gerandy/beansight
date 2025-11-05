@@ -5,18 +5,30 @@ import { db } from "../../firebase";
 
 export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState([]); // ✅ now fetched
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const loadInventory = async () => {
-      const snapshot = await getDocs(collection(db, "inventory"));
+      setLoading(true);
+      setError(null);
+      try {
+        const snapshot = await getDocs(collection(db, "Inventory"));
+        console.log("Inventory snapshot size:", snapshot.size);
+        const items = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
 
-      const items = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setProducts(items);
+        console.log("Loaded items:", items);
+        setProducts(items);
+      } catch (err) {
+        console.error("Failed to load inventory:", err);
+        setError(err?.message || String(err));
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadInventory();
@@ -25,7 +37,9 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const matchCategory = category === "All" || p.category === category;
-      const matchSearch = p.item?.toLowerCase().includes(search.toLowerCase());
+      // safe search: check name, item, or fallback to empty string
+      const text = (p.name || p.item || "").toString().toLowerCase();
+      const matchSearch = text.includes(search.toLowerCase());
       return matchCategory && matchSearch;
     });
   }, [products, category, search]);
@@ -33,6 +47,8 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
 
   return (
     <div className="text-coffee-900">
+      {loading && <div className="text-sm text-coffee-600">Loading inventory...</div>}
+      {error && <div className="text-sm text-red-600">Error loading inventory: {error}</div>}
       {/* Search + Count */}
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
         <div className="relative w-full sm:flex-1">
@@ -65,9 +81,9 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
 
             {/* Product Image */}
             <div className="w-full aspect-square bg-coffee-200 rounded-xl overflow-hidden flex items-center justify-center">
-              {p.image ? (
+              {p.img ? (
                 <img
-                  src={p.image}
+                  src={p.img}
                   alt={p.name}
                   className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                 />
@@ -79,7 +95,6 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
             {/* Product Details */}
             <div className="mt-3 flex-1">
               <h3>{p.name}</h3>
-              <p>{p.category}</p>
             </div>
 
             {/* Price + Add Button */}
