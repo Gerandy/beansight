@@ -131,7 +131,7 @@ export default function OrderManagement() {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-coffee-100 text-coffee-900">
+    <div className="min-h-screen p-8 text-coffee-900">
       <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-lg border border-coffee-200 p-8">
         <h2 className="text-3xl font-bold mb-8 text-center text-coffee-800 flex items-center justify-center gap-2">
           <Coffee className="w-7 h-7 text-coffee-600" /> Order Management

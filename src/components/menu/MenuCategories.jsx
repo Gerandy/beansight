@@ -40,7 +40,7 @@ function MenuCategories() {
   };
 
   return (
-    <div className="relative bg-coffee-50 shadow-sm border-b border-coffee-200 sticky top-16 z-20">
+    <div className="relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] shadow-sm border-b border-coffee-200 sticky top-16 z-20">
       {showArrows && (
         <button
           onClick={() => scroll("left")}
@@ -52,7 +52,7 @@ function MenuCategories() {
 
       <div
         ref={scrollRef}
-        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-coffee-50"
+        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5]"
       >
         {categories.map((cat, idx) => (
           <button

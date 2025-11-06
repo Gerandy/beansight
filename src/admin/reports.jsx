@@ -54,10 +54,7 @@ export default function Reports() {
   ];
 
   return (
-    <div
-      className="p-6 space-y-8 text-[var(--color-coffee-900)] animate-fadeIn"
-      style={{ backgroundColor: "var(--color-coffee-100)" }}
-    >
+    <div className="p-6 space-y-8 text-[var(--color-coffee-900)] animate-fadeIn"   >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-3xl font-bold text-[var(--color-coffee-800)]">
