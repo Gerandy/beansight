@@ -85,18 +85,18 @@ function ProductDetails() {
             {/* Decorative Blur Circle */}
             <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-[#E5B299] rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
 
-            <div className="relative z-10 flex flex-col items-center">
+            <div className="relative  z-10 flex flex-col items-center">
               <img
                 src={product.img || logo}
                 alt={product.name}
-                className="w-72 h-72 object-contain rounded-2xl shadow-md"
+                className="w-72 h-72 bg-coffee-50 object-contain rounded-2xl shadow-md"
               />
               <h2 className="text-3xl font-extrabold mt-6 text-[#7D5A50]">
                 {product.name}
               </h2>
               <p className="text-2xl font-semibold mt-2">₱ {Number(product.price).toFixed(2)}</p>
               <p className="text-sm text-[#B4846C] italic mt-1">
-                Rich and creamy espresso blend
+                {product.description}
               </p>
 
               {/* Quantity Selector */}
@@ -151,18 +151,21 @@ function ProductDetails() {
                 <div>
                   <label className="block font-semibold mb-3">Dusk and Dawn Sizes</label>
                   <div className="flex gap-4">
-                    {["Dusk", "Dawn"].map((size) => (
+                    {[
+                      { name: "Dusk", oz: 16 },
+                      { name: "Dawn", oz: 22 }
+                    ].map((size) => (
                       <button
-                        key={size}
+                        key={size.name}
                         type="button"
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => setSelectedSize(size.name)}
                         className={`px-6 py-2 rounded-full font-semibold transition-all ${
-                          selectedSize === size
+                          selectedSize === size.name
                             ? "bg-[#7D5A50] text-white shadow-md"
                             : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"
                         }`}
                       >
-                        {size}
+                        {size.name} ({size.oz} oz)
                       </button>
                     ))}
                   </div>

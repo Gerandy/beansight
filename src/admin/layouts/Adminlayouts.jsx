@@ -59,7 +59,7 @@ export default function AdminLayout() {
               isMobile ? "text-white" : "text-black"
             }`}
           >
-            Beansight ☕
+            SOL-ACE ☕
           </h2>
 
           <nav className="space-y-2">

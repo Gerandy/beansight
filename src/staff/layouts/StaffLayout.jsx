@@ -43,7 +43,7 @@ export default function StaffLayout() {
                 </div>
                 <div className="hidden sm:block">
                   <h1 className="text-lg font-semibold leading-none">Staff POS</h1>
-                  <p className="text-xs text-white/80">Beansight</p>
+                  <p className="text-xs text-white/80">Sol-Ace</p>
                 </div>
               </div>
 

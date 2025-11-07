@@ -33,8 +33,8 @@ function MenuGrid() {
       <div className="max-w-6xl mx-auto mt-15 px-4 py-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="border border-coffee-200 rounded-xl p-4 bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] animate-pulse relative overflow-hidden">
-              <div className="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
+            <div key={i} className="w-36 h-36 mb-5 rounded-xl overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] flex items-center justify-center relative z-10 shadow-sm">
+              <div className="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
               <div className="h-40 bg-coffee-200 rounded-lg mb-3 relative z-10"></div>
               <div className="h-4 bg-coffee-200 rounded w-3/4 mb-2 relative z-10"></div>
               <div className="h-6 bg-coffee-200 rounded w-1/2 mb-3 relative z-10"></div>
@@ -52,30 +52,30 @@ function MenuGrid() {
         {products.map((p) => (
           <div
             key={p.id}
-            className="border border-coffee-200 rounded-xl shadow-sm p-4 flex flex-col relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer group overflow-hidden"
+            className="bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-6 flex flex-col relative hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group overflow-hidden"
           >
-            <div className="absolute inset-0 opacity-5 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
+            <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
 
             {p.isNew && (
-              <span className="absolute top-3 left-3 bg-coffee-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm z-10">
+              <span className="absolute top-3 right-3 bg-coffee-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md z-15">
                 New
               </span>
             )}
 
-            <div className="h-40 w-full rounded-lg flex items-center justify-center mb-3 overflow-hidden relative z-10">
+            <div className="w-36 h-36 mx-auto rounded-xl flex items-center justify-center mb-5 overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] relative z-10 shadow-sm">
               <img
                 src={p.img}
                 alt={p.name}
-                className="h-32 w-32 object-contain group-hover:scale-105 transition-transform duration-300"
+                className="w-32 h-32 object-contain group-hover:scale-110 transition-transform duration-300"
               />
             </div>
 
-            <h3 className="font-semibold text-coffee-900 text-sm md:text-base line-clamp-2 mb-2 min-h-[40px] relative z-10">
+            <h3 className="font-semibold text-[#4E342E] text-base md:text-base line-clamp-2 mb-2 min-h-[44px] relative z-10 tracking-wide">
               {p.name}
             </h3>
             
-            <p className="font-bold text-coffee-800 text-lg md:text-xl mb-3 relative z-10">
-              ₱{p.price}.00
+            <p className="font-bold text-[#6B3E2E] text-2xl mb-4 relative z-10">
+              ₱{p.price}
             </p>
 
             <button

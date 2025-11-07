@@ -65,10 +65,13 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
                   alt="logo"
                 />
                 <span className="logo-font text-white group-hover:text-orange-200 transition-colors duration-400 mr-1">
-                  BEAN
+                  SOL
                 </span>
                 <span className="logo-font text-orange-200 group-hover:text-white transition-colors duration-400">
-                  SIGHT
+                  -
+                </span>
+                <span className="logo-font text-orange-200 group-hover:text-white transition-colors duration-400">
+                  ACE
                 </span>
               </div>
             </Link>
