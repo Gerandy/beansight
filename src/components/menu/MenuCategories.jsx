@@ -1,41 +1,81 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
-function MenuCategories() {
-  const categories = [
-    "Featured",
-    "Group Meals",
-    "Chicken",
-    "Burgers",
-    "McSpaghetti",
-    "Rice Bowls",
-    "Desserts & Drinks",
-    "McCafé",
-    "Fries & Extras",
-    "Happy Meal",
-    "Sulit Busog Meals",
-  ];
+function MenuCategories({ selected = "All", onSelect = () => {} }) {
+  const [categories, setCategories] = useState(["All"]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // keep a local selected state so UI updates even if parent doesn't control it
+  const [localSelected, setLocalSelected] = useState(selected);
+  useEffect(() => {
+    setLocalSelected(selected);
+  }, [selected]);
 
   const scrollRef = useRef(null);
   const [showArrows, setShowArrows] = useState(false);
 
   const checkOverflow = () => {
     if (scrollRef.current) {
-      setShowArrows(scrollRef.current.scrollWidth > scrollRef.current.clientWidth);
+      const el = scrollRef.current;
+      // add a small tolerance so tiny rounding differences don't show arrows
+      setShowArrows(el.scrollWidth > el.clientWidth + 8);
+    } else {
+      setShowArrows(false);
     }
   };
 
   useEffect(() => {
-    checkOverflow();
+    let mounted = true;
+    const loadCategories = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const snapshot = await getDocs(collection(db, "Inventory"));
+        const catSet = new Set();
+        snapshot.docs.forEach((doc) => {
+          const c = doc.data()?.category;
+          if (c) catSet.add(String(c));
+        });
+        const list = Array.from(catSet)
+          .map((s) => String(s || "").trim())
+          .filter(Boolean)
+          .sort((a, b) =>
+            a.localeCompare(b, undefined, { sensitivity: "base", numeric: true })
+          );
+        if (mounted) setCategories(["All", ...list]);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        if (mounted) setError(err?.message || String(err));
+      } finally {
+        if (mounted) setLoading(false);
+        // ensure overflow check runs after DOM updates
+        setTimeout(checkOverflow, 100);
+      }
+    };
+
+    loadCategories();
     window.addEventListener("resize", checkOverflow);
-    return () => window.removeEventListener("resize", checkOverflow);
+    // initial check after mount
+    setTimeout(checkOverflow, 120);
+    return () => {
+      mounted = false;
+      window.removeEventListener("resize", checkOverflow);
+    };
   }, []);
 
+  useEffect(() => {
+    // re-check overflow when categories change
+    setTimeout(checkOverflow, 80);
+  }, [categories]);
+
+  const SCROLL_STEP = 240;
   const scroll = (direction) => {
     if (scrollRef.current) {
-      const { clientWidth } = scrollRef.current;
-      const scrollAmount = direction === "left" ? -clientWidth : clientWidth;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      const amount = direction === "left" ? -SCROLL_STEP : SCROLL_STEP;
+      scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
     }
   };
 
@@ -43,8 +83,10 @@ function MenuCategories() {
     <div className="relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] shadow-sm border-b border-coffee-200 sticky top-16 z-20">
       {showArrows && (
         <button
+          type="button"
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
+          aria-label="Scroll categories left"
+          className="absolute left-2 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -64,10 +106,13 @@ function MenuCategories() {
         ))}
       </div>
 
+      {/* Right arrow */}
       {showArrows && (
         <button
+          type="button"
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
+          aria-label="Scroll categories right"
+          className="absolute right-2 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
