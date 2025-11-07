@@ -80,8 +80,7 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
   };
 
   return (
-    <div className="relative bg-coffee-50 shadow-sm border-b border-coffee-200 sticky top-16 z-20">
-      {/* Left arrow */}
+    <div className="relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] shadow-sm border-b border-coffee-200 sticky top-16 z-20">
       {showArrows && (
         <button
           type="button"
@@ -93,52 +92,19 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
         </button>
       )}
 
-      {/* Category list */}
-      <nav aria-label="Menu categories" className="overflow-hidden">
-        <div
-          ref={scrollRef}
-          className="flex items-center gap-3 overflow-x-auto whitespace-nowrap py-3 px-4 scroll-smooth"
-          // ensure pointer events are enabled on the scroll container
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {loading ? (
-            <div className="text-sm text-coffee-600">Loading categories...</div>
-          ) : error ? (
-            <div className="text-sm text-red-600">Error loading categories</div>
-          ) : (
-            categories.map((cat) => {
-              const active = cat === localSelected;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setLocalSelected(cat);
-                    try { onSelect(cat); } catch (e) { /* ignore */ }
-                  }}
-                  aria-pressed={active}
-                  // ensure the button receives pointer events and shows pointer cursor
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer pointer-events-auto
-                    ${
-                      active
-                        ? "bg-coffee-500 text-white border border-coffee-500 shadow-sm transform scale-105"
-                        : "bg-white text-coffee-800 border border-coffee-100 hover:bg-coffee-50"
-                    }`}
-                >
-                  {/* optional icon for the "All" pill */}
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center ${active ? "bg-white/20" : "bg-coffee-100"}`}>
-                    {/* simple dot instead of separate icon */}
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="4" cy="4" r="3" fill={active ? "#ffffff" : "#7b5a44"} />
-                    </svg>
-                  </span>
-                  <span className="whitespace-nowrap">{cat}</span>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </nav>
+      <div
+        ref={scrollRef}
+        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5]"
+      >
+        {categories.map((cat, idx) => (
+          <button
+            key={idx}
+            className="text-sm font-medium text-coffee-700 hover:text-coffee-900 whitespace-nowrap hover:cursor-pointer transition-colors"
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
       {/* Right arrow */}
       {showArrows && (

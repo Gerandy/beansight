@@ -78,12 +78,6 @@ const Orders = ({ orders = sampleOrders }) => {
 		setSelectedOrder(null);
 	};
 
-	const cancelOrder = (id) => {
-		console.log(`Order ${id} cancelled`);
-		// Add your API call here
-		alert("Order cancelled successfully!");
-	};
-
 	const reorder = (order) => {
 		console.log(`Reordering: ${order.item}`);
 		// Add your reorder logic here
@@ -97,7 +91,7 @@ const Orders = ({ orders = sampleOrders }) => {
 	};
 
 	return (
-		<div className="min-h-[70vh] mt-20 bg-coffee-100 py-10 px-6">
+		<div className="min-h-[70vh] mt-20  py-10 px-6">
 			{loading ? (
 				<div className="flex items-center justify-center min-h-[60vh]">
 					<div className="text-center">
@@ -253,15 +247,6 @@ const Orders = ({ orders = sampleOrders }) => {
 										>
 											View Details
 										</button>
-
-										{order.status === "Pending" && (
-											<button
-												onClick={() => cancelOrder(order.id)}
-												className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
-											>
-												Cancel Order
-											</button>
-										)}
 
 										{order.status === "Delivered" && (
 											<button

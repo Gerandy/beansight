@@ -52,7 +52,6 @@ export default function AdminLayout() {
       }`;
 
     return (
-      // container ensures logout sits at the bottom
       <div className="flex flex-col h-full justify-between">
         <div>
           <h2

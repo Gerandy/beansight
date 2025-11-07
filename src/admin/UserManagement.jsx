@@ -210,7 +210,7 @@ function UserTable({ users, isAdmin, onAdd, onEdit, onDelete, onStatusToggle }) 
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-soft-lg p-6 border border-coffee-100">
+    <div className=" rounded-2xl shadow-soft-lg p-6 border border-coffee-100">
       {/* Filters + Add */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
         <div className="flex gap-2 w-full sm:w-auto">
@@ -378,7 +378,7 @@ export default function UserManagementEnhanced() {
   };
 
   return (
-    <div className="min-h-screen p-6 bg-coffee-100">
+    <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-soft-xl p-8 border border-coffee-100">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold text-coffee-800 mb-2">User Management</h1>

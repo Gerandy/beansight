@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function MenuCategories() {
+function MenuCategories({ onCategoryClick = () => {} }) {
   const categories = [
     { name: "Featured", img: "src/assets/ahjinlogo.png" },
     { name: "Group Meals", img: "src/assets/ahjinlogo.png" },
@@ -104,11 +104,20 @@ function MenuCategories() {
             {categories.map((cat) => (
               <div
                 key={cat.name}
-                className="flex flex-col items-center select-none"
+                className="flex flex-col items-center select-none cursor-pointer hover:opacity-80 transition-opacity"
                 style={{ width: `${cardWidth}px` }}
+                onClick={() => onCategoryClick(cat.name)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onCategoryClick(cat.name);
+                  }
+                }}
               >
                 <div
-                  className="rounded-full flex items-center justify-center bg-coffee-50 border-2 border-coffee-200"
+                  className="rounded-full flex items-center justify-center bg-white border-2 border-coffee-200"
                   style={{
                     width: isDesktop ? 160 : 96,
                     height: isDesktop ? 160 : 96,

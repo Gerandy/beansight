@@ -139,7 +139,7 @@ function InventoryAnalytics() {
 
 
   return (
-    <div className="p-8 space-y-8 min-h-screen bg-coffee-100 text-coffee-800 font-sans">
+    <div className="p-8 space-y-8 min-h-screen text-coffee-800 font-sans">
       <header className="flex items-center mb-6">
         <h1 className="text-3xl font-bold text-coffee-800">☕ Inventory Analytics</h1>
         <button

@@ -376,7 +376,7 @@ export default function ProductManagement() {
   };
 
   return (
-    <div className="min-h-screen text-black bg-coffee-100 p-2 sm:p-4 md:p-6 lg:p-10">
+    <div className="min-h-screen text-blackp-2 sm:p-4 md:p-6 lg:p-10">
       <div className="mx-auto max-w-screen-2xl w-full">
         {/* Header with title + KPIs */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 mb-6 md:mb-8">

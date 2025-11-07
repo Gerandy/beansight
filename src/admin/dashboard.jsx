@@ -65,7 +65,7 @@ export default function Dashboard() {
   const [dateRange, setDateRange] = useState("This Week");
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-8 bg-coffee-100 min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -235,4 +235,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

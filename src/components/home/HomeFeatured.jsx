@@ -16,7 +16,9 @@ function MenuFeatured() {
         id: doc.id,
         ...doc.data(),
       }));
-      setFoodMenu(items.slice(0, 5));
+      // Filter to only include new items (assuming 'isNew' field exists in Firestore)
+      const newItems = items.filter((item) => item.isNew);
+      setFoodMenu(newItems.slice(0, 5));
     };
 
     fetchMenu();
@@ -28,22 +30,27 @@ function MenuFeatured() {
 
     const cardWidth = scrollContainer.offsetWidth;
     const currentScroll = scrollContainer.scrollLeft;
-    
-    const newScroll = direction === "left" 
-      ? currentScroll - cardWidth 
-      : currentScroll + cardWidth;
+
+    const newScroll =
+      direction === "left"
+        ? currentScroll - cardWidth
+        : currentScroll + cardWidth;
 
     scrollContainer.scrollTo({
       left: newScroll,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
   };
 
   return (
     <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
       {/* Header */}
-      <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold">Featured</h1>
-      <p className="text-coffee-700 mb-4 text-sm sm:text-base lg:text-lg">Discover what might be your next favorites</p>
+      <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold">
+        Featured
+      </h1>
+      <p className="text-coffee-700 mb-4 text-sm sm:text-base lg:text-lg">
+        Discover what might be your next favorites
+      </p>
 
       {/* Desktop Grid */}
       <div className="hidden lg:grid grid-cols-5 gap-4">
@@ -53,6 +60,7 @@ function MenuFeatured() {
               name={item.name}
               price={`${item.price}`}
               img={item.img}
+              isNew={item.isNew}
             />
           </Link>
         ))}
@@ -67,14 +75,11 @@ function MenuFeatured() {
           <ChevronLeft size={18} />
         </button>
 
-        <div
-          ref={scrollRef}
-          className="flex w-full overflow-hidden mx-8"
-        >
+        <div ref={scrollRef} className="flex w-full overflow-hidden mx-8">
           <div className="flex transition-transform duration-300 ease-out">
             {foodMenu.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="w-[calc((100vw-96px)/2)] px-2 flex-shrink-0"
               >
                 <Link to={`/menu/product-details/${item.id}`}>
@@ -82,6 +87,7 @@ function MenuFeatured() {
                     name={item.name}
                     price={`${item.price}`}
                     img={item.img}
+                    isNew={item.isNew}
                   />
                 </Link>
               </div>

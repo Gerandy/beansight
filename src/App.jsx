@@ -29,7 +29,6 @@ import Reports from "./admin/reports";
 import Product from "./admin/Products";
 import UserManagement from "./admin/UserManagement";
 import OrderManagement from "./admin/OrderManagement";
-import Pos from "./admin/Pos";
 
 // ----- Staff (POS) -----
 import StaffLayout from "./staff/layouts/StaffLayout";
@@ -100,7 +99,6 @@ function App() {
           <Route path="products" element={<Product />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="order-management" element={<OrderManagement />} />
-          <Route path="pos" element={<Pos />} />
         </Route>
 
         {/* ---------- Staff Site (POS) ---------- */}
