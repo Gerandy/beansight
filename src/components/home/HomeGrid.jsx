@@ -4,13 +4,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+
 
 function MenuGrid() {
   const [foodMenu, setFoodMenu] = useState([]);
-  const [firstName, setFirstName] = useState("User"); // default fallback
   const scrollRef = useRef(null);
+  const firstNamee = localStorage.getItem("firstName") || "Guest";
 
+  
+  
+  
   useEffect(() => {
   const fetchMenu = async () => {
     const querySnapshot = await getDocs(collection(db, "Inventory"));
@@ -21,18 +24,11 @@ function MenuGrid() {
     setFoodMenu(items.slice(0, 5));
   };
 
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        setFirstName(userDoc.data().firstName || "User");
-      }
-    }
-  });
+  
 
   fetchMenu();
 
-  return () => unsubscribe(); // cleanup
+  
 }, []);
 
   const handleScroll = (direction) => {
@@ -57,8 +53,8 @@ function MenuGrid() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold mb-2">
-          Hello, {firstName}!
-        </h1>
+          Hello, {firstNamee}!
+        </h1> 
         <p className="text-coffee-600 text-sm sm:text-base lg:text-lg">
           Food Options for you!
         </p>
