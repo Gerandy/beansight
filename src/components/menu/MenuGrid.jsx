@@ -62,11 +62,11 @@ function MenuGrid() {
               </span>
             )}
 
-            <div className="w-36 h-36 mx-auto rounded-xl flex items-center justify-center mb-5 overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] relative z-10 shadow-sm">
+            <div className="w-full aspect-square rounded-xl flex items-center justify-center mb-5 overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] relative z-10 shadow-sm">
               <img
                 src={p.img}
                 alt={p.name}
-                className="w-32 h-32 object-contain group-hover:scale-110 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
 
