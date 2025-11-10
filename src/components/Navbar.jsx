@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import logo from "../assets/ahjinlogo.png";
+import logo from "../assets/solacew.png";
 import { Handbag } from "lucide-react";
 import CartSidebar from "./CartSidebar";
 import Login from "./auth/Login";
@@ -39,12 +39,14 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-40 bg-gradient-to-r from-coffee-700 to-coffee-600 border-b border-white/10 shadow-lg navbar-animate">
+      <nav
+        className="fixed top-0 w-full z-40 bg-gradient-to-r from-coffee-700 to-coffee-600 border-b border-white/10 shadow-lg navbar-animate"
+        style={{ fontFamily: "var(--font-sans)" }}
+      >
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            <Link to="/home" className="font-mono text-xl font-bold text-white flex items-center">
-              <img className="h-12 w-12 mr-2" src={logo} alt="logo" />
-              <span className="text-white">SOL-ACE</span>
+            <Link to="/home" className="logo-font text-xl font-bold text-white flex items-center">
+              <img className="h-65 w-65 mr-1" src={logo} alt="logo" />
             </Link>
 
             <div className="flex items-center space-x-4">
