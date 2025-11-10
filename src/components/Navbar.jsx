@@ -36,7 +36,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
     localStorage.removeItem("authToken");
     localStorage.removeItem("firstName");
     setIsAuthed(false);
-    navigate("/");
+    window.location.href = "/";
   };
 
   const handleOrdersClick = (e) => {

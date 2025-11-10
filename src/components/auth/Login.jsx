@@ -3,7 +3,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import ResetPassword from "./ResetPassword";
-import logo from "../../assets/araw.png";
+import logo from "../../assets/beansight.png";
 
 export default function Login({ open, onClose }) {
   const [email, setEmail] = useState("");
