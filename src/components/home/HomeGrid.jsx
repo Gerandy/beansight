@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 function MenuGrid() {
   const [foodMenu, setFoodMenu] = useState([]);
@@ -11,28 +12,28 @@ function MenuGrid() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    const fetchMenu = async () => {
-      const querySnapshot = await getDocs(collection(db, "Inventory"));
-      const items = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setFoodMenu(items.slice(0, 5));
-    };
+  const fetchMenu = async () => {
+    const querySnapshot = await getDocs(collection(db, "Inventory"));
+    const items = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    setFoodMenu(items.slice(0, 5));
+  };
 
-    const fetchUserName = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (userDoc.exists()) {
         setFirstName(userDoc.data().firstName || "User");
       }
-    };
+    }
+  });
 
-    fetchMenu();
-    fetchUserName();
-  }, []);
+  fetchMenu();
+
+  return () => unsubscribe(); // cleanup
+}, []);
 
   const handleScroll = (direction) => {
     const scrollContainer = scrollRef.current;

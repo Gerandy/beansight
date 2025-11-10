@@ -24,9 +24,9 @@ export default function Login({ open, onClose }) {
       const docSnap = await getDoc(doc(db, "users", userId));
       const userData = docSnap.exists() ? docSnap.data() : {};
 
-      // Store in localStorage
-      localStorage.setItem("authToken", userId);
-      localStorage.setItem("firstName", userData.firstName || "");
+    // Store in localStorage
+    localStorage.setItem("authToken", userId);
+    // localStorage.setItem("firstName", userData.firstName || "");
 
       onClose(); // close modal
       window.location.reload();
