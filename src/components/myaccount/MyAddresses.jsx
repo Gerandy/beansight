@@ -1,27 +1,26 @@
+import { useEffect, useState } from "react";
+import { db } from "../../firebase";
+import { collection, getDocs } from "firebase/firestore";
+
 function MyAddresses() {
-  const addresses = [
-    {
-      id: 1,
-      label: "One25 Driving School Sampaloc, Barangay 375 Santa Cruz",
-      details:
-        "One25 Driving School Sampaloc, Barangay 375 Santa Cruz, Manila City, Metro Manila, 1014, National Capital Region (NCR), Philippines",
-      isDefault: true,
-    },
-    {
-      id: 2,
-      label: "Blk 14 Lot 28, Garnette Street",
-      details:
-        "Blk 14 Lot 28, Garnette Street, Silvertowne IV, Malagasang II-B, Imus City, Cavite, 4103, CALABARZON (Region IV-A), Philippines",
-      isDefault: false,
-    },
-    {
-      id: 3,
-      label: "Blk 14 Lot 28, Garnette Street",
-      details:
-        "Blk 14 Lot 28, Garnette Street, Silvertowne IV, Malagasang II-B, Imus City, Cavite, 4103, CALABARZON (Region IV-A), Philippines",
-      isDefault: false,
-    },
-  ];
+  const [addresses, setAddresses] = useState([]);
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      const userId = localStorage.getItem("authToken");
+      if (!userId) return;
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "users", userId, "addresses"));
+        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setAddresses(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAddresses();
+  }, []);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -46,9 +45,7 @@ function MyAddresses() {
                 <h2 className="font-semibold text-coffee-900 text-sm sm:text-base mb-1">
                   {address.label}
                 </h2>
-                <p className="text-xs sm:text-sm text-coffee-700 break-words">
-                  {address.details}
-                </p>
+                <p className="text-xs sm:text-sm text-coffee-700 break-words">{address.details}</p>
               </div>
             </div>
 
