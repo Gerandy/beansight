@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck, ScrollText } from "lucide-react";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -14,21 +17,18 @@ export default function Signup() {
   const [showPwd, setShowPwd] = useState(false);
   const [showPwd2, setShowPwd2] = useState(false);
 
-  // Terms state
   const [termsOpen, setTermsOpen] = useState(false);
   const [termsScrolledToEnd, setTermsScrolledToEnd] = useState(false);
-  const [hasReadTerms, setHasReadTerms] = useState(false); // set when user confirms after full scroll
-  const [agreed, setAgreed] = useState(false); // checkbox
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const scrollRef = useRef(null);
   const navigate = useNavigate();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (localStorage.getItem("authToken")) navigate("/Myaccount", { replace: true });
   }, [navigate]);
 
-  // Basic password strength hint
   const strength = (() => {
     let s = 0;
     if (pwd.length >= 8) s++;
@@ -36,7 +36,7 @@ export default function Signup() {
     if (/[a-z]/.test(pwd)) s++;
     if (/\d/.test(pwd)) s++;
     if (/[^A-Za-z0-9]/.test(pwd)) s++;
-    return s; // 0-5
+    return s;
   })();
 
   const onScrollTerms = (e) => {
@@ -50,19 +50,41 @@ export default function Signup() {
     setTermsOpen(false);
   };
 
-  const onSignup = (e) => {
+  const onSignup = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (!firstName || !lastName || !email || !contactNumber || !pwd) return setError("All fields are required.");
-    if (pwd !== pwd2) return setError("Passwords do not match.");
-    if (!hasReadTerms || !agreed) {
-      return setError("Please read the Terms to the end and agree before signing up.");
+    if (!firstName || !lastName || !email || !contactNumber || !pwd) {
+      return setError("All fields are required.");
     }
+    if (pwd !== pwd2) return setError("Passwords do not match.");
+    if (!hasReadTerms || !agreed) return setError("Please read the Terms to the end and agree before signing up.");
 
-    // TODO: replace with real API signup then login
-    localStorage.setItem("authToken", "demo");
-    navigate("/Myaccount", { replace: true });
+    try {
+      // 1️⃣ Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pwd);
+      const userId = userCredential.user.uid;
+
+      // 2️⃣ Store extra user info in Firestore
+      await setDoc(doc(db, "users", userId), {
+        firstName,
+        lastName,
+        email,
+        contactNumber,
+        role: "client", // default role
+        createdAt: new Date(),
+      });
+
+      // 3️⃣ Save token & role in localStorage
+      localStorage.setItem("authToken", userId);
+      localStorage.setItem("role", "client");
+
+      // 4️⃣ Redirect to Myaccount
+      navigate("/Myaccount", { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    }
   };
 
   const canSubmit =
@@ -83,12 +105,10 @@ export default function Signup() {
           <ShieldCheck className="h-6 w-6 text-coffee-600" />
           <h1 className="text-2xl font-bold text-coffee-800">Create Account</h1>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Signup to get started with BeanSight
-        </p>
+        <p className="text-sm text-gray-600 mb-4">Signup to get started with BeanSight</p>
 
         <form onSubmit={onSignup} className="space-y-4 text-gray-600">
-          {/* First Name and Last Name */}
+          {/* First & Last Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First name</label>
@@ -110,7 +130,7 @@ export default function Signup() {
             </div>
           </div>
 
-          {/* Email and Contact Number */}
+          {/* Email & Contact */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -134,6 +154,7 @@ export default function Signup() {
             </div>
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
             <div className="relative">
@@ -148,31 +169,13 @@ export default function Signup() {
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
                 className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700"
-                aria-label={showPwd ? "Hide password" : "Show password"}
               >
                 {showPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="h-1 flex-1 rounded bg-gray-200 overflow-hidden">
-                <div
-                  className={`h-full transition-all ${
-                    strength <= 2
-                      ? "bg-red-500 w-2/5"
-                      : strength === 3
-                      ? "bg-yellow-500 w-3/5"
-                      : strength === 4
-                      ? "bg-lime-500 w-4/5"
-                      : "bg-green-600 w-full"
-                  }`}
-                />
-              </div>
-              <span className="text-xs text-gray-600">
-                {strength <= 2 ? "Weak" : strength === 3 ? "Okay" : strength === 4 ? "Good" : "Strong"}
-              </span>
-            </div>
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
             <div className="relative">
@@ -187,14 +190,13 @@ export default function Signup() {
                 type="button"
                 onClick={() => setShowPwd2((v) => !v)}
                 className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700"
-                aria-label={showPwd2 ? "Hide password" : "Show password"}
               >
                 {showPwd2 ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>
 
-          {/* Terms + Agreement */}
+          {/* Terms & Agreement */}
           <div className="rounded-lg border text-coffee-700 border-gray-200 p-3 bg-gray-50">
             <div className="flex items-start gap-3">
               <button
@@ -205,8 +207,7 @@ export default function Signup() {
                 }}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-coffee-700 hover:text-coffee-800 hover:underline"
               >
-                <ScrollText className="h-4 w-4" />
-                Read Terms of Service & Privacy Policy
+                <ScrollText className="h-4 w-4" /> Read Terms of Service & Privacy Policy
               </button>
             </div>
             <p className="text-xs text-gray-600 mt-1">
@@ -251,86 +252,140 @@ export default function Signup() {
       </div>
 
       {/* Terms Modal */}
-      {termsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
-              <h2 className="text-lg font-semibold text-coffee-800">Terms of Service & Privacy Policy</h2>
-              <button
-                onClick={() => setTermsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-                aria-label="Close"
-              >
-                ✕
-              </button>
-            </div>
+     {termsOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h2 className="text-lg font-semibold text-coffee-800">Terms of Service & Privacy Policy</h2>
+        <button
+          onClick={() => setTermsOpen(false)}
+          className="text-gray-500 hover:text-gray-700"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
 
-            <div
-              ref={scrollRef}
-              onScroll={onScrollTerms}
-              className="text-coffee-700 px-5 py-4 max-h-[50vh] overflow-y-auto prose prose-sm prose-gray"
-            >
-              <p>
-                Welcome to BeanSight. Please read these Terms carefully. By creating an account, you
-                agree to be bound by them. This sample text is a placeholder; replace with your
-                actual Terms of Service and Privacy Policy content.
-              </p>
-              <h3>1. Accounts</h3>
-              <p>
-                You are responsible for maintaining the confidentiality of your account and password
-                and for restricting access to your device.
-              </p>
-              <h3>2. Orders and Payments</h3>
-              <p>
-                All orders are subject to availability. Prices and fees may change without notice.
-              </p>
-              <h3>3. Privacy</h3>
-              <p>
-                We collect and process your data according to our Privacy Policy, including order
-                history, preferences, and device information to improve our service.
-              </p>
-              <h3>4. Security</h3>
-              <p>
-                Do not share your password. Enable additional security options when available.
-              </p>
-              <h3>5. Termination</h3>
-              <p>
-                We may suspend or terminate accounts that violate these Terms or applicable laws.
-              </p>
-              <p>
-                By proceeding, you acknowledge reading and understanding these Terms and our Privacy
-                Policy.
-              </p>
-              <p className="text-gray-500 text-xs">
-                Keep scrolling to the bottom to enable the confirmation button.
-              </p>
-              <div className="h-16" />
-            </div>
+      {/* Scrollable content */}
+      {/* Terms Modal */}
+{termsOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col">
+      
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b">
+        <h2 className="text-lg font-semibold text-coffee-800">Terms of Service & Privacy Policy</h2>
+        <button
+          onClick={() => setTermsOpen(false)}
+          className="text-gray-500 hover:text-gray-700"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
 
-            <div className="flex items-center justify-between gap-3 px-5 py-4 border-t">
-              <span className={`text-sm ${termsScrolledToEnd ? "text-green-700" : "text-gray-600"}`}>
-                {termsScrolledToEnd ? "You reached the end." : "Scroll to the end to enable confirmation."}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setTermsOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmRead}
-                  disabled={!termsScrolledToEnd}
-                  className={`px-4 py-2 rounded-lg text-white font-medium transition
-                    ${termsScrolledToEnd ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
-                >
-                  I've read the Terms
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Scrollable content */}
+      <div
+        ref={scrollRef}
+        onScroll={onScrollTerms}
+        className="px-5 py-4 overflow-y-auto max-h-[60vh]"
+      >
+        <div className="prose prose-sm prose-gray">
+          <p>
+            Welcome to BeanSight. Please read these Terms carefully. By creating an account, you
+            agree to be bound by them.
+          </p>
+
+          <h3>1. Accounts</h3>
+          <p>You are responsible for maintaining the confidentiality of your account and password.</p>
+
+          <h3>2. Orders and Payments</h3>
+          <p>All orders are subject to availability. Prices and fees may change without notice.</p>
+
+          <h3>3. Privacy</h3>
+          <p>We collect and process your data according to our Privacy Policy.</p>
+
+          <h3>4. Security</h3>
+          <p>Do not share your password. Enable additional security options when available.</p>
+
+          <h3>5. Termination</h3>
+          <p>We may suspend or terminate accounts that violate these Terms or applicable laws.</p>
+
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+          <p>By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+
+          {/* Spacer to allow scrolling to bottom */}
+          <div className="h-16" />
         </div>
-      )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-t">
+        <span className={`text-sm ${termsScrolledToEnd ? "text-green-700" : "text-gray-600"}`}>
+          {termsScrolledToEnd ? "You reached the end." : "Scroll to the end to enable confirmation."}
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTermsOpen(false)}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmRead}
+            disabled={!termsScrolledToEnd}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition
+              ${termsScrolledToEnd ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
+          >
+            I've read the Terms
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-t">
+        <span className={`text-sm ${termsScrolledToEnd ? "text-green-700" : "text-gray-600"}`}>
+          {termsScrolledToEnd ? "You reached the end." : "Scroll to the end to enable confirmation."}
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTermsOpen(false)}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={confirmRead}
+            disabled={!termsScrolledToEnd}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition
+              ${termsScrolledToEnd ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
+          >
+            I've read the Terms
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+
     </>
   );
 }
