@@ -136,6 +136,14 @@ export default function AdminLayout() {
             </NavLink>
 
             <NavLink
+              to="/admin/inventory"
+              className={({ isActive }) => linkClasses(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Boxes size={20} /> Inventory
+            </NavLink>
+
+            <NavLink
               to="/admin/order-management"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}

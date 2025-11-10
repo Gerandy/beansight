@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebase";
 
 
 
@@ -112,25 +113,26 @@ export default function ProductManagement() {
   const openModal = (product = null) => {
     if (product) {
       setEditing(product);
-      // ensure we keep availability as boolean when editing
       setForm({ 
         name: product.name ?? "",
         description: product.description ?? "",
         category: product.category ?? "",
         price: product.price ?? "",
-        availability: product.availability === true, // boolean
-        image: product.image ?? null,
+        availability: product.availability === true,
+        image: null, // Don't set the image File object
+        img: product.img ?? "", // Store the existing URL
+        isNew: product.isNew ?? false,
         id: product.id
       });
     } else {
       setEditing(null);
-      // default new product form - availability explicitly boolean true
       setForm({
         name: "",
         description: "",
         category: "",
         price: "",
         availability: true,
+        image: null,
         img: "",
         isNew: true,
       });
@@ -157,14 +159,27 @@ export default function ProductManagement() {
     }
   };
 
-  // Save (ensure availability is boolean before sending to Firestore)
+  // Save (upload image to Firebase Storage first, then save URL to Firestore)
   const handleSave = async (e) => {
     e.preventDefault();
     try {
+      let imageUrl = form.img || "";
+
+      // If a new image file was selected, upload it to Firebase Storage
+      if (form.image instanceof File) {
+        const imageRef = ref(storage, `products/${Date.now()}_${form.image.name}`);
+        const snapshot = await uploadBytes(imageRef, form.image);
+        imageUrl = await getDownloadURL(snapshot.ref);
+      }
+
       const productData = {
-        ...form,
-        availability: !!form.availability, // force boolean
+        name: form.name,
+        description: form.description,
+        category: form.category,
         price: form.price === "" ? 0 : Number(form.price),
+        availability: !!form.availability,
+        img: imageUrl, // Store the download URL
+        isNew: form.isNew || false,
       };
 
       if (editing) {
@@ -174,7 +189,7 @@ export default function ProductManagement() {
         await addDoc(collection(db, "Inventory"), productData);
       }
 
-      // refresh list after save
+      // Refresh list after save
       const querySnapshot = await getDocs(collection(db, "Inventory"));
       const productList = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -204,28 +219,14 @@ export default function ProductManagement() {
 
   // ProductImage component with createObjectURL management (prevents leaks)
   const ProductImage = ({ product, className = "w-28 h-20" }) => {
-    const [src, setSrc] = useState(null);
-    useEffect(() => {
-      let url = null;
-      if (!product || !product.image) {
-        setSrc(null);
-        return;
-      }
-      if (product.image instanceof File) {
-        url = URL.createObjectURL(product.image);
-        setSrc(url);
-      } else if (typeof product.image === "string") {
-        setSrc(product.image);
-      } else {
-        setSrc(null);
-      }
-      return () => {
-        if (url) URL.revokeObjectURL(url);
-      };
-    }, [product?.image]);
-
-    if (src) {
-      return <img src={src} alt={product?.name} className={`${className} object-cover rounded-lg`} />;
+    if (product?.img) {
+      return (
+        <img 
+          src={product.img} 
+          alt={product?.name} 
+          className={`${className} object-cover rounded-lg`} 
+        />
+      );
     }
     return (
       <div
@@ -236,26 +237,30 @@ export default function ProductManagement() {
     );
   };
 
+  // Update formImageUrl to show preview or existing image
   const [formImageUrl, setFormImageUrl] = useState(null);
   useEffect(() => {
     let url = null;
-    if (!form.image) {
-      setFormImageUrl(null);
-      return;
-    }
+    
+    // If there's a new file selected, create object URL for preview
     if (form.image instanceof File) {
       url = URL.createObjectURL(form.image);
       setFormImageUrl(url);
-    } else if (typeof form.image === "string") {
-      setFormImageUrl(form.image);
-    } else {
+    } 
+    // If there's an existing image URL from Firestore, use it
+    else if (form.img) {
+      setFormImageUrl(form.img);
+    } 
+    // Otherwise, no image
+    else {
       setFormImageUrl(null);
     }
+    
     return () => {
       if (url) URL.revokeObjectURL(url);
     };
-  }, [form.image]);
-//testing
+  }, [form.image, form.img]);
+
   // categories for filter dropdown based on data
   const categories = useMemo(() => {
     const set = new Set(products.map((p) => p.category || "Uncategorized"));
@@ -798,16 +803,19 @@ export default function ProductManagement() {
                   </label>
 
                   {/* Preview */}
-                  {form.image && (
+                  {formImageUrl && (
                     <div className="mt-3 flex items-center gap-2">
                       <img
-                        src={formImageUrl || ""}
+                        src={formImageUrl}
                         alt="Preview"
                         className="w-16 h-16 object-cover rounded-xl border border-coffee-200 shadow-sm"
                       />
                       <button
                         type="button"
-                        onClick={() => setForm({ ...form, image: null })}
+                        onClick={() => {
+                          setForm({ ...form, image: null, img: "" });
+                          setFormImageUrl(null);
+                        }}
                         className="text-red-500 hover:text-red-700 transition"
                         title="Remove image"
                       >

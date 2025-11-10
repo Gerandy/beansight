@@ -2,11 +2,15 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase"; 
 import { collection, getDocs } from "firebase/firestore";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
 
-function MenuGrid() {
+function MenuGrid({ selectedCategory = "All" }) {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [favorites, setFavorites] = useState(new Set());
+  const ITEMS_PER_PAGE = 8;
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -26,7 +30,48 @@ function MenuGrid() {
     };
 
     fetchInventory();
+    
+    // Load favorites from localStorage
+    const savedFavorites = localStorage.getItem("favorites");
+    if (savedFavorites) {
+      setFavorites(new Set(JSON.parse(savedFavorites)));
+    }
   }, []);
+
+  // Reset to page 1 when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
+
+  const toggleFavorite = (productId, e) => {
+    e.stopPropagation(); // Prevent card click
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(productId)) {
+        newFavorites.delete(productId);
+      } else {
+        newFavorites.add(productId);
+      }
+      // Save to localStorage
+      localStorage.setItem("favorites", JSON.stringify([...newFavorites]));
+      return newFavorites;
+    });
+  };
+
+  const filteredProducts = selectedCategory === "All" 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  const goToPage = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
@@ -48,13 +93,28 @@ function MenuGrid() {
 
   return (
     <div className="max-w-6xl mx-auto mt-15 px-4 py-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {products.map((p) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+        {currentProducts.map((p) => (
           <div
             key={p.id}
             className="bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-6 flex flex-col relative hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group overflow-hidden"
           >
             <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
+
+            {/* Heart Icon for Favorites */}
+            <button
+              onClick={(e) => toggleFavorite(p.id, e)}
+              className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md z-15 hover:bg-white transition-all duration-200 active:scale-90"
+              aria-label={favorites.has(p.id) ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart 
+                className={`w-5 h-5 transition-all duration-200 ${
+                  favorites.has(p.id) 
+                    ? "fill-red-500 text-red-500" 
+                    : "text-coffee-400 hover:text-red-500"
+                }`}
+              />
+            </button>
 
             {p.isNew && (
               <span className="absolute top-3 right-3 bg-coffee-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md z-15">
@@ -87,6 +147,48 @@ function MenuGrid() {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8 pb-6">
+          <button
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex gap-2">
+            {[...Array(totalPages)].map((_, idx) => {
+              const pageNum = idx + 1;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => goToPage(pageNum)}
+                  className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
+                    currentPage === pageNum
+                      ? "bg-coffee-700 text-white"
+                      : "bg-coffee-100 text-coffee-700 hover:bg-coffee-200"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
