@@ -31,7 +31,7 @@ function MyProfile() {
   const canChangePassword = currentPwd && newPwd && confirmPwd && newPwd === confirmPwd;
 
     
-  // Fetch user profile from Firestore
+  // Fetch user profile from Firestores
   useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
     if (currentUser) {
