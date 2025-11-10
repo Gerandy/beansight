@@ -1,24 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 function MyProfile() {
   const auth = getAuth();
   const user = auth.currentUser;
 
+  const [profile, setProfile] = useState({ firstName: "", lastName: "", email: "", dob: "" });
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
-  const [profile, setProfile] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    dob: ""
-  });
 
   const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
@@ -28,28 +22,21 @@ function MyProfile() {
 
   const canChangePassword = currentPwd && newPwd && confirmPwd && newPwd === confirmPwd;
 
-  // Fetch user profile from Firestore
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) return;
+      const userId = localStorage.getItem("authToken");
+      if (!userId) return;
+
       try {
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setProfile({
-            firstName: data.firstName || "",
-            lastName: data.lastName || "",
-            email: data.email || user.email || "",
-            dob: data.dob || ""
-          });
-        }
+        const docSnap = await getDoc(doc(db, "users", userId));
+        if (docSnap.exists()) setProfile(docSnap.data());
       } catch (err) {
-        console.error("Error fetching profile:", err);
+        console.error(err);
       }
     };
+
     fetchProfile();
-  }, [user]);
+  }, []);
 
   const handleChangePassword = async () => {
     setError("");
@@ -57,11 +44,8 @@ function MyProfile() {
     if (!canChangePassword) return;
 
     try {
-      // Re-authenticate the user
       const credential = EmailAuthProvider.credential(user.email, currentPwd);
       await reauthenticateWithCredential(user, credential);
-
-      // Update password
       await updatePassword(user, newPwd);
       setSuccess("Password updated successfully!");
       setCurrentPwd("");
@@ -111,10 +95,10 @@ function MyProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-coffee-800 mb-2">Date of Birth</label>
+                <label className="block text-sm font-medium text-coffee-800 mb-2">Date of birth</label>
                 <input
                   type="date"
-                  value={profile.dob}
+                  value={profile.dob || ""}
                   className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500"
                   readOnly
                 />
@@ -122,81 +106,36 @@ function MyProfile() {
             </>
           )}
 
-          {/* Password change section */}
-          {!showChangePassword ? (
-            <div className="text-center mt-4">
-              <button
-                type="button"
-                className="text-coffee-700 font-semibold underline text-sm sm:text-base hover:text-coffee-900 transition-colors"
-                onClick={() => setShowChangePassword(true)}
-              >
-                Change password
-              </button>
-            </div>
-          ) : (
+          {showChangePassword && (
             <div className="bg-coffee-50 rounded-lg p-4 sm:p-6 mt-8 shadow-sm border border-coffee-200">
               {error && <p className="text-red-600 mb-2">{error}</p>}
               {success && <p className="text-green-600 mb-2">{success}</p>}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-coffee-800 mb-2">Current Password</label>
-                <div className="relative">
-                  <input
-                    type={showCurrent ? "text" : "password"}
-                    className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 pr-10 focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                    placeholder="Enter current password"
-                    value={currentPwd}
-                    onChange={(e) => setCurrentPwd(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
-                    onClick={() => setShowCurrent((v) => !v)}
-                  >
-                    {showCurrent ? <Eye size={20} /> : <EyeOff size={20} />}
-                  </button>
+              {/* Password Inputs */}
+              {[
+                { label: "Current Password", value: currentPwd, setValue: setCurrentPwd, show: showCurrent, setShow: setShowCurrent },
+                { label: "New Password", value: newPwd, setValue: setNewPwd, show: showNew, setShow: setShowNew },
+                { label: "Confirm Password", value: confirmPwd, setValue: setConfirmPwd, show: showConfirm, setShow: setShowConfirm },
+              ].map(({ label, value, setValue, show, setShow }, idx) => (
+                <div className="mb-4" key={idx}>
+                  <label className="block text-sm font-medium text-coffee-800 mb-2">{label}</label>
+                  <div className="relative">
+                    <input
+                      type={show ? "text" : "password"}
+                      className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 pr-10 focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
+                      onClick={() => setShow(!show)}
+                    >
+                      {show ? <Eye size={20} /> : <EyeOff size={20} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-coffee-800 mb-2">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showNew ? "text" : "password"}
-                    className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 pr-10 focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                    placeholder="Enter new password"
-                    value={newPwd}
-                    onChange={(e) => setNewPwd(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
-                    onClick={() => setShowNew((v) => !v)}
-                  >
-                    {showNew ? <Eye size={20} /> : <EyeOff size={20} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-coffee-800 mb-2">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? "text" : "password"}
-                    className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 pr-10 focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                    placeholder="Confirm new password"
-                    value={confirmPwd}
-                    onChange={(e) => setConfirmPwd(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
-                    onClick={() => setShowConfirm((v) => !v)}
-                  >
-                    {showConfirm ? <Eye size={20} /> : <EyeOff size={20} />}
-                  </button>
-                </div>
-              </div>
+              ))}
 
               <button
                 type="button"
