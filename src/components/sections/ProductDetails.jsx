@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useCart } from "../CartContext";
-import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft } from "lucide-react";
+import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart } from "lucide-react";
 import logo from "../../assets/ahjinlogo.png";
-import MenuCard from "../home/HomeCard"; // Import the MenuCard component
+import MenuCard from "../home/HomeCard";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -15,13 +15,7 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("Dusk");
-
-  // Example suggested products (replace with actual fetch if needed)
-  const suggestedProducts = [
-    { name: "Latte", price: 120, img: logo },
-    { name: "Cappuccino", price: 130, img: logo },
-    { name: "Espresso", price: 100, img: logo },
-  ];
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,7 +33,28 @@ function ProductDetails() {
       }
     };
     fetchProduct();
+
+    // Check if product is in favorites
+    const savedFavorites = localStorage.getItem("favorites");
+    if (savedFavorites) {
+      const favoritesArray = JSON.parse(savedFavorites);
+      setIsFavorite(favoritesArray.includes(id));
+    }
   }, [id]);
+
+  const toggleFavorite = () => {
+    const savedFavorites = localStorage.getItem("favorites");
+    let favoritesArray = savedFavorites ? JSON.parse(savedFavorites) : [];
+
+    if (isFavorite) {
+      favoritesArray = favoritesArray.filter(favId => favId !== id);
+    } else {
+      favoritesArray.push(id);
+    }
+
+    localStorage.setItem("favorites", JSON.stringify(favoritesArray));
+    setIsFavorite(!isFavorite);
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -49,12 +64,19 @@ function ProductDetails() {
       name: product.name,
       price: product.price,
       quantity,
-      image: product.img || logo,
+      img: product.img || logo,
       size: selectedSize,
     };
 
     addToCart(cartItem);
   };
+
+  // Example suggested products (replace with actual fetch if needed)
+  const suggestedProducts = [
+    { name: "Latte", price: 120, img: logo },
+    { name: "Cappuccino", price: 130, img: logo },
+    { name: "Espresso", price: 100, img: logo },
+  ];
 
   if (!product)
     return (
@@ -76,21 +98,38 @@ function ProductDetails() {
             {/* Back Button - Moved to upper left */}
             <button
               className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(-1)} 
               aria-label="Back to Menu"
             >
               <ArrowLeft size={24} />
             </button>
 
+            {/* Heart/Favorite Button - Upper right */}
+            <button
+              onClick={toggleFavorite}
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90"
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart 
+                className={`w-6 h-6 transition-all duration-200 ${
+                  isFavorite 
+                    ? "fill-red-500 text-red-500" 
+                    : "text-[#7D5A50] hover:text-red-500"
+                }`}
+              />
+            </button>
+
             {/* Decorative Blur Circle */}
             <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-[#E5B299] rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
 
-            <div className="relative  z-10 flex flex-col items-center">
-              <img
-                src={product.img || logo}
-                alt={product.name}
-                className="w-72 h-72 bg-coffee-50 object-contain rounded-2xl shadow-md"
-              />
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-72 h-72 aspect-square bg-coffee-50 rounded-2xl shadow-md overflow-hidden">
+                <img
+                  src={product.img || logo}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <h2 className="text-3xl font-extrabold mt-6 text-[#7D5A50]">
                 {product.name}
               </h2>

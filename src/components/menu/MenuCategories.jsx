@@ -99,7 +99,15 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
         {categories.map((cat, idx) => (
           <button
             key={idx}
-            className="text-sm font-medium text-coffee-700 hover:text-coffee-900 whitespace-nowrap hover:cursor-pointer transition-colors"
+            onClick={() => {
+              setLocalSelected(cat);
+              onSelect(cat);
+            }}
+            className={`text-sm font-medium whitespace-nowrap hover:cursor-pointer transition-colors ${
+              localSelected === cat
+                ? "text-coffee-900 font-bold border-b-2 border-coffee-900"
+                : "text-coffee-700 hover:text-coffee-900"
+            }`}
           >
             {cat}
           </button>
