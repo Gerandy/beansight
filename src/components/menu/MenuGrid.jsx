@@ -55,8 +55,12 @@ function MenuGrid({ selectedCategory = "All" }) {
       // Save to localStorage
       localStorage.setItem("favorites", JSON.stringify([...newFavorites]));
       return newFavorites;
+      
     });
+    
   };
+  
+    
 
   const filteredProducts = selectedCategory === "All" 
     ? products 

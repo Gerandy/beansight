@@ -64,7 +64,7 @@ function ProductDetails() {
       name: product.name,
       price: product.price,
       quantity,
-      image: product.img || logo,
+      img: product.img || logo,
       size: selectedSize,
     };
 
@@ -98,7 +98,7 @@ function ProductDetails() {
             {/* Back Button - Moved to upper left */}
             <button
               className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(-1)} 
               aria-label="Back to Menu"
             >
               <ArrowLeft size={24} />
