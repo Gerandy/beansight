@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useData } from "../datafetcher";
-
+import { collection, addDoc, serverTimestamp, doc, setDoc  } from "firebase/firestore";
+import { db } from "../firebase";
 
 
 import {
@@ -53,6 +54,8 @@ export default function Checkout() {
   // const [appliedPromo, setAppliedPromo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  
+  
 
   const [info, setInfo] = useState({
     fullName: "",
@@ -62,14 +65,79 @@ export default function Checkout() {
 
   
   const {  userData  } = useData();
+  
 
   const defaultAddress = userData.addresses?.find(addr => addr.isDefault);
   const contactNum = userData.contactNumber?.[0];
 
+  const firstName = userData?.firstName || "";
+  const lastName = userData?.lastName || "";
+  const email = userData?.email || ""; 
+
+
+   const handleCheckout = async (userData, contactNum, defaultAddress) => {
+  try {
+    // ✅ Get user UID from localStorage
+    const uid = localStorage.getItem("authToken");
+    if (!uid) return alert("User not logged in");
+
+    // ✅ Get cart from localStorage
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    if (cart.length === 0) return alert("Cart is empty!");
+
+    // ✅ Compute total
+    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    // ✅ Generate a new unique ID for the order
+    const orderRef = doc(collection(db, "orders")); // this creates a doc ref with auto ID
+    const orderId = orderRef.id;
+
+    // ✅ Prepare order data
+    const orderData = {
+      id: orderId, // store the same ID in the order
+      uid, // user ID
+      user: {
+        uid: uid || "",
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phone: contactNum?.number || "",
+        address: {
+          label: defaultAddress?.label || "",
+          details: defaultAddress?.details || "",
+          city: defaultAddress?.city || "",
+          province: defaultAddress?.province || "",
+          zipcode: defaultAddress?.zipcode || "",
+        },
+      },
+      items: cart,
+      total,
+      status: "Pending",
+      createdAt: serverTimestamp(),
+    };
+
+    // ✅ Save in global orders collection
+    await setDoc(orderRef, orderData);
+
+    // ✅ Save in user's subcollection with the SAME ID
+    await setDoc(doc(db, "users", uid, "orders", orderId), orderData);
+
+    // ✅ Clear cart
+    localStorage.removeItem("cart");
+
+    alert("Order placed successfully!");
+  } catch (err) {
+    console.error("Checkout error:", err);
+    alert("Failed to place order.");
+  }
+};
 
 
 
-   if (loading) return <p>Loading...</p>;
+
+    
+
+   
    
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
@@ -338,7 +406,7 @@ const removeItem = (id) => {
 
                 <div className="mt-4 flex gap-2">
                   <button onClick={() => { setStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 px-3 py-2 rounded-md border border-gray-200">Edit details</button>
-                  <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
+                  <button onClick={ handleCheckout } className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
                 </div>
               </div>
 
