@@ -3,7 +3,7 @@ import ProductGrid from "./components/ProductGrid";
 import Cart from "./components/Cart";
 import OrderSummary from "./components/OrderSummary";
 import CategoryFilter from "./components/CategoryFilter";
-
+//jj
 export default function POSPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
