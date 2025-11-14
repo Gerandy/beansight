@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useData } from "../datafetcher";
+import { collection, addDoc, serverTimestamp, doc, setDoc  } from "firebase/firestore";
+import { db } from "../firebase";
 
 
 import {
@@ -16,6 +19,14 @@ import {
   Minus,
   Eye,
 } from "lucide-react";
+
+
+  
+
+
+
+
+
 
 const SAMPLE_ITEMS = [
   {
@@ -34,20 +45,155 @@ const SAMPLE_ITEMS = [
   },
 ];
 
+
 export default function Checkout() {
   // steps: 0 - Info, 1 - Shipping, 2 - Payment, 3 - Review
   const [step, setStep] = useState(0);
-  const [items, setItems] = useState(SAMPLE_ITEMS);
+  const [items, setItems] = useState([]);
   const [promo, setPromo] = useState("");
-  const [appliedPromo, setAppliedPromo] = useState(null);
+  // const [appliedPromo, setAppliedPromo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+   const [qrData, setQrData] = useState(null); // 🟢 this stores PayMongo QR response
+
+  
+  const [qrPayment, setQrPayment] = useState(null);
+
 
   const [info, setInfo] = useState({
     fullName: "",
     email: "",
     phone: "",
   });
+
+  
+  const {  userData  } = useData();
+  
+
+  const defaultAddress = userData.addresses?.find(addr => addr.isDefault);
+  const contactNum = userData.contactNumber?.[0];
+
+  const firstName = userData?.firstName || "";
+  const lastName = userData?.lastName || "";
+  const email = userData?.email || ""; 
+
+
+   const handleCheckout = async () => {
+  if (!items.length) return alert("Cart is empty!");
+  setLoading(true);
+
+  const uid = localStorage.getItem("authToken");
+  const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+
+  const orderData = {
+    id: orderId,
+    uid,
+    user: {
+      uid,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      phone: contactNum?.number || "",
+      address: defaultAddress || {},
+    },
+    items,
+    total: grandTotal,
+    status: "Pending",
+    createdAt: serverTimestamp(),
+    paymentMethod: payment.method,
+  };
+
+  try {
+    // Save order in Firestore
+    const orderRef = doc(collection(db, "orders"), orderId);
+    await setDoc(orderRef, orderData);
+
+    if (payment.method === "wallet") {
+      // Generate QRPh payment
+      const qrOptions = {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          
+        },
+       body: JSON.stringify({data: {attributes: {kind: 'instore'}}})
+      };
+
+      const response = await fetch('https://api.paymongo.com/v1/qrph/generate', qrOptions);
+      const qrData = await response.json();
+      
+
+      if (qrData.data) {
+        // Store QR info in state to display modal
+        setQrPayment(qrData.data.attributes); // make sure you have a state for QR modal
+      } else {
+        console.error(qrData);
+        alert("Failed to generate QR payment.");
+      }
+
+    } else {
+      // Card or COD
+      setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
+      localStorage.removeItem("cart");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Checkout failed.");
+  }
+
+  setLoading(false);
+};
+
+
+
+
+
+    
+
+   
+   
+  useEffect(() => {
+    const storedCart = localStorage.getItem("cart");
+    if (storedCart) {
+      setItems(JSON.parse(storedCart));
+    }
+  }, []);
+
+  
+
+useEffect(() => {
+  const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+  setItems(savedCart);
+}, []);
+
+const subtotal = items.reduce(
+  (sum, item) => sum + item.price * item.quantity,
+  0
+);
+
+const discount = 0;
+const deliveryFee = 50;
+const grandTotal = subtotal - discount + deliveryFee;
+
+  
+
+function updateQty(id, delta) {
+  const updated = items.map(item =>
+    item.id === id
+      ? { ...item, quantity: Math.max(1, (item.quantity || 1) + delta) }
+      : item
+  );
+  setItems(updated);
+}
+
+
+
+const removeItem = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  
 
   const [shipping, setShipping] = useState({
     type: "delivery", 
@@ -66,32 +212,27 @@ export default function Checkout() {
   const shippingValid = shipping.type === "pickup" ? true : (shipping.address.trim() && shipping.city.trim());
   const paymentValid = payment.method === "card" ? (payment.cardNumber.replace(/\s/g, '').length >= 12 && payment.cvv.length >= 3) : true;
 
-  const subtotal = useMemo(() => items.reduce((s, it) => s + it.price * it.qty, 0), [items]);
-  const discount = appliedPromo ? appliedPromo.amount : 0;
-  const deliveryFee = shipping.type === "delivery" ? 60 : 0;
-  const tax = Math.round((subtotal - discount + deliveryFee) * 0.5);
-  const total = subtotal - discount + deliveryFee + tax;
+  // const subtotal = useMemo(() => items.reduce((s, it) => s + it.price * it.qty, 0), [items]);
+  // const discount = appliedPromo ? appliedPromo.amount : 0;
+  // const deliveryFee = shipping.type === "delivery" ? 60 : 0;
+  // const tax = Math.round((subtotal - discount + deliveryFee) * 0.5);
+  // const total = subtotal - discount + deliveryFee + tax;
 
-  function updateQty(id, delta) {
-    setItems(items.map(i => i.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i));
-  }
 
-  function removeItem(id) {
-    setItems(items.filter(i => i.id !== id));
-  }
+ 
 
-  function applyPromo() {
-    // demo promo rules
-    if (!promo) return;
-    const p = promo.trim().toUpperCase();
-    if (p === "BILAO10") {
-      setAppliedPromo({ code: p, amount: Math.round(subtotal * 0.10) });
-    } else if (p === "SHIPPINGFREE") {
-      setAppliedPromo({ code: p, amount: deliveryFee });
-    } else {
-      setAppliedPromo({ code: p, amount: 0, invalid: true });
-    }
-  }
+  // function applyPromo() {
+  //   // demo promo rules
+  //   if (!promo) return;
+  //   const p = promo.trim().toUpperCase();
+  //   if (p === "BILAO10") {
+  //     setAppliedPromo({ code: p, amount: Math.round(subtotal * 0.10) });
+  //   } else if (p === "SHIPPINGFREE") {
+  //     setAppliedPromo({ code: p, amount: deliveryFee });
+  //   } else {
+  //     setAppliedPromo({ code: p, amount: 0, invalid: true });
+  //   }
+  // }
 
   async function placeOrder() {
     if (!infoValid || !shippingValid || !paymentValid) {
@@ -133,6 +274,7 @@ export default function Checkout() {
   }
 
   return (
+    
     <div className="min-h-screen mt-16 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <header className="mb-6 flex items-center justify-between">
@@ -153,6 +295,28 @@ export default function Checkout() {
 
           </div>
         </header>
+         {/* 🟢 Display QR Code Modal */}
+      {qrData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <h2 className="text-lg font-semibold mb-3">Scan to Pay via QRPH</h2>
+            <img
+              src={qrData.qr_image} // 🔵 PayMongo gives you QR image URL
+              alt="QRPH Code"
+              className="mx-auto w-48 h-48 mb-4"
+            />
+            <p className="text-sm text-gray-500 mb-4">
+              Amount: ₱{grandTotal.toLocaleString()}
+            </p>
+            <button
+              onClick={() => setQrData(null)}
+              className="bg-gray-700 text-white px-4 py-2 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -163,9 +327,9 @@ export default function Checkout() {
             {/* Info */}
             <SectionCard title="Contact information" icon={<Mail size={18} />}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Input label="Full name" value={info.fullName} onChange={v => setInfo({ ...info, fullName: v })} required icon={<User size={16} />} />
-                <Input label="Email" value={info.email} onChange={v => setInfo({ ...info, email: v })} required icon={<Mail size={16} />} />
-                <Input label="Phone" value={info.phone} onChange={v => setInfo({ ...info, phone: v })} required icon={<MapPin size={16} />} />
+                <Input label="Full name" value={`${userData?.firstName || ""} ${userData?.lastName || ""}`}   icon={<User size={16} />} />
+                <Input label="Email" value={userData?.email || ""}  required icon={<Mail size={16} />} />
+                <Input label="Phone" value={contactNum?.number || "" }  required icon={<MapPin size={16} />} />
               </div>
               <div className="mt-2 text-sm text-gray-500">We’ll send order updates to this email and number.</div>
             </SectionCard>
@@ -187,10 +351,10 @@ export default function Checkout() {
 
               {shipping.type === 'delivery' ? (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input label="Address" value={shipping.address} onChange={v => setShipping({ ...shipping, address: v })} placeholder="Street, House no." required icon={<MapPin size={16} />} />
-                  <Input label="City" value={shipping.city} onChange={v => setShipping({ ...shipping, city: v })} required />
-                  <Input label="Province" value={shipping.province} onChange={v => setShipping({ ...shipping, province: v })} />
-                  <Input label="ZIP" value={shipping.zip} onChange={v => setShipping({ ...shipping, zip: v })} />
+                  <Input label="Address" value={defaultAddress?.details} onChange={v => setShipping({ ...shipping, address: v })} placeholder="Street, House no." required  icon={<MapPin size={16} />} />
+                  <Input label="City" value={defaultAddress?.city} onChange={v => setShipping({ ...shipping, city: v })} required />
+                  <Input label="Province" value={defaultAddress?.province} onChange={v => setShipping({ ...shipping, province: v })} />
+                  <Input label="ZIP" value={defaultAddress?.zipcode} onChange={v => setShipping({ ...shipping, zip: v })} />
                   <textarea className="col-span-1 md:col-span-2 mt-2 p-3 border border-gray-200 rounded-lg" placeholder="Delivery notes (optional)" value={shipping.notes} onChange={e => setShipping({ ...shipping, notes: e.target.value })} />
                 </div>
               ) : (
@@ -250,7 +414,7 @@ export default function Checkout() {
                           </div>
                           <div className="flex items-center gap-2">
                             <button onClick={() => updateQty(it.id, -1)} className="p-1 rounded border border-gray-200"><Minus size={14} /></button>
-                            <div className="px-3">{it.qty}</div>
+                            <div className="px-3">{it.quantity}</div>
                             <button onClick={() => updateQty(it.id, +1)} className="p-1 rounded border border-gray-200"><Plus size={14} /></button>
                             <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded"><Trash2 size={14} /></button>
                           </div>
@@ -263,48 +427,27 @@ export default function Checkout() {
                 <hr className="my-3" />
 
                 <div className="text-sm text-gray-600 space-y-2">
-                  <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span>Discount</span><span>- ₱{discount.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span>Tax (12%)</span><span>₱{tax.toLocaleString()}</span></div>
-                  <div className="flex justify-between font-semibold text-lg mt-2"><span>Total</span><span>₱{total.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal}</span></div>
+                  {/* <div className="flex justify-between"><span>Discount</span><span>- ₱{}</span></div> */}
+                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee}</span></div>
+                  <div className="flex justify-between font-semibold text-lg mt-2"><span>Total</span><span>₱{grandTotal}</span></div>
                 </div>
 
                 <div className="mt-4">
                   <div className="flex gap-2">
                     <input value={promo} onChange={e => setPromo(e.target.value)} placeholder="Promo code" className="flex-1 p-2 border border-gray-200 rounded-md" />
-                    <button onClick={applyPromo} className="px-3 py-2 rounded-md bg-yellow-950 text-white">Apply</button>
+                    <button  className="px-3 py-2 rounded-md bg-yellow-950 text-white">Apply</button>
                   </div>
-                  {appliedPromo && <div className={`mt-2 text-sm ${appliedPromo.invalid ? 'text-red-500' : 'text-green-600'}`}>{appliedPromo.invalid ? 'Invalid code' : `Applied ${appliedPromo.code} — ₱${appliedPromo.amount}`}</div>}
+                  {/* {appliedPromo && <div className={`mt-2 text-sm ${appliedPromo.invalid ? 'text-red-500' : 'text-green-600'}`}>{appliedPromo.invalid ? 'Invalid code' : `Applied ${appliedPromo.code} — ₱${appliedPromo.amount}`}</div>} */}
                 </div>
 
                 <div className="mt-4 flex gap-2">
                   <button onClick={() => { setStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 px-3 py-2 rounded-md border border-gray-200">Edit details</button>
-                  <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
+                  <button onClick={ handleCheckout } className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
                 </div>
               </div>
 
-              {/* trust badges */}
-              <div className="bg-white p-4 rounded-lg shadow flex items-center gap-3 text-sm">
-                <CheckCircle className="text-green-500" />
-                <div>
-                  <div className="font-medium">Secure checkout</div>
-                  <div className="text-gray-500">We use TLS encryption — your payment is safe.</div>
-                </div>
-              </div>
-
-              {/* upsell example */}
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="text-sm font-medium">Add-on suggestion</div>
-                <div className="mt-2 flex items-center gap-3">
-                  <img src="https://images.unsplash.com/photo-1543352634-8f3c12a4b9ba?q=80&w=400&auto=format&fit=crop&ixlib=rb-4.0.3&s=example" className="w-16 h-16 rounded-lg object-cover" />
-                  <div className="flex-1">
-                    <div>Leche Flan (Slice)</div>
-                    <div className="text-sm text-gray-500">Add for ₱65</div>
-                  </div>
-                  <button className="px-3 py-2 rounded-md border border-gray-200">Add</button>
-                </div>
-              </div>
+              
 
             </div>
           </aside>
@@ -315,7 +458,7 @@ export default function Checkout() {
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div>
               <div className="text-sm text-gray-500">Total</div>
-              <div className="font-semibold">₱{total.toLocaleString()}</div>
+              <div className="font-semibold">₱{}</div>
             </div>
             <div>
               <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold">Place order</button>
@@ -336,10 +479,9 @@ export default function Checkout() {
                     <div className="text-sm text-gray-500">Order #{success.id} — {success.eta}</div>
                   </div>
                 </div>
-                <div className="mt-4 text-sm">We've emailed a receipt to <span className="font-medium">{info.email}</span>. You can track your order in the Orders page.</div>
+                <div className="mt-4 text-sm">You can track your order in the Orders page.</div>
                 <div className="mt-6 flex justify-end gap-3">
-                  <button onClick={() => setSuccess(null)} className="px-4 py-2 rounded-md border">Close</button>
-                  <a href="#" className="px-4 py-2 rounded-md bg-yellow-950 text-white">View order</a>
+                  <a href="/orders" className="px-4 py-2 rounded-md bg-yellow-950 text-white">View order</a>
                 </div>
               </motion.div>
               <ConfettiLite />

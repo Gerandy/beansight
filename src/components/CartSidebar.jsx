@@ -7,10 +7,13 @@ function CartSidebar({ cartOpen, onClose }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState("now");
 
-  const { cart = [], removeFromCart, updateQuantity, total = 0 } = useCart() || {}; // ✅ Safe defaults
+  const { cart = [], removeFromCart, updateQuantity, totalPrice  = 0 } = useCart() || {};
+
+
 
   const deliveryFee = cart.length > 0 ? 49 : 0;
-  const grandTotal = total + deliveryFee;
+  const grandTotal = totalPrice + deliveryFee;
+
 
   useEffect(() => {
     if (showDeliveryModal) {
@@ -63,7 +66,7 @@ function CartSidebar({ cartOpen, onClose }) {
               >
                 <div className="flex items-center gap-3">
                   <img
-                    src={item.image}
+                    src={item.img}
                     alt={item.name}
                     className="w-16 h-16 rounded-md object-cover"
                   />
@@ -106,7 +109,8 @@ function CartSidebar({ cartOpen, onClose }) {
         <div className="absolute bottom-0 w-full p-4 border-t border-black bg-lime-50">
           <div className="flex justify-between">
             <span className="text-black">Subtotal</span>
-            <span className="text-black">₱{total.toFixed(2)}</span>
+            <span className="text-black">₱{totalPrice.toFixed(2)}</span>
+
           </div>
           <div className="flex justify-between">
             <span className="text-black">Delivery fee</span>
