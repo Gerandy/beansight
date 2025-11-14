@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useNavigate } from "react-router-dom";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay } from "swiper/modules";
+import { Navigation, Autoplay, Pagination } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/navigation";
+import "swiper/css/pagination";
 
 function Slider() {
   const [slides, setSlides] = useState([]);
+  const navigate = useNavigate();
 
   // Fetch banners from Firestore
   useEffect(() => {
@@ -19,7 +22,7 @@ function Slider() {
         const snapshot = await getDocs(collection(db, "banners"));
         const banners = snapshot.docs.map((doc) => ({
           id: doc.id,
-          image: doc.data().img, // Ensure your field in Firestore is "img"
+          image: doc.data().img,
         }));
         setSlides(banners);
       } catch (err) {
@@ -38,31 +41,45 @@ function Slider() {
   }
 
   return (
-    <div className="w-full flex justify-center mt-20">
-      <div className="relative w-full max-w-6xl mx-auto px-4">
+    <div className="w-full flex justify-center" style={{ marginTop: "88px" }}>
+      <div className="relative w-full max-w-5xl mx-auto px-4">
         <Swiper
-          modules={[Navigation, Autoplay]}
+          modules={[Navigation, Autoplay, Pagination]}
           navigation={{
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev",
+            nextEl: ".custom-swiper-button-next",
+            prevEl: ".custom-swiper-button-prev",
+          }}
+          pagination={{
+            clickable: true,
+            bulletClass: 'swiper-pagination-bullet',
+            bulletActiveClass: 'swiper-pagination-bullet-active',
           }}
           loop
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          className="rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden shadow-lg"
         >
           {slides.map((slide) => (
             <SwiperSlide key={slide.id}>
-              <img
-                src={slide.image}
-                alt={`Banner ${slide.id}`}
-                className="w-full h-[320px] md:h-[420px] object-cover rounded-2xl"
-              />
+              <div 
+                className="cursor-pointer"
+                onClick={() => navigate('/menu')}
+              >
+                <img
+                  src={slide.image}
+                  alt={`Banner ${slide.id}`}
+                  className="w-full h-auto object-cover"
+                />
+              </div>
             </SwiperSlide>
           ))}
 
           {/* Custom Navigation Buttons */}
-          <div className="swiper-button-prev text-green  "></div>
-          <div className="swiper-button-next text-green  "></div>
+          <div className="custom-swiper-button-prev">
+            <span>&#8249;</span>
+          </div>
+          <div className="custom-swiper-button-next">
+            <span>&#8250;</span>
+          </div>
         </Swiper>
       </div>
     </div>
