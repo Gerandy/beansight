@@ -115,7 +115,7 @@ export default function Checkout() {
         headers: {
           accept: 'application/json',
           'Content-Type': 'application/json',
-          authorization: 'Basic c2tfdGVzdF9DUG5KV25FRjdVNUU2eWhGOVRjUW5OUnI6'
+          
         },
        body: JSON.stringify({data: {attributes: {kind: 'instore'}}})
       };
