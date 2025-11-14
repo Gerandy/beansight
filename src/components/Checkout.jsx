@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useData } from "../datafetcher";
 import { collection, addDoc, serverTimestamp, doc, setDoc  } from "firebase/firestore";
 import { db } from "../firebase";
+import Xendit from "xendit-node";
 
 
 import {
@@ -20,7 +21,30 @@ import {
   Eye,
 } from "lucide-react";
 
+const xenditClient = new Xendit({
+  secretKey: "xnd_development_xxxxxxxxxxxxxxxxx"
+});
 
+const { Invoice } = xenditClient;
+
+export async function createInvoice(req, res) {
+  try {
+    const invoice = await Invoice.createInvoice({
+      externalId: "order-001",
+      amount: 149,
+      description: "Biscoff Latte",
+      currency: "PHP",
+      paymentMethods: ["GCASH"],  
+      successRedirectUrl: "https://your-app.com/success",
+      failureRedirectUrl: "https://your-app.com/failed"
+    });
+
+    res.json(invoice);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err });
+  }
+}
   
 
 
