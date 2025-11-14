@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useData } from "../datafetcher";
 import { collection, addDoc, serverTimestamp, doc, setDoc  } from "firebase/firestore";
 import { db } from "../firebase";
-import Xendit from "xendit-node";
 
 
 import {
@@ -21,30 +20,7 @@ import {
   Eye,
 } from "lucide-react";
 
-const xenditClient = new Xendit({
-  secretKey: "xnd_development_xxxxxxxxxxxxxxxxx"
-});
 
-const { Invoice } = xenditClient;
-
-export async function createInvoice(req, res) {
-  try {
-    const invoice = await Invoice.createInvoice({
-      externalId: "order-001",
-      amount: 149,
-      description: "Biscoff Latte",
-      currency: "PHP",
-      paymentMethods: ["GCASH"],  
-      successRedirectUrl: "https://your-app.com/success",
-      failureRedirectUrl: "https://your-app.com/failed"
-    });
-
-    res.json(invoice);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: err });
-  }
-}
   
 
 
@@ -125,41 +101,36 @@ export default function Checkout() {
   };
 
   try {
-    // Save order in Firestore
+    // Save to Firestore
     const orderRef = doc(collection(db, "orders"), orderId);
     await setDoc(orderRef, orderData);
 
+    // 👇 XENDIT PAYMENT
     if (payment.method === "wallet") {
-      // Generate QRPh payment
-      const qrOptions = {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-          authorization: 'Basic c2tfdGVzdF9DUG5KV25FRjdVNUU2eWhGOVRjUW5OUnI6'
-        },
-       body: JSON.stringify({data: {attributes: {kind: 'instore'}}})
-      };
+      const res = await fetch("http://localhost:3001/create-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: grandTotal,
+          orderId,
+          description: "Sol-Ace Order Payment"
+        })
+      });
 
-      const response = await fetch('https://api.paymongo.com/v1/qrph/generate', qrOptions);
-      const qrData = await response.json();
-      
-      
+      const data = await res.json();
 
-      if (qrData.data) {
-        // Store QR info in state to display modal
-        setQrPayment(qrData.data.attributes); // make sure you have a state for QR modal
-       
+      if (data.invoiceUrl) {
+        window.location.href = data.invoiceUrl; // redirect to GCash checkout
+        return;
       } else {
-        console.error(qrData);
-        alert("Failed to generate QR payment.");
+        alert("Payment error. Check backend.");
       }
-
-    } else {
-      // Card or COD
-      setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
-      localStorage.removeItem("cart");
     }
+
+    // For COD or CARD (placeholder)
+    setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
+    localStorage.removeItem("cart");
+
   } catch (err) {
     console.error(err);
     alert("Checkout failed.");
@@ -318,29 +289,7 @@ const removeItem = (id) => {
 
           </div>
         </header>
-         {/* 🟢 Display QR Code Modal */}
-      {qrData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <h2 className="text-lg font-semibold mb-3">Scan to Pay via QRPH</h2>
-            <img
-              src={qrData.qr_image} // 🔵 PayMongo gives you QR image URL
-              alt="QRPH Code"
-              className="mx-auto w-48 h-48 mb-4"
-            />
-            <p className="text-sm text-gray-500 mb-4">
-              Amount: ₱{grandTotal.toLocaleString()}
-            </p>
-            <button
-              onClick={() => setQrData(null)}
-              className="bg-gray-700 text-white px-4 py-2 rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
+        
         {/* container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* right: summary - Shows first on mobile */}
