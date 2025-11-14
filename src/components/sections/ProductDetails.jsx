@@ -5,7 +5,7 @@ import { db } from "../../firebase";
 import { useCart } from "../CartContext";
 import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart } from "lucide-react";
 import logo from "../../assets/ahjinlogo.png";
-import MenuCard from "../home/HomeCard";
+import HomeCard from "../home/HomeCard";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -73,9 +73,9 @@ function ProductDetails() {
 
   // Example suggested products (replace with actual fetch if needed)
   const suggestedProducts = [
-    { name: "Latte", price: 120, img: logo },
-    { name: "Cappuccino", price: 130, img: logo },
-    { name: "Espresso", price: 100, img: logo },
+    { id: "latte", name: "Latte", price: 120, img: logo },
+    { id: "cappuccino", name: "Cappuccino", price: 130, img: logo },
+    { id: "espresso", name: "Espresso", price: 100, img: logo },
   ];
 
   if (!product)
@@ -219,11 +219,12 @@ function ProductDetails() {
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {suggestedProducts.map((item, index) => (
-                  <MenuCard
+                  <HomeCard
                     key={index}
                     name={item.name}
                     price={item.price}
                     img={item.img}
+                    onClick={() => navigate(`/product/${item.id}`)}
                   />
                 ))}
               </div>
