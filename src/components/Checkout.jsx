@@ -47,11 +47,8 @@ const SAMPLE_ITEMS = [
 
 
 export default function Checkout() {
-  // steps: 0 - Info, 1 - Shipping, 2 - Payment, 3 - Review
-  const [step, setStep] = useState(0);
+
   const [items, setItems] = useState([]);
-  const [promo, setPromo] = useState("");
-  // const [appliedPromo, setAppliedPromo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
    const [qrData, setQrData] = useState(null); // 🟢 this stores PayMongo QR response
@@ -320,9 +317,54 @@ const removeItem = (id) => {
 
         {/* container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* left: forms */}
-          <div className="lg:col-span-8 text-black space-y-6">
-            <Stepper step={step} setStep={setStep} />
+          {/* right: summary - Shows first on mobile */}
+          <aside className="text-black lg:col-span-4 order-first lg:order-last">
+            <div className="lg:sticky lg:top-20 space-y-4">
+              <div className="bg-white rounded-2xl p-5 shadow">
+                <h3 className="text-lg font-semibold">Order Summary</h3>
+                <div className="mt-3 space-y-3">
+                  {items.map(it => (
+                    <div key={it.id} className="flex items-center gap-3">
+                      <img src={it.img} alt="item" className="w-16 h-16 rounded-lg object-cover" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{it.name}</div>
+                            <div className="text-sm text-gray-500">₱{it.price.toLocaleString()}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => updateQty(it.id, -1)} className="p-1 rounded border border-gray-200"><Minus size={14} /></button>
+                            <div className="px-3">{it.quantity}</div>
+                            <button onClick={() => updateQty(it.id, +1)} className="p-1 rounded border border-gray-200"><Plus size={14} /></button>
+                            <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded"><Trash2 size={14} /></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <hr className="my-3" />
+
+                <div className="text-sm text-gray-600 space-y-2">
+                  <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal}</span></div>
+                  {/* <div className="flex justify-between"><span>Discount</span><span>- ₱{}</span></div> */}
+                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee}</span></div>
+                  <div className="flex justify-between font-semibold text-lg mt-2"><span>Total</span><span>₱{grandTotal}</span></div>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button onClick={ handleCheckout } className="hidden lg:block px-3 py-2 w-full rounded-md bg-yellow-950 text-white">Checkout</button>
+                </div>
+              </div>
+
+              
+
+            </div>
+          </aside>
+
+          {/* left: forms - Shows second on mobile */}
+          <div className="lg:col-span-8 text-black space-y-6 order-last lg:order-first">
 
             {/* Info */}
             <SectionCard title="Contact information" icon={<Mail size={18} />}>
@@ -396,72 +438,23 @@ const removeItem = (id) => {
             </SectionCard>
 
           </div>
-
-          {/* right: summary */}
-          <aside className="text-black lg:col-span-4">
-            <div className="sticky top-6 space-y-4">
-              <div className="bg-white rounded-2xl p-5 shadow">
-                <h3 className="text-lg font-semibold">Order Summary</h3>
-                <div className="mt-3 space-y-3">
-                  {items.map(it => (
-                    <div key={it.id} className="flex items-center gap-3">
-                      <img src={it.img} alt="item" className="w-16 h-16 rounded-lg object-cover" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">{it.name}</div>
-                            <div className="text-sm text-gray-500">₱{it.price.toLocaleString()}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateQty(it.id, -1)} className="p-1 rounded border border-gray-200"><Minus size={14} /></button>
-                            <div className="px-3">{it.quantity}</div>
-                            <button onClick={() => updateQty(it.id, +1)} className="p-1 rounded border border-gray-200"><Plus size={14} /></button>
-                            <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded"><Trash2 size={14} /></button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <hr className="my-3" />
-
-                <div className="text-sm text-gray-600 space-y-2">
-                  <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal}</span></div>
-                  {/* <div className="flex justify-between"><span>Discount</span><span>- ₱{}</span></div> */}
-                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee}</span></div>
-                  <div className="flex justify-between font-semibold text-lg mt-2"><span>Total</span><span>₱{grandTotal}</span></div>
-                </div>
-
-                <div className="mt-4">
-                  <div className="flex gap-2">
-                    <input value={promo} onChange={e => setPromo(e.target.value)} placeholder="Promo code" className="flex-1 p-2 border border-gray-200 rounded-md" />
-                    <button  className="px-3 py-2 rounded-md bg-yellow-950 text-white">Apply</button>
-                  </div>
-                  {/* {appliedPromo && <div className={`mt-2 text-sm ${appliedPromo.invalid ? 'text-red-500' : 'text-green-600'}`}>{appliedPromo.invalid ? 'Invalid code' : `Applied ${appliedPromo.code} — ₱${appliedPromo.amount}`}</div>} */}
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <button onClick={() => { setStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex-1 px-3 py-2 rounded-md border border-gray-200">Edit details</button>
-                  <button onClick={ handleCheckout } className="px-3 py-2 rounded-md bg-yellow-950 text-white">Checkout</button>
-                </div>
-              </div>
-
-              
-
-            </div>
-          </aside>
         </div>
 
         {/* mobile sticky bar */}
-        <div className="fixed inset-x-0 bottom-0 p-3 bg-white shadow-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 p-3 bg-white shadow-md lg:hidden z-30">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div>
               <div className="text-sm text-gray-500">Total</div>
-              <div className="font-semibold">₱{}</div>
+              <div className="font-semibold">₱{grandTotal.toLocaleString()}</div>
             </div>
             <div>
-              <button onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold">Place order</button>
+              <button 
+                onClick={handleCheckout} 
+                disabled={loading}
+                className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Processing...' : 'Checkout'}
+              </button>
             </div>
           </div>
         </div>
@@ -490,25 +483,6 @@ const removeItem = (id) => {
         </AnimatePresence>
 
       </div>
-    </div>
-  );
-}
-
-
-function Stepper({ step, setStep }) {
-  const labels = ["Contact", "Shipping", "Review"];
-  return (
-    <div className="bg-white rounded-2xl p-4 shadow flex items-center gap-4 justify-center">
-      {labels.map((lab, i) => (
-        <div key={lab} className="flex items-center gap-3">
-          <button onClick={() => setStep(i)} className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center ${i <= step ? 'bg-yellow-950 text-white' : 'bg-gray-100 text-gray-600'}`}>{i + 1}</button>
-          <div className="hidden md:block">
-            <div className={`text-sm ${i <= step ? 'font-semibold text-gray-900' : 'text-gray-400'}`}>{lab}</div>
-            <div className="text-xs text-gray-400">{i === step ? 'In progress' : i < step ? 'Done' : 'Pending'}</div>
-          </div>
-          {i < labels.length - 1 && <div className={`w-6 h-[2px] ${i < step ? 'bg-yellow-950' : 'bg-gray-200'} hidden md:block`} />}
-        </div>
-      ))}
     </div>
   );
 }

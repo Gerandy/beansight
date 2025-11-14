@@ -8,6 +8,8 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -37,20 +39,31 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const matchCategory = category === "All" || p.category === category;
-      // safe search: check name, item, or fallback to empty string
       const text = (p.name || p.item || "").toString().toLowerCase();
       const matchSearch = text.includes(search.toLowerCase());
       return matchCategory && matchSearch;
     });
   }, [products, category, search]);
 
+  // 📄 Pagination logic
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category]);
 
   return (
     <div className="text-coffee-900">
       {loading && <div className="text-sm text-coffee-600">Loading inventory...</div>}
       {error && <div className="text-sm text-red-600">Error loading inventory: {error}</div>}
+      
       {/* Search + Count */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-4">
         <div className="relative w-full sm:flex-1">
           <Search className="absolute left-3 top-2.5 text-coffee-500 w-4 h-4" />
           <input
@@ -65,9 +78,32 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
         </div>
       </div>
 
+      {/* Items per page selector */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-coffee-700">Show:</label>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
+          >
+            <option value={8}>8</option>
+            <option value={12}>12</option>
+            <option value={24}>24</option>
+            <option value={48}>48</option>
+          </select>
+        </div>
+        <span className="text-xs text-coffee-700">
+          Page {currentPage} of {totalPages || 1} • {Math.min((currentPage - 1) * itemsPerPage + 1, filtered.length)}-{Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length}
+        </span>
+      </div>
+
       {/* Product Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-        {filtered.map((p) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5 mb-6">
+        {paginatedProducts.map((p) => (
           <div
             key={p.id}
             className="relative bg-coffee-100 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 p-4 flex flex-col group"
@@ -94,7 +130,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
 
             {/* Product Details */}
             <div className="mt-3 flex-1">
-              <h3>{p.name}</h3>
+              <h3 className="text-sm font-medium text-coffee-800">{p.name}</h3>
             </div>
 
             {/* Price + Add Button */}
@@ -113,13 +149,67 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
         ))}
 
         {/* Empty State */}
-        {filtered.length === 0 && (
+        {paginatedProducts.length === 0 && (
           <div className="col-span-full text-center text-coffee-500 py-10 flex flex-col items-center gap-2">
             <PackageX className="w-8 h-8" />
             <p>No products found</p>
           </div>
         )}
       </div>
+
+      {/* 📄 Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            ← Previous
+          </button>
+
+          <div className="flex items-center gap-2">
+            {[...Array(totalPages)].map((_, i) => {
+              const page = i + 1;
+              // Show first, last, current, and adjacent pages
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+                      currentPage === page
+                        ? "bg-coffee-600 text-white"
+                        : "bg-white border border-coffee-200 text-coffee-800 hover:bg-coffee-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                return (
+                  <span key={page} className="text-coffee-700">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

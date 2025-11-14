@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useCart } from "./CartContext";
 import { Link } from "react-router-dom";
 
-function CartSidebar({ cartOpen, onClose }) {
+function CartSidebar({ cartOpen, setCartOpen }) {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState("now");
@@ -128,6 +128,7 @@ function CartSidebar({ cartOpen, onClose }) {
                     : "bg-yellow-950 text-white hover:bg-yellow-800"
                 }`}
                 disabled={cart.length === 0}
+                onClick={() => setCartOpen(false)}
               >
                 Proceed to Checkout
               </button>

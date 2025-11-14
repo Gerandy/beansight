@@ -10,6 +10,8 @@ export default function OnlineOrders() {
   const [primarySort, setPrimarySort] = useState("placedAt");
   const [secondarySort, setSecondarySort] = useState("none");
   const [toast, setToast] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const nextStatusMap = {
     Pending: "Preparing",
@@ -136,6 +138,18 @@ export default function OnlineOrders() {
     });
   }, [orders, search, filter, primarySort, secondarySort]);
 
+  // 📄 Pagination logic
+  const totalPages = Math.ceil(visibleOrders.length / itemsPerPage);
+  const paginatedOrders = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return visibleOrders.slice(start, start + itemsPerPage);
+  }, [visibleOrders, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, search, primarySort, secondarySort]);
+
   const formatTime = (iso) =>
     new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const formatDateTime = (iso) => new Date(iso).toLocaleString();
@@ -197,6 +211,27 @@ export default function OnlineOrders() {
               <option value="status">Then: Status</option>
             </select>
           </div>
+
+          {/* Items per page selector */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-coffee-700">Show:</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+            <span className="text-xs text-coffee-700">
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, visibleOrders.length)} - {Math.min(currentPage * itemsPerPage, visibleOrders.length)} of {visibleOrders.length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -206,104 +241,160 @@ export default function OnlineOrders() {
           <p className="mb-3 text-sm">No active orders found.</p>
         </div>
       ) : (
-        <div className="overflow-auto rounded-md border border-coffee-200">
-          <table className="w-full text-sm">
-            <thead className="bg-coffee-100 text-coffee-800">
-              <tr>
-                <th className="py-3 px-4 text-left">Order</th>
-                <th className="py-3 px-4 text-left">Customer</th>
-                <th className="py-3 px-4 text-center">Items</th>
-                <th className="py-3 px-4 text-right">Total</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleOrders.map((order, idx) => (
-                <React.Fragment key={order.id}>
-                  <tr
-                    className={`border-t hover:bg-coffee-50 transition-colors ${
-                      idx % 2 === 0 ? "bg-white" : "bg-coffee-50"
-                    }`}
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex flex-col gap-1">
-                        <div className="font-medium text-coffee-800">
-                          {order.id}
-                        </div>
-                        <div className="text-xs text-coffee-700">
-                          {formatTime(order.placedAt)}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">{order.customer}</td>
-                    <td className="py-3 px-4 text-center">
-                      {order.itemCount}
-                    </td>
-                    <td className="py-3 px-4 text-right font-medium text-coffee-800">
-                      {currency(order.total)}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => toggleExpand(order.id)}
-                          className="px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
-                        >
-                          {expanded.includes(order.id) ? "Hide" : "Details"}
-                        </button>
-                        {nextStatusMap[order.status] && (
-                          <button
-                            onClick={() =>
-                              handleStatusChange(order.id, order.status)
-                            }
-                            className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
-                          >
-                            Move to {nextStatusMap[order.status]}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-
-                  {expanded.includes(order.id) && (
-                    <tr className="bg-coffee-50">
-                      <td colSpan="6" className="py-3 px-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-coffee-700">
-                          <div>
-                            <div className="text-xs font-semibold mb-2 text-coffee-800">
-                              Items
-                            </div>
-                            <ul className="space-y-1">
-                              {order.items.map((it, i) => (
-                                <li key={i} className="flex justify-between">
-                                  <span>{it.name}</span>
-                                  <span className="text-coffee-800 font-medium">
-                                    x{it.qty}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
+        <>
+          <div className="overflow-auto rounded-md border border-coffee-200">
+            <table className="w-full text-sm">
+              <thead className="bg-coffee-100 text-coffee-800">
+                <tr>
+                  <th className="py-3 px-4 text-left">Order</th>
+                  <th className="py-3 px-4 text-left">Customer</th>
+                  <th className="py-3 px-4 text-center">Items</th>
+                  <th className="py-3 px-4 text-right">Total</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedOrders.map((order, idx) => (
+                  <React.Fragment key={order.id}>
+                    <tr
+                      className={`border-t hover:bg-coffee-50 transition-colors ${
+                        idx % 2 === 0 ? "bg-white" : "bg-coffee-50"
+                      }`}
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="font-medium text-coffee-800">
+                            {order.id}
                           </div>
-                          <div>
-                            <div className="text-xs font-semibold mb-2 text-coffee-800">
-                              Order Info
-                            </div>
-                            <div className="text-xs">
-                              Placed: {formatDateTime(order.placedAt)}
-                            </div>
+                          <div className="text-xs text-coffee-700">
+                            {formatTime(order.placedAt)}
                           </div>
                         </div>
                       </td>
+                      <td className="py-3 px-4">{order.customer}</td>
+                      <td className="py-3 px-4 text-center">
+                        {order.itemCount}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium text-coffee-800">
+                        {currency(order.total)}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <StatusBadge status={order.status} />
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => toggleExpand(order.id)}
+                            className="px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
+                          >
+                            {expanded.includes(order.id) ? "Hide" : "Details"}
+                          </button>
+                          {nextStatusMap[order.status] && (
+                            <button
+                              onClick={() =>
+                                handleStatusChange(order.id, order.status)
+                              }
+                              className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
+                            >
+                              Move to {nextStatusMap[order.status]}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+
+                    {expanded.includes(order.id) && (
+                      <tr className="bg-coffee-50">
+                        <td colSpan="6" className="py-3 px-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-coffee-700">
+                            <div>
+                              <div className="text-xs font-semibold mb-2 text-coffee-800">
+                                Items
+                              </div>
+                              <ul className="space-y-1">
+                                {order.items.map((it, i) => (
+                                  <li key={i} className="flex justify-between">
+                                    <span>{it.name}</span>
+                                    <span className="text-coffee-800 font-medium">
+                                      x{it.qty}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold mb-2 text-coffee-800">
+                                Order Info
+                              </div>
+                              <div className="text-xs">
+                                Placed: {formatDateTime(order.placedAt)}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 📄 Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 px-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+                {[...Array(totalPages)].map((_, i) => {
+                  const page = i + 1;
+                  // Show first, last, current, and adjacent pages
+                  if (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+                          currentPage === page
+                            ? "bg-coffee-600 text-white"
+                            : "bg-white border border-coffee-200 text-coffee-800 hover:bg-coffee-100"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                      <span key={page} className="text-coffee-700">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* 🔔 Toast */}

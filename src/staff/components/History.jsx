@@ -9,6 +9,8 @@ export default function History() {
 	const [primarySort, setPrimarySort] = useState("date");
 	const [secondarySort, setSecondarySort] = useState("none");
 	const [search, setSearch] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage, setItemsPerPage] = useState(10);
 
 	// 🔥 Fetch only completed orders from Firestore (real-time)
 	useEffect(() => {
@@ -86,6 +88,18 @@ export default function History() {
 		return sorted;
 	}, [orders, search, primarySort, secondarySort]);
 
+	// 📄 Pagination logic
+	const totalPages = Math.ceil(visibleOrders.length / itemsPerPage);
+	const paginatedOrders = useMemo(() => {
+		const start = (currentPage - 1) * itemsPerPage;
+		return visibleOrders.slice(start, start + itemsPerPage);
+	}, [visibleOrders, currentPage, itemsPerPage]);
+
+	// Reset to page 1 when filters change
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [search, primarySort, secondarySort]);
+
 	return (
 		<>
 			<div className="p-6 bg-[var(--color-coffee-50)] rounded-2xl border border-[var(--color-coffee-100)] shadow-sm">
@@ -143,10 +157,29 @@ export default function History() {
 									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
 								/>
 							</div>
-
-							
 						</div>
 					</div>
+				</div>
+
+				{/* Items per page selector */}
+				<div className="flex items-center gap-2 mb-4">
+					<label className="text-xs text-[var(--color-coffee-700)]">Show:</label>
+					<select
+						value={itemsPerPage}
+						onChange={(e) => {
+							setItemsPerPage(Number(e.target.value));
+							setCurrentPage(1);
+						}}
+						className="bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] rounded-md px-2 py-1 text-xs shadow-sm"
+					>
+						<option value={5}>5</option>
+						<option value={10}>10</option>
+						<option value={20}>20</option>
+						<option value={50}>50</option>
+					</select>
+					<span className="text-xs text-[var(--color-coffee-700)]">
+						Showing {Math.min((currentPage - 1) * itemsPerPage + 1, visibleOrders.length)} - {Math.min(currentPage * itemsPerPage, visibleOrders.length)} of {visibleOrders.length}
+					</span>
 				</div>
 
 				{/* 🧾 Orders Table */}
@@ -173,7 +206,7 @@ export default function History() {
 									</tr>
 								</thead>
 								<tbody>
-									{visibleOrders.map((o, idx) => (
+									{paginatedOrders.map((o, idx) => (
 
 										
 										<tr
@@ -221,7 +254,7 @@ export default function History() {
 
 						{/* Mobile Cards */}
 						<div className="md:hidden space-y-4">
-							{visibleOrders.map((o) => (
+							{paginatedOrders.map((o) => (
 								<div
 									key={o.id}
 									className="bg-white rounded-xl shadow-sm border border-[var(--color-coffee-100)] p-4"
@@ -261,6 +294,60 @@ export default function History() {
 								</div>
 							))}
 						</div>
+
+						{/* 📄 Pagination Controls */}
+						{totalPages > 1 && (
+							<div className="flex items-center justify-between mt-6 px-2">
+								<button
+									onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+									disabled={currentPage === 1}
+									className="px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+								>
+									← Previous
+								</button>
+
+								<div className="flex items-center gap-2">
+									{[...Array(totalPages)].map((_, i) => {
+										const page = i + 1;
+										// Show first, last, current, and adjacent pages
+										if (
+											page === 1 ||
+											page === totalPages ||
+											(page >= currentPage - 1 && page <= currentPage + 1)
+										) {
+											return (
+												<button
+													key={page}
+													onClick={() => setCurrentPage(page)}
+													className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+														currentPage === page
+															? "bg-[var(--color-coffee-600)] text-white"
+															: "bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] hover:bg-[var(--color-coffee-50)]"
+													}`}
+												>
+													{page}
+												</button>
+											);
+										} else if (page === currentPage - 2 || page === currentPage + 2) {
+											return (
+												<span key={page} className="text-[var(--color-coffee-700)]">
+													...
+												</span>
+											);
+										}
+										return null;
+									})}
+								</div>
+
+								<button
+									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+									disabled={currentPage === totalPages}
+									className="px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+								>
+									Next →
+								</button>
+							</div>
+						)}
 					</>
 				)}
 			</div>

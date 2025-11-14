@@ -87,6 +87,15 @@ function MyContactNumbers() {
             </button>
           </div>
         )}
+
+        {contacts.length > 0 && !showForm && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-full bg-coffee-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-coffee-800 transition-colors text-sm sm:text-base"
+          >
+            Add New Contact Number
+          </button>
+        )}
       </div>
     </div>
   );

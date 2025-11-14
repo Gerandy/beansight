@@ -107,7 +107,7 @@ function ProductDetails() {
             {/* Heart/Favorite Button - Upper right */}
             <button
               onClick={toggleFavorite}
-              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90"
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90 z-20"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart 
@@ -189,7 +189,7 @@ function ProductDetails() {
                 <Ruler className="w-5 h-5 text-[#7D5A50] mt-1" />
                 <div>
                   <label className="block font-semibold mb-3">Dusk and Dawn Sizes</label>
-                  <div className="flex gap-4">
+                  <div className="flex gap-2 sm:gap-4">
                     {[
                       { name: "Dusk", oz: 16 },
                       { name: "Dawn", oz: 22 }
@@ -198,7 +198,7 @@ function ProductDetails() {
                         key={size.name}
                         type="button"
                         onClick={() => setSelectedSize(size.name)}
-                        className={`px-6 py-2 rounded-full font-semibold transition-all ${
+                        className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${
                           selectedSize === size.name
                             ? "bg-[#7D5A50] text-white shadow-md"
                             : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"

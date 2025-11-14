@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Filter, Search } from "lucide-react";
 import {
   collection,
@@ -13,8 +13,10 @@ export default function StaffProductManagement() {
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("Newest");
   const [products, setProducts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // ✅ Realtime listener to Firestore “products” collection
+  // ✅ Realtime listener to Firestore "products" collection
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "Inventory"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -47,23 +49,37 @@ export default function StaffProductManagement() {
   };
 
   // ✅ Apply filters and search
-  const filteredProducts = products
-    .filter((p) => {
-      const q = search.toLowerCase();
-      return (
-        p.item?.toLowerCase().includes(q) ||
-        p.category?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q)
-      );
-    })
-    .filter((p) => (filter === "All" ? true : p.category === filter))
-    .sort((a, b) => {
-      if (sort === "Newest") return b.createdAt?.seconds - a.createdAt?.seconds;
-      if (sort === "Oldest") return a.createdAt?.seconds - b.createdAt?.seconds;
-      if (sort === "Price: Low to High") return a.price - b.price;
-      if (sort === "Price: High to Low") return b.price - a.price;
-      return 0;
-    });
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p) => {
+        const q = search.toLowerCase();
+        return (
+          p.item?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q)
+        );
+      })
+      .filter((p) => (filter === "All" ? true : p.category === filter))
+      .sort((a, b) => {
+        if (sort === "Newest") return b.createdAt?.seconds - a.createdAt?.seconds;
+        if (sort === "Oldest") return a.createdAt?.seconds - b.createdAt?.seconds;
+        if (sort === "Price: Low to High") return a.price - b.price;
+        if (sort === "Price: High to Low") return b.price - a.price;
+        return 0;
+      });
+  }, [products, search, filter, sort]);
+
+  // 📄 Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(start, start + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filter, sort]);
 
   return (
     <div className="p-8 min-h-screen text-[#3c2a1e] bg-[#fffaf5]">
@@ -145,6 +161,27 @@ export default function StaffProductManagement() {
           </div>
         </div>
 
+        {/* Items per page selector */}
+        <div className="flex items-center gap-2 mb-4">
+          <label className="text-xs text-[#8c7a68]">Show:</label>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="bg-white border border-[#f3e7dc] text-[#7a6957] rounded-xl px-2 py-1 text-xs shadow-sm"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span className="text-xs text-[#8c7a68]">
+            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredProducts.length)} - {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length}
+          </span>
+        </div>
+
         {/* Table */}
         <div className="bg-white shadow-sm rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
@@ -158,7 +195,7 @@ export default function StaffProductManagement() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.map((p) => (
+              {paginatedProducts.map((p) => (
                 <tr
                   key={p.id}
                   className="last:border-0 hover:bg-coffee-100 transition-all"
@@ -167,7 +204,6 @@ export default function StaffProductManagement() {
                   <td className="p-4 font-medium">
                     <div className="flex flex-col">
                       <span>{p.name}</span>
-                      
                     </div>
                   </td>
                   <td className="p-4">{p.category}</td>
@@ -189,7 +225,7 @@ export default function StaffProductManagement() {
                 </tr>
               ))}
 
-              {filteredProducts.length === 0 && (
+              {paginatedProducts.length === 0 && (
                 <tr>
                   <td
                     colSpan="5"
@@ -202,6 +238,60 @@ export default function StaffProductManagement() {
             </tbody>
           </table>
         </div>
+
+        {/* 📄 Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 px-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Previous
+            </button>
+
+            <div className="flex items-center gap-2">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                // Show first, last, current, and adjacent pages
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1.5 text-sm rounded-xl font-semibold transition-colors ${
+                        currentPage === page
+                          ? "bg-[#c49a77] text-white"
+                          : "bg-white border border-[#f3e7dc] text-[#7a6957] hover:bg-[#f8eee5]"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <span key={page} className="text-[#8c7a68]">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
