@@ -1,59 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Filter, Search } from "lucide-react";
+import {
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "../../firebase"; // ✅ adjust path if needed
 
 export default function StaffProductManagement() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("Newest");
+  const [products, setProducts] = useState([]);
 
-  const [products, setProducts] = useState([
-    {
-      id: "01",
-      item: "Americano",
-      description: "Strong brewed coffee",
-      category: "Beverage",
-      price: 80,
-      availability: "Available",
-    },
-    {
-      id: "02",
-      item: "Cappuccino Latte",
-      description: "Smooth and creamy coffee",
-      category: "Beverage",
-      price: 80,
-      availability: "Available",
-    },
-    {
-      id: "03",
-      item: "Chocolate Cake",
-      description: "Rich chocolate layered cake",
-      category: "Dessert",
-      price: 120,
-      availability: "Not Available",
-    },
-    {
-      id: "04",
-      item: "Blueberry Muffin",
-      description: "Freshly baked muffin with blueberries",
-      category: "Dessert",
-      price: 60,
-      availability: "Available",
-    },
-  ]);
+  // ✅ Realtime listener to Firestore “products” collection
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "Inventory"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setProducts(data);
+    });
+    return () => unsub();
+  }, []);
 
-  // ✅ Toggle availability
-  const toggleAvailability = (id) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              availability:
-                p.availability === "Available" ? "Not Available" : "Available",
-            }
-          : p
-      )
-    );
+  // ✅ Toggle product availability (update Firestore)
+  const toggleAvailability = async (id, currentAvailability) => {
+    try {
+      const newStatus =
+        currentAvailability === "Available" ? "Not Available" : "Available";
+      const docRef = doc(db, "Inventory", id);
+      await updateDoc(docRef, { availability: newStatus });
+      console.log(`✅ Updated ${id} → ${newStatus}`);
+    } catch (err) {
+      console.error("Error updating product:", err);
+    }
   };
 
   // ✅ Reset filters and search
@@ -65,13 +48,22 @@ export default function StaffProductManagement() {
 
   // ✅ Apply filters and search
   const filteredProducts = products
-    .filter(
-      (p) =>
-        p.item.toLowerCase().includes(search.toLowerCase()) ||
-        p.category.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((p) => (filter === "All" ? true : p.category === filter));
+    .filter((p) => {
+      const q = search.toLowerCase();
+      return (
+        p.item?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q)
+      );
+    })
+    .filter((p) => (filter === "All" ? true : p.category === filter))
+    .sort((a, b) => {
+      if (sort === "Newest") return b.createdAt?.seconds - a.createdAt?.seconds;
+      if (sort === "Oldest") return a.createdAt?.seconds - b.createdAt?.seconds;
+      if (sort === "Price: Low to High") return a.price - b.price;
+      if (sort === "Price: High to Low") return b.price - a.price;
+      return 0;
+    });
 
   return (
     <div className="p-8 min-h-screen text-[#3c2a1e] bg-[#fffaf5]">
@@ -159,7 +151,7 @@ export default function StaffProductManagement() {
             <thead className="bg-coffee-100 text-[#8c7a68] text-left">
               <tr>
                 <th className="p-4">ID</th>
-                <th className="p-4">Item</th>
+                <th className="p-4">Product Name</th>
                 <th className="p-4">Category</th>
                 <th className="p-4">Price</th>
                 <th className="p-4">Availability</th>
@@ -174,17 +166,17 @@ export default function StaffProductManagement() {
                   <td className="p-4">{p.id}</td>
                   <td className="p-4 font-medium">
                     <div className="flex flex-col">
-                      <span>{p.item}</span>
-                      <span className="text-xs text-[#8c7a68]">
-                        {p.description}
-                      </span>
+                      <span>{p.name}</span>
+                      
                     </div>
                   </td>
                   <td className="p-4">{p.category}</td>
                   <td className="p-4">₱{p.price}</td>
                   <td className="p-4">
                     <button
-                      onClick={() => toggleAvailability(p.id)}
+                      onClick={() =>
+                        toggleAvailability(p.id, p.availability)
+                      }
                       className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                         p.availability === "Available"
                           ? "bg-green-100 text-green-700"
@@ -214,4 +206,3 @@ export default function StaffProductManagement() {
     </div>
   );
 }
-

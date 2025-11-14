@@ -1,5 +1,7 @@
 // src/staff/components/OrderSummary.jsx
 import React, { useMemo, useState } from "react";
+import { db } from "../../firebase";
+import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import {
   CreditCard,
   Smartphone,
@@ -10,6 +12,7 @@ import {
   User,
   Percent,
 } from "lucide-react";
+
 
 export default function OrderSummary({ cartItems = [], onComplete = () => {}, onClear = () => {} }) {
 
@@ -38,27 +41,43 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
   const change = Number(cashGiven || 0) - total;
 
   // ACTIONS
-  const handleComplete = () => {
-    if (cartItems.length === 0) return alert("Cart is empty");
-    if (paymentType === "cash" && Number(cashGiven || 0) < total)
-      return alert("Cash given is less than total");
+  const handleComplete = async () => {
+  if (cartItems.length === 0) return alert("Cart is empty");
+  if (paymentType === "cash" && Number(cashGiven || 0) < total)
+    return alert("Cash given is less than total");
 
-    const order = {
-      id: `POS-${Date.now()}`,
-      items: cartItems,
-      subtotal,
-      discountType,
-      discountAmount,
-      tip,
-      total,
-      paymentType,
-      cashGiven: paymentType === "cash" ? Number(cashGiven) : null,
-      customerName,
-      timestamp: new Date().toISOString(),
-    };
+  const orderId = `POS-${Date.now().toString().slice(-6)}`;
 
-    onComplete(order);
+  const orderData = {
+    id: orderId,
+    source: "POS", // 🔵 distinguish POS vs online checkout
+    items: cartItems,
+    subtotal,
+    discountType,
+    discountAmount,
+    tip,
+    total,
+    paymentType,
+    cashGiven: paymentType === "cash" ? Number(cashGiven) : null,
+    customerName: customerName || "Walk-in Customer",
+    status: "Completed",
+    createdAt: serverTimestamp(),
+    completedAt: new Date().toISOString(),
   };
+
+  try {
+    // 🔥 Save to Firestore just like online checkout
+    const ref = doc(collection(db, "orders"), orderId);
+    await setDoc(ref, orderData);
+
+    alert("Sale recorded successfully!");
+    onComplete(orderData);
+  } catch (err) {
+    console.error(err);
+    alert("Failed to save order.");
+  }
+};
+
 
   const handlePrint = () => window.print();
   const handleClear = () => onClear?.();

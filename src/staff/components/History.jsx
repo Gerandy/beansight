@@ -1,73 +1,36 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Eye, X, ChevronDown } from "lucide-react";
-
-const orders = [
-	{
-		id: 1,
-		date: "2025-10-01",
-		time: "10:42 AM",
-		customer: "John Doe",
-		total: 13,
-		status: "Completed",
-		payment: "GCash",
-		type: "Takeout",
-		staff: "Maria",
-		items: [
-			{ name: "Coffee", qty: 2, price: 5 },
-			{ name: "Pastry", qty: 1, price: 3 },
-		],
-	},
-	{
-		id: 2,
-		date: "2025-10-05",
-		time: "12:15 PM",
-		customer: "Jane Smith",
-		total: 16,
-		status: "Completed",
-		payment: "Cash",
-		type: "In-store",
-		staff: "Luis",
-		items: [
-			{ name: "Tea", qty: 1, price: 4 },
-			{ name: "Sandwich", qty: 2, price: 6 },
-		],
-	},
-	{
-		id: 3,
-		date: "2025-09-28",
-		time: "9:00 AM",
-		customer: "Alex Rivera",
-		total: 10,
-		status: "Pending",
-		payment: "Credit Card",
-		type: "Delivery",
-		staff: "Ella",
-		items: [
-			{ name: "Latte", qty: 1, price: 5 },
-			{ name: "Muffin", qty: 1, price: 5 },
-		],
-	},
-	{
-		id: 4,
-		date: "2025-10-02",
-		time: "3:00 PM",
-		customer: "Brian Lee",
-		total: 20,
-		status: "Cancelled",
-		payment: "Cash",
-		type: "Delivery",
-		staff: "Ella",
-		items: [{ name: "Cake", qty: 2, price: 10 }],
-	},
-];
+import { db } from "../../firebase";
+import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 
 export default function History() {
+	const [orders, setOrders] = useState([]);
 	const [selectedOrder, setSelectedOrder] = useState(null);
 	const [primarySort, setPrimarySort] = useState("date");
 	const [secondarySort, setSecondarySort] = useState("none");
 	const [search, setSearch] = useState("");
 
-	// coffee palette (keeps design consistent with OnlineOrders)
+	// 🔥 Fetch only completed orders from Firestore (real-time)
+	useEffect(() => {
+		const ordersRef = collection(db, "orders");
+		const q = query(
+			ordersRef,
+			where("status", "==", "Completed"),
+			
+		);
+
+		const unsubscribe = onSnapshot(q, (snapshot) => {
+			const data = snapshot.docs.map((doc) => ({
+				id: doc.id,
+				...doc.data(),
+			}));
+			setOrders(data);
+		});
+
+		return () => unsubscribe();
+	}, []);
+
+	// 💰 Currency formatter
 	const currency = (v) =>
 		new Intl.NumberFormat("en-PH", {
 			style: "currency",
@@ -77,12 +40,9 @@ export default function History() {
 
 	const sortOptions = [
 		{ value: "date", label: "Date" },
-		{ value: "customer", label: "Customer" },
 		{ value: "total", label: "Total" },
-		{ value: "status", label: "Status" },
 	];
 
-	// Replace getStatusClasses with theme-based classes
 	const getStatusClasses = (s) =>
 		s === "Completed"
 			? "bg-[var(--color-coffee-600)] text-white"
@@ -105,17 +65,17 @@ export default function History() {
 	const compareValues = (a, b, key) => {
 		if (key === "date") return new Date(b.date) - new Date(a.date);
 		if (key === "total") return b.total - a.total;
-		return a[key].toString().localeCompare(b[key].toString());
+		return a[key]?.toString().localeCompare(b[key]?.toString());
 	};
 
 	const visibleOrders = useMemo(() => {
-		const q = search.trim().toLowerCase();
+		const q = search.trim();
 		const filtered = orders.filter((o) => {
 			if (!q) return true;
 			return (
-				o.customer.toLowerCase().includes(q) ||
+				o.customer?.toLowerCase().includes(q) ||
 				String(o.id).includes(q) ||
-				o.status.toLowerCase().includes(q)
+				o.status?.toLowerCase().includes(q)
 			);
 		});
 		const sorted = [...filtered].sort((a, b) => {
@@ -124,7 +84,7 @@ export default function History() {
 			return compareValues(a, b, secondarySort);
 		});
 		return sorted;
-	}, [search, primarySort, secondarySort]);
+	}, [orders, search, primarySort, secondarySort]);
 
 	return (
 		<>
@@ -132,13 +92,14 @@ export default function History() {
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
 					<div>
 						<h2 className="text-2xl font-semibold text-[var(--color-coffee-800)]">
-							 📜 Order History
+							📜 Order History
 						</h2>
 						<p className="text-sm text-[var(--color-coffee-700)]">
-							Past orders and receipts — search, sort, and view details.
+							Completed orders only — search, sort, and view details.
 						</p>
 					</div>
 
+					{/* 🔍 Search + Sorting Controls */}
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
 						<div className="flex items-center bg-white border border-[var(--color-coffee-100)] rounded-md px-2 py-1 gap-2 w-full sm:w-[260px]">
 							<svg
@@ -156,13 +117,14 @@ export default function History() {
 							</svg>
 							<input
 								aria-label="Search history"
-								placeholder="Search id, customer or status..."
+								placeholder="Search Order id#"
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								className="bg-transparent outline-none text-sm text-[var(--color-coffee-800)] w-full"
 							/>
 						</div>
 
+						{/* Sort dropdowns */}
 						<div className="flex items-center gap-2">
 							<div className="relative">
 								<select
@@ -182,45 +144,28 @@ export default function History() {
 								/>
 							</div>
 
-							<div className="relative">
-								<select
-									value={secondarySort}
-									onChange={(e) => setSecondarySort(e.target.value)}
-									className="appearance-none bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-medium py-2 pl-3 pr-8 rounded-md text-sm shadow-sm"
-								>
-									<option value="none">No secondary</option>
-									{sortOptions
-										.filter((o) => o.value !== primarySort)
-										.map((o) => (
-											<option key={o.value} value={o.value}>
-												Then: {o.label}
-											</option>
-										))}
-								</select>
-								<ChevronDown
-									size={16}
-									className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-								/>
-							</div>
+							
 						</div>
 					</div>
 				</div>
 
+				{/* 🧾 Orders Table */}
 				{visibleOrders.length === 0 ? (
 					<div className="py-12 text-center text-[var(--color-coffee-700)]">
-						<p className="mb-3">No history items match your filters.</p>
+						<p className="mb-3">No completed orders yet.</p>
 						<small className="text-xs">
-							Try clearing the search or changing the sort.
+							Completed orders will appear here once marked as done.
 						</small>
 					</div>
 				) : (
 					<>
+						{/* Desktop Table */}
 						<div className="hidden md:block overflow-auto rounded-md border border-[var(--color-coffee-100)] bg-white">
 							<table className="w-full text-sm table-fixed">
 								<thead className="bg-[var(--color-coffee-100)] text-[var(--color-coffee-800)]">
 									<tr>
 										<th className="py-3 px-4 text-left w-[120px]">Order</th>
-										<th className="py-3 px-4 text-left">Customer</th>
+										<th className="py-3 px-50 text-left">Customer</th>
 										<th className="py-3 px-4 text-left w-36">Date</th>
 										<th className="py-3 px-4 text-right w-28">Total</th>
 										<th className="py-3 px-4 text-center w-36">Status</th>
@@ -229,20 +174,29 @@ export default function History() {
 								</thead>
 								<tbody>
 									{visibleOrders.map((o, idx) => (
+
+										
 										<tr
 											key={o.id}
-											className={`border-t hover:bg-[var(--color-coffee-50)] transition-colors ${
+											className={`whitespace-nowrap border-t hover:bg-[var(--color-coffee-50)] transition-colors ${
 												idx % 2 === 0 ? "bg-white" : "bg-[var(--color-coffee-50)]"
 											}`}
 										>
 											<td className="py-3 px-4 font-medium text-[var(--color-coffee-800)]">
 												#{o.id}
 											</td>
-											<td className="py-3 px-4">{o.customer}</td>
-											<td className="py-3 px-4">
+											<td className="py-3 px-50">{o.user?.firstName}</td>
+											<td className="py-3 px-0">
 												{o.date}
 												<div className="text-xs text-[var(--color-coffee-700)]">
-													{o.time}
+													{o.createdAt &&
+													 o.createdAt.toDate().toLocaleString("en-US", {
+													 month: "short",
+													 day: "numeric",
+													 year: "numeric",
+													 hour: "numeric",
+													 minute: "2-digit",
+													})}
 												</div>
 											</td>
 											<td className="py-3 px-4 text-right font-medium">
@@ -265,6 +219,7 @@ export default function History() {
 							</table>
 						</div>
 
+						{/* Mobile Cards */}
 						<div className="md:hidden space-y-4">
 							{visibleOrders.map((o) => (
 								<div
@@ -274,7 +229,7 @@ export default function History() {
 									<div className="flex justify-between items-start gap-3">
 										<div className="flex items-center gap-3">
 											<div className="w-10 h-10 rounded-full bg-[var(--color-coffee-100)] text-[var(--color-coffee-800)] flex items-center justify-center font-semibold">
-												{o.customer[0]}
+												{o.customer?.[0]}
 											</div>
 											<div>
 												<div className="font-medium text-[var(--color-coffee-800)]">
@@ -310,6 +265,7 @@ export default function History() {
 				)}
 			</div>
 
+			{/* 🪟 Modal */}
 			{selectedOrder && (
 				<div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50">
 					<div className="bg-white rounded-2xl shadow-2xl w-[90%] sm:w-full sm:max-w-md p-6 relative">
@@ -325,13 +281,20 @@ export default function History() {
 
 						<div className="text-sm text-[var(--color-coffee-700)] space-y-1">
 							<p>
-								<strong>Date:</strong> {selectedOrder.date} {selectedOrder.time}
+								<strong>Date:</strong> {selectedOrder &&
+													 selectedOrder.createdAt.toDate().toLocaleString("en-US", {
+													 month: "short",
+													 day: "numeric",
+													 year: "numeric",
+													 hour: "numeric",
+													 minute: "2-digit",
+													})} 
 							</p>
 							<p>
-								<strong>Customer:</strong> {selectedOrder.customer}
+								<strong>Customer:</strong> {selectedOrder.user?.firstName}
 							</p>
 							<p>
-								<strong>Payment:</strong> {selectedOrder.payment}
+								<strong>Payment:</strong> {selectedOrder.paymentMethod}
 							</p>
 							<p>
 								<strong>Type:</strong> {selectedOrder.type}
@@ -341,33 +304,32 @@ export default function History() {
 							</p>
 							<p>
 								<strong>Status:</strong>{" "}
-								<span
-									className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${getStatusClasses(
-										selectedOrder.status
-									)}`}
-								>
-									{selectedOrder.status}
-								</span>
+								<StatusBadge status={selectedOrder.status} />
 							</p>
 						</div>
 
-						<div className="mt-4 border-t pt-3">
-							<h4 className="font-semibold mb-2 text-[var(--color-coffee-800)]">
-								Items
-							</h4>
-							<ul className="space-y-1 text-sm text-[var(--color-coffee-700)]">
-								{selectedOrder.items.map((i) => (
-									<li key={i.name} className="flex justify-between">
-										<span>
-											{i.name} x{i.qty}
-										</span>
-										<span className="font-medium">
-											{currency(i.price * i.qty)}
-										</span>
-									</li>
-								))}
-							</ul>
-						</div>
+						{selectedOrder.items && (
+							<div className="mt-4 border-t pt-3">
+								<h4 className="font-semibold mb-2 text-[var(--color-coffee-800)]">
+									Items
+								</h4>
+								
+								<ul className="space-y-1 text-sm text-[var(--color-coffee-700)]">
+									{selectedOrder.items.map((i, idx) => (
+										<li key={idx} className="flex justify-between">
+											<span>
+												{i.name} x{i.quantity}
+												<br></br>
+												Delivery Fee 
+											</span>
+											<span className="font-medium">
+												{currency(i.price * i.quantity + 50)}
+											</span>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
 
 						<div className="mt-4 border-t pt-3 text-right">
 							<p className="text-lg font-bold text-[var(--color-coffee-800)]">
@@ -380,4 +342,3 @@ export default function History() {
 		</>
 	);
 }
-

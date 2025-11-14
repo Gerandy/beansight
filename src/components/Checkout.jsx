@@ -54,8 +54,11 @@ export default function Checkout() {
   // const [appliedPromo, setAppliedPromo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+   const [qrData, setQrData] = useState(null); // 🟢 this stores PayMongo QR response
+
   
-  
+  const [qrPayment, setQrPayment] = useState(null);
+
 
   const [info, setInfo] = useState({
     fullName: "",
@@ -75,62 +78,73 @@ export default function Checkout() {
   const email = userData?.email || ""; 
 
 
-   const handleCheckout = async (userData, contactNum, defaultAddress) => {
+   const handleCheckout = async () => {
+  if (!items.length) return alert("Cart is empty!");
+  setLoading(true);
+
+  const uid = localStorage.getItem("authToken");
+  const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+
+  const orderData = {
+    id: orderId,
+    uid,
+    user: {
+      uid,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      phone: contactNum?.number || "",
+      address: defaultAddress || {},
+    },
+    items,
+    total: grandTotal,
+    status: "Pending",
+    createdAt: serverTimestamp(),
+    paymentMethod: payment.method,
+  };
+
   try {
-    // ✅ Get user UID from localStorage
-    const uid = localStorage.getItem("authToken");
-    if (!uid) return alert("User not logged in");
-
-    // ✅ Get cart from localStorage
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
-    if (cart.length === 0) return alert("Cart is empty!");
-
-    // ✅ Compute total
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-    // ✅ Generate a new unique ID for the order
-    const orderRef = doc(collection(db, "orders")); // this creates a doc ref with auto ID
-    const orderId = orderRef.id;
-
-    // ✅ Prepare order data
-    const orderData = {
-      id: orderId, // store the same ID in the order
-      uid, // user ID
-      user: {
-        uid: uid || "",
-        firstName: firstName,
-        lastName: lastName,
-        email: email,
-        phone: contactNum?.number || "",
-        address: {
-          label: defaultAddress?.label || "",
-          details: defaultAddress?.details || "",
-          city: defaultAddress?.city || "",
-          province: defaultAddress?.province || "",
-          zipcode: defaultAddress?.zipcode || "",
-        },
-      },
-      items: cart,
-      total,
-      status: "Pending",
-      createdAt: serverTimestamp(),
-    };
-
-    // ✅ Save in global orders collection
+    // Save order in Firestore
+    const orderRef = doc(collection(db, "orders"), orderId);
     await setDoc(orderRef, orderData);
 
-    // ✅ Save in user's subcollection with the SAME ID
-    await setDoc(doc(db, "users", uid, "orders", orderId), orderData);
+    if (payment.method === "wallet") {
+      // Generate QRPh payment
+      const qrOptions = {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          authorization: 'Basic c2tfdGVzdF9DUG5KV25FRjdVNUU2eWhGOVRjUW5OUnI6'
+        },
+       body: JSON.stringify({data: {attributes: {kind: 'instore'}}})
+      };
 
-    // ✅ Clear cart
-    localStorage.removeItem("cart");
+      const response = await fetch('https://api.paymongo.com/v1/qrph/generate', qrOptions);
+      const qrData = await response.json();
+      
 
-    alert("Order placed successfully!");
+      if (qrData.data) {
+        // Store QR info in state to display modal
+        setQrPayment(qrData.data.attributes); // make sure you have a state for QR modal
+      } else {
+        console.error(qrData);
+        alert("Failed to generate QR payment.");
+      }
+
+    } else {
+      // Card or COD
+      setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
+      localStorage.removeItem("cart");
+    }
   } catch (err) {
-    console.error("Checkout error:", err);
-    alert("Failed to place order.");
+    console.error(err);
+    alert("Checkout failed.");
   }
+
+  setLoading(false);
 };
+
 
 
 
@@ -260,6 +274,7 @@ const removeItem = (id) => {
   }
 
   return (
+    
     <div className="min-h-screen mt-16 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         <header className="mb-6 flex items-center justify-between">
@@ -280,6 +295,28 @@ const removeItem = (id) => {
 
           </div>
         </header>
+         {/* 🟢 Display QR Code Modal */}
+      {qrData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <h2 className="text-lg font-semibold mb-3">Scan to Pay via QRPH</h2>
+            <img
+              src={qrData.qr_image} // 🔵 PayMongo gives you QR image URL
+              alt="QRPH Code"
+              className="mx-auto w-48 h-48 mb-4"
+            />
+            <p className="text-sm text-gray-500 mb-4">
+              Amount: ₱{grandTotal.toLocaleString()}
+            </p>
+            <button
+              onClick={() => setQrData(null)}
+              className="bg-gray-700 text-white px-4 py-2 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -442,10 +479,9 @@ const removeItem = (id) => {
                     <div className="text-sm text-gray-500">Order #{success.id} — {success.eta}</div>
                   </div>
                 </div>
-                <div className="mt-4 text-sm">We've emailed a receipt to <span className="font-medium">{info.email}</span>. You can track your order in the Orders page.</div>
+                <div className="mt-4 text-sm">You can track your order in the Orders page.</div>
                 <div className="mt-6 flex justify-end gap-3">
-                  <button onClick={() => setSuccess(null)} className="px-4 py-2 rounded-md border">Close</button>
-                  <a href="#" className="px-4 py-2 rounded-md bg-yellow-950 text-white">View order</a>
+                  <a href="/orders" className="px-4 py-2 rounded-md bg-yellow-950 text-white">View order</a>
                 </div>
               </motion.div>
               <ConfettiLite />
