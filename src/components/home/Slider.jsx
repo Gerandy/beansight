@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function Slider() {
   const [slides, setSlides] = useState([]);
@@ -10,8 +11,9 @@ export default function Slider() {
   const [direction, setDirection] = useState("right");
   const [waveBtn, setWaveBtn] = useState("");
   const timerRef = useRef(null);
+  const navigate = useNavigate();
 
-  const AUTO_INTERVAL = 3000;
+  const AUTO_INTERVAL = 7000;
 
   // ⬇️ Fetch banners from Firestore
   useEffect(() => {
@@ -36,19 +38,23 @@ export default function Slider() {
   const startSwipe = (dir) => {
     if (animating || slides.length === 0) return;
 
-    let nextIdx =
-      dir === "right"
-        ? (current + 1) % slides.length
-        : (current - 1 + slides.length) % slides.length;
+    setCurrent((prevCurrent) => {
+      const nextIdx =
+        dir === "right"
+          ? (prevCurrent + 1) % slides.length
+          : (prevCurrent - 1 + slides.length) % slides.length;
 
-    setDirection(dir);
-    setNext(nextIdx);
-    setAnimating(true);
+      setDirection(dir);
+      setNext(nextIdx);
+      setAnimating(true);
 
-    setTimeout(() => {
-      setCurrent(nextIdx);
-      setAnimating(false);
-    }, 350);
+      setTimeout(() => {
+        setCurrent(nextIdx);
+        setAnimating(false);
+      }, 350);
+
+      return prevCurrent; // Return current state unchanged for now
+    });
   };
 
   // ⬇️ Autoplay
@@ -57,10 +63,14 @@ export default function Slider() {
 
     if (timerRef.current) clearInterval(timerRef.current);
 
-    timerRef.current = setInterval(() => startSwipe("right"), AUTO_INTERVAL);
+    timerRef.current = setInterval(() => {
+      startSwipe("right");
+    }, AUTO_INTERVAL);
 
-    return () => clearInterval(timerRef.current);
-  }, [current, slides]);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [slides.length, animating]); // Add animating to dependencies
 
   const handleBtnClick = (side, fn) => {
     setWaveBtn(side);
@@ -98,16 +108,21 @@ export default function Slider() {
         <div
           className="group relative w-full aspect-[2.8/1] bg-white rounded-2xl shadow-xl flex items-center justify-center overflow-hidden"
           onMouseEnter={() => {
-            clearInterval(timerRef.current);
+            if (timerRef.current) clearInterval(timerRef.current);
             timerRef.current = null;
           }}
           onMouseLeave={() => {
-            timerRef.current = setInterval(() => startSwipe("right"), AUTO_INTERVAL);
+            if (!animating) {
+              timerRef.current = setInterval(() => startSwipe("right"), AUTO_INTERVAL);
+            }
           }}
         >
           {/* Left Button */}
           <button
-            onClick={() => handleBtnClick("left", () => startSwipe("left"))}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleBtnClick("left", () => startSwipe("left"));
+            }}
             className={`
               absolute left-4 top-1/2 -translate-y-1/2 z-30
               bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
@@ -122,7 +137,10 @@ export default function Slider() {
           </button>
 
           {/* Images */}
-          <div className="w-full h-full flex items-center justify-center">
+          <div 
+            className="w-full h-full flex items-center justify-center cursor-pointer"
+            onClick={() => navigate('/menu')}
+          >
             <img
               src={slides[current].img}
               alt=""
@@ -137,7 +155,10 @@ export default function Slider() {
 
           {/* Right Button */}
           <button
-            onClick={() => handleBtnClick("right", () => startSwipe("right"))}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleBtnClick("right", () => startSwipe("right"));
+            }}
             className={`
               absolute right-4 top-1/2 -translate-y-1/2 z-30
               bg-yellow-950 text-white rounded-full w-9 h-9 flex items-center justify-center
@@ -150,6 +171,35 @@ export default function Slider() {
               &#8250;
             </span>
           </button>
+
+          {/* Indicator Dots */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (index !== current && !animating) {
+                    setDirection(index > current ? "right" : "left");
+                    setNext(index);
+                    setAnimating(true);
+                    setTimeout(() => {
+                      setCurrent(index);
+                      setAnimating(false);
+                    }, 350);
+                  }
+                }}
+                className={`
+                  w-2 h-2 rounded-full transition-all duration-300
+                  ${index === current 
+                    ? "bg-yellow-950 w-6" 
+                    : "bg-white/60 hover:bg-white/80"
+                  }
+                `}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Animations */}

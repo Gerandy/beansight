@@ -26,6 +26,3 @@ function MenuCard({ name, price, img, isNew }) {
 }
 
 export default MenuCard;
-
-
-
