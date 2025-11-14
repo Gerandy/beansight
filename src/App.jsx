@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
 import { useState } from "react";
 import MobileMenu from "./components/MobileMenu";
@@ -17,7 +17,6 @@ import Checkout from "./components/Checkout";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import RequireAuth from "./components/auth/RequireAuth";
-
 
 // ----- Admin -----
 import AdminLayout from "./admin/layouts/Adminlayouts";
@@ -57,9 +56,13 @@ function App() {
                 setCartOpen={setCartOpen}
               />
               <MobileMenu menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+
               <main className="flex-grow">
                 <Routes>
-                  <Route path="/" element={<Home />} />
+
+                  {/* 🔥 Redirect root to /home */}
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+
                   <Route path="/home" element={<Home />} />
                   <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
                   <Route path="/menu/product-details/:id" element={<ProductDetails />} />
@@ -67,6 +70,7 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+
                   <Route
                     path="/Myaccount"
                     element={
@@ -81,8 +85,10 @@ function App() {
                     <Route path="contacts" element={<MyContactNumbers />} />
                     <Route path="favorites" element={<MyFavorites />} />
                   </Route>
+
                 </Routes>
               </main>
+
               <Footer />
             </div>
           }
@@ -102,7 +108,7 @@ function App() {
           <Route path="order-management" element={<OrderManagement />} />
         </Route>
 
-        {/* ---------- Staff Site (POS) ---------- */}
+        {/* ---------- Staff Site ---------- */}
         <Route path="/staff" element={<StaffLayout />}>
           <Route index element={<PosPage />} />
           <Route path="pos" element={<PosPage />} />
@@ -110,10 +116,10 @@ function App() {
           <Route path="history" element={<History />} />
           <Route path="products" element={<StaffProduct />} />
         </Route>
+
       </Routes>
     </Router>
   );
 }
 
 export default App;
-
