@@ -1,4 +1,4 @@
-/* CSS Code */
+
 .swiper-wrapper {
 width: 100%;
 height: max-content !important;
@@ -10,3 +10,19 @@ position: relative;
 .swiper-pagination-bullet {
 background: #4f46e5;
 }
+
+
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important; 
+  
+  width: 2.5rem; 
+  height: 2.5rem;
+  border-radius: 9999px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+
+
