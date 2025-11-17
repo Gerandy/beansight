@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Eye, X, ChevronDown } from "lucide-react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { select } from "framer-motion/m";
 
 export default function History() {
 	const [orders, setOrders] = useState([]);
@@ -378,13 +379,13 @@ export default function History() {
 													})} 
 							</p>
 							<p>
-								<strong>Customer:</strong> {selectedOrder.user?.firstName}
+								<strong>Customer:</strong> {selectedOrder.user?.firstName || selectedOrder.customerName}
 							</p>
 							<p>
-								<strong>Payment:</strong> {selectedOrder.paymentMethod}
+								<strong>Payment:</strong> {selectedOrder.paymentMethod ||selectedOrder.paymentType}
 							</p>
 							<p>
-								<strong>Type:</strong> {selectedOrder.type}
+								<strong>Type:</strong> {selectedOrder.source === "POS" ? "Walk In" : "Online"}
 							</p>
 							<p>
 								<strong>Cashier:</strong> {selectedOrder.staff}
@@ -405,12 +406,12 @@ export default function History() {
 									{selectedOrder.items.map((i, idx) => (
 										<li key={idx} className="flex justify-between">
 											<span>
-												{i.name} x{i.quantity}
+												{i.name} x{i.quantity || i.qty}
 												<br></br>
-												Delivery Fee 
+												
 											</span>
 											<span className="font-medium">
-												{currency(i.price * i.quantity + 50)}
+												{currency(i.price * i.quantity + 50 || i.price * i.qty)}
 											</span>
 										</li>
 									))}

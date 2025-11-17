@@ -30,16 +30,18 @@ export default function StaffProductManagement() {
 
   // ✅ Toggle product availability (update Firestore)
   const toggleAvailability = async (id, currentAvailability) => {
-    try {
-      const newStatus =
-        currentAvailability === "Available" ? "Not Available" : "Available";
-      const docRef = doc(db, "Inventory", id);
-      await updateDoc(docRef, { availability: newStatus });
-      console.log(`✅ Updated ${id} → ${newStatus}`);
-    } catch (err) {
-      console.error("Error updating product:", err);
-    }
-  };
+  try {
+    // currentAvailability is TRUE or FALSE from Firestore
+    const newStatus = !currentAvailability; // flip boolean
+
+    const docRef = doc(db, "Inventory", id);
+    await updateDoc(docRef, { availability: newStatus });
+
+    console.log(`Updated availability ${id} → ${newStatus}`);
+  } catch (err) {
+    console.error("Error updating product:", err);
+  }
+};
 
   // ✅ Reset filters and search
   const handleReset = () => {
@@ -210,16 +212,12 @@ export default function StaffProductManagement() {
                   <td className="p-4">₱{p.price}</td>
                   <td className="p-4">
                     <button
-                      onClick={() =>
-                        toggleAvailability(p.id, p.availability)
-                      }
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
-                        p.availability === "Available"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      onClick={() => toggleAvailability(p.id, p.availability)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 
+                        ${p.availability ? "bg-rgreened-100 text-green-700" : "bg-red-100 text-red-700"}
+                      `}
                     >
-                      {p.availability}
+                      {p.availability ? " Available" : " Not Available"}
                     </button>
                   </td>
                 </tr>

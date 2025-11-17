@@ -521,7 +521,7 @@ export default function ProductManagement() {
                         <button
                           onClick={async () => {
                             await checkAvailability(p.id);
-                            await toggleAvailability(p.id, p.availability);
+                            
                           }}
                           className={`text-xs mt-1 px-2 py-1 rounded-full whitespace-nowrap ${
                             p.availability 
