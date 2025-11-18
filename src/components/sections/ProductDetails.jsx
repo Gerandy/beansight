@@ -66,6 +66,7 @@ function ProductDetails() {
       quantity,
       img: product.img || logo,
       size: selectedSize,
+      category: product.category
     };
 
     addToCart(cartItem);

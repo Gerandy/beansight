@@ -1,25 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase"; // adjust path if needed
 
 export default function StaffLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [newOrderCount, setNewOrderCount] = useState(3);
+  const [newOrderCount, setNewOrderCount] = useState(0);
   const location = useLocation();
   const prevCountRef = useRef(newOrderCount);
   const audioRef = useRef(null);
 
   // 🧠 Reset new order badge when on Online Orders page
-  useEffect(() => {
-    if (location.pathname.includes("online-orders")) {
-      setNewOrderCount(0);
-    }
-  }, [location]);
+useEffect(() => {
+  const q = query(
+    collection(db, "orders"),
+    where("status", "==", "Pending")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setNewOrderCount(snapshot.size);
+  });
+
+  return () => unsubscribe();
+}, []);
 
   // 🔔 Play sound when new order count increases
   useEffect(() => {
     if (newOrderCount > prevCountRef.current) {
       audioRef.current?.play();
     }
+    
     prevCountRef.current = newOrderCount;
   }, [newOrderCount]);
 

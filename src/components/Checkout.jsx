@@ -97,6 +97,7 @@ export default function Checkout() {
     total: grandTotal,
     status: "Pending",
     createdAt: serverTimestamp(),
+    completedAt: new Date().toISOString(),
     paymentMethod: payment.method,
   };
 

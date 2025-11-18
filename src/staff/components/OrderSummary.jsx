@@ -28,12 +28,16 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     senior: { label: "Senior Citizen", value: 20 },
     pwd: { label: "PWD", value: 20 },
   };
+  const normalizedCart = cartItems.map(item => ({
+  ...item,
+  quantity: item.quantity ?? item.qty ?? 1,
+  }));
 
   // COMPUTATIONS
-  const subtotal = useMemo(
-    () => cartItems.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0),
-    [cartItems]
-  );
+ const subtotal = useMemo(
+  () => normalizedCart.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
+  [normalizedCart]
+);
 
   const discountAmount = (subtotal * discountTypes[discountType].value) / 100;
   const tipAmount = (subtotal * tip) / 100;
@@ -51,7 +55,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
   const orderData = {
     id: orderId,
     source: "POS", // 🔵 distinguish POS vs online checkout
-    items: cartItems,
+    items: normalizedCart,
     subtotal,
     discountType,
     discountAmount,

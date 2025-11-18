@@ -138,12 +138,21 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
               <div className="text-sm font-semibold text-coffee-800">
                 ₱{Number(p.price).toFixed(2)}
               </div>
-              <button
-                onClick={() => onAdd(p)}
-                className="flex items-center gap-1 px-3 py-1.5 bg-coffee-500 text-white rounded-md text-xs sm:text-sm hover:bg-coffee-600 active:scale-95 transition-all shadow-sm"
-              >
-                <PlusCircle className="w-4 h-4" /> Add
-              </button>
+             <button
+              onClick={() => {
+                if (!p.availability) return; 
+                  onAdd(p);
+              }}
+              disabled={!p.availability}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm active:scale-95 transition-all shadow-sm
+                ${
+                  p.availability
+                    ? "bg-coffee-500 text-white hover:bg-coffee-600"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
+            >
+              <PlusCircle className="w-4 h-4" /> Add
+            </button>
             </div>
           </div>
         ))}

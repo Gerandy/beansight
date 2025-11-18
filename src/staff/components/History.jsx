@@ -219,7 +219,7 @@ export default function History() {
 											<td className="py-3 px-4 font-medium text-[var(--color-coffee-800)]">
 												#{o.id}
 											</td>
-											<td className="py-3 px-50">{o.user?.firstName}</td>
+											<td className="py-3 px-50">{o.user?.firstName || o?.customerName}</td>
 											<td className="py-3 px-0">
 												{o.date}
 												<div className="text-xs text-[var(--color-coffee-700)]">
@@ -406,12 +406,12 @@ export default function History() {
 									{selectedOrder.items.map((i, idx) => (
 										<li key={idx} className="flex justify-between">
 											<span>
-												{i.name} x{i.quantity || i.qty}
+												{i.name} x{i.quantity}
 												<br></br>
 												
 											</span>
 											<span className="font-medium">
-												{currency(i.price * i.quantity + 50 || i.price * i.qty)}
+												{currency(i.price * i.quantity)}
 											</span>
 										</li>
 									))}

@@ -18,6 +18,36 @@ import { Calendar } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
 import { collection, getDocs } from "firebase/firestore";
 
+// Helper to calculate % change
+function calcPercentageChange(current, previous) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
+
+// Helper to check if a date is in this week/month/year
+function filterByPeriod(date, period) {
+  const d = new Date(date);
+  const now = new Date();
+
+  if (period === "This Week") {
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    return d >= startOfWeek && d <= endOfWeek;
+  }
+
+  if (period === "This Month") {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
+
+  if (period === "This Year") {
+    return d.getFullYear() === now.getFullYear();
+  }
+
+  return false;
+}
+
 export default function Dashboard() {
   const [dateRange, setDateRange] = useState("This Week");
   const [orders, setOrders] = useState([]);
@@ -29,7 +59,7 @@ export default function Dashboard() {
     const fetchOrders = async () => {
       try {
         const snapshot = await getDocs(collection(db, "orders"));
-        const data = snapshot.docs.map(doc => doc.data());
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setOrders(data);
       } catch (err) {
         console.error("Error fetching orders:", err);
@@ -43,7 +73,7 @@ export default function Dashboard() {
   // Compute Dashboard Analytics
   // -------------------------------
   const {
-    totalSalesToday,
+    totalSales,
     totalOrders,
     newCustomersCount,
     menuItemsSold,
@@ -52,89 +82,134 @@ export default function Dashboard() {
     topItems,
     customerData,
     staffData,
-    recentOrders
+    recentOrders,
+    kpiChanges
   } = useMemo(() => {
-    const today = new Date();
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-    // KPI Computations
-    let totalSalesToday = 0;
-    let totalOrders = orders.length;
-    let menuItemsSold = 0;
-    const customerSet = new Set();
+    // Separate orders by current and previous period
+    const now = new Date();
+    const getPreviousPeriod = (period) => {
+      if (period === "This Week") {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        const startPrevWeek = new Date(startOfWeek);
+        startPrevWeek.setDate(startPrevWeek.getDate() - 7);
+        const endPrevWeek = new Date(startOfWeek);
+        endPrevWeek.setDate(endPrevWeek.getDate() - 1);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= startPrevWeek && d <= endPrevWeek;
+        });
+      }
+      if (period === "This Month") {
+        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= prevMonth && d <= nextMonth;
+        });
+      }
+      if (period === "This Year") {
+        const prevYear = new Date(now.getFullYear() - 1, 0, 1);
+        const endPrevYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= prevYear && d <= endPrevYear;
+        });
+      }
+      return [];
+    };
 
-    // Analytics data
-    const salesMap = {}; // day -> sales
+    const previousOrders = getPreviousPeriod(dateRange);
+
+    // KPI calculations
+    let totalSales = 0;
+    let menuItemsSold = 0;
+    let totalOrders = 0;
+    const customerSet = new Set();
+    const salesMap = {};
     const categoryMap = {};
     const topItemsMap = {};
-    const staffMap = {}; // adjust if you track cashier/staff
-
-    const recentOrders = [...orders].sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt)).slice(0, 10);
+    const staffMap = {};
 
     orders.forEach(order => {
       const completedDate = new Date(order.completedAt);
+      if (filterByPeriod(completedDate, dateRange)) {
+        totalSales += order.total;
+        console.log(order.total);
 
-      // Total Sales Today
-      if (completedDate.toDateString() === today.toDateString()) {
-        totalSalesToday += order.total;
+        totalOrders += 1;
+        if (!customerSet.has(order.customerName)) customerSet.add(order.customerName);
+
+        order.items.forEach(item => {
+          categoryMap[item.category] = (categoryMap[item.category] || 0) + item.quantity;
+          if (!topItemsMap[item.name]) topItemsMap[item.name] = { id: item.id, name: item.name, sales: 0 };
+          topItemsMap[item.name].sales += item.quantity;
+          menuItemsSold += item.quantity;
+        });
+
+        const staff = order.cashierName || "Unknown";
+        staffMap[staff] = (staffMap[staff] || 0) + order.total;
+
+        // Sales trend
+        const day = dayNames[completedDate.getDay()];
+        salesMap[day] = (salesMap[day] || 0) + order.total;
       }
-
-      // Customer tracking
-      if (!customerSet.has(order.customerName)) customerSet.add(order.customerName);
-
-      // Sales trend by day
-      const day = dayNames[completedDate.getDay()];
-      salesMap[day] = (salesMap[day] || 0) + order.total;
-
-      // Menu Performance & Top Items
-      order.items.forEach(item => {
-        // Category
-        categoryMap[item.category] = (categoryMap[item.category] || 0) + item.qty;
-        // Top Items
-        if (!topItemsMap[item.name]) topItemsMap[item.name] = { id: item.id, name: item.name, sales: 0 };
-        topItemsMap[item.name].sales += item.qty;
-        // Total items sold
-        menuItemsSold += item.qty;
-      });
-
-      // Staff performance (if you have cashier/staff field)
-      const staff = order.cashierName || "Unknown";
-      staffMap[staff] = (staffMap[staff] || 0) + order.total;
     });
 
-    // Sales chart data
+    // Previous period totals
+    let prevTotalSales = 0;
+    let prevMenuItems = 0;
+    let prevTotalOrders = previousOrders.length;
+    const prevCustomerSet = new Set();
+    previousOrders.forEach(order => {
+      prevTotalSales += order.total;
+      order.items.forEach(item => prevMenuItems += item.quantity);
+      if (!prevCustomerSet.has(order.customerName)) prevCustomerSet.add(order.customerName);
+    });
+    const prevNewCustomers = prevCustomerSet.size;
+
+    const kpiChanges = {
+      totalSales: calcPercentageChange(totalSales, prevTotalSales),
+      totalOrders: calcPercentageChange(totalOrders, prevTotalOrders),
+      menuItemsSold: calcPercentageChange(menuItemsSold, prevMenuItems),
+      newCustomers: calcPercentageChange(customerSet.size, prevNewCustomers),
+    };
+
+    // Chart & Table Data
     const salesData = dayNames.map(day => ({ day, sales: salesMap[day] || 0 }));
-
-    // Category chart data
     const categoryData = Object.entries(categoryMap).map(([category, value]) => ({ category, value }));
-
-    // Top items chart data (top 5)
     const topItems = Object.values(topItemsMap).sort((a, b) => b.sales - a.sales).slice(0, 5);
-
-    // Customer analytics
-    const newCustomersCount = customerSet.size; // total unique customers
     const customerData = [
-      { name: "Returning", value: orders.length - newCustomersCount },
-      { name: "New", value: newCustomersCount },
+      { name: "Returning", value: orders.length - customerSet.size },
+      { name: "New", value: customerSet.size },
     ];
-
-    // Staff analytics
     const staffData = Object.entries(staffMap).map(([name, value]) => ({ name, value }));
+    const recentOrders = [...orders].sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt)).slice(0, 10);
 
-    return { totalSalesToday, totalOrders, newCustomersCount, menuItemsSold, salesData, categoryData, topItems, customerData, staffData, recentOrders };
-  }, [orders]);
+    return {
+      totalSales,
+      totalOrders,
+      newCustomersCount: customerSet.size,
+      menuItemsSold,
+      salesData,
+      categoryData,
+      topItems,
+      customerData,
+      staffData,
+      recentOrders,
+      kpiChanges,
+    };
+  }, [orders, dateRange]);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-coffee-900">
-            ☕ Dashboard Overview
-          </h1>
-          <p className="text-coffee-600 text-sm">
-            Welcome back! Here's your latest business summary.
-          </p>
+          <h1 className="text-3xl font-extrabold text-coffee-900">☕ Dashboard Overview</h1>
+          <p className="text-coffee-600 text-sm">Welcome back! Here's your latest business summary.</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
           <Calendar className="text-coffee-600 w-4 h-4" />
@@ -153,10 +228,10 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {[
-          { title: "Total Sales Today", value: `₱${totalSalesToday.toLocaleString()}`, change: "▲ 12%" },
-          { title: "Total Orders", value: totalOrders, change: "▲ 5%" },
-          { title: "New Customers", value: newCustomersCount, change: "▲ 9%" },
-          { title: "Menu Items Sold", value: menuItemsSold, change: "▲ 7%" },
+          { title: "Total Sales", value: `₱${totalSales.toLocaleString()}`, change: `▲ ${kpiChanges.totalSales.toFixed(1)}%` },
+          { title: "Total Orders", value: totalOrders, change: `▲ ${kpiChanges.totalOrders.toFixed(1)}%` },
+          { title: "New Customers", value: newCustomersCount, change: `▲ ${kpiChanges.newCustomers.toFixed(1)}%` },
+          { title: "Menu Items Sold", value: menuItemsSold, change: `▲ ${kpiChanges.menuItemsSold.toFixed(1)}%` },
         ].map((card, i) => (
           <div
             key={i}
@@ -168,7 +243,6 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Trend */}
@@ -292,6 +366,11 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+    
+
+      {/* Charts Section */}
+      {/* ...rest of charts, tables, and layout remain the same, using salesData, categoryData, topItems, customerData, staffData, recentOrders */}
     </div>
+    
   );
 }
