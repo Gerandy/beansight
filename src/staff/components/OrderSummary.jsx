@@ -51,11 +51,13 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     return alert("Cash given is less than total");
 
   const orderId = `POS-${Date.now().toString().slice(-6)}`;
+  const username = {customerName,uid:"walk-in"};
 
   const orderData = {
     id: orderId,
     source: "POS", // 🔵 distinguish POS vs online checkout
     items: normalizedCart,
+    user: username,
     subtotal,
     discountType,
     discountAmount,
@@ -63,7 +65,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     total,
     paymentType,
     cashGiven: paymentType === "cash" ? Number(cashGiven) : null,
-    customerName: customerName || "Walk-in Customer",
+    // customerName: customerName || "Walk-in Customer",
     status: "Completed",
     createdAt: serverTimestamp(),
     completedAt: new Date().toISOString(),

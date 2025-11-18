@@ -219,7 +219,7 @@ export default function History() {
 											<td className="py-3 px-4 font-medium text-[var(--color-coffee-800)]">
 												#{o.id}
 											</td>
-											<td className="py-3 px-50">{o.user?.firstName || o?.customerName}</td>
+											<td className="py-3 px-50">{o.user?.firstName || o.user?.customerName || "Anonymous"}</td>
 											<td className="py-3 px-0">
 												{o.date}
 												<div className="text-xs text-[var(--color-coffee-700)]">
