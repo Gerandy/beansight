@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useData } from "../datafetcher";
 import { collection, addDoc, serverTimestamp, doc, setDoc  } from "firebase/firestore";
 import { db } from "../firebase";
+import Map from "./maps";
 
 
 import {
@@ -19,6 +20,12 @@ import {
   Minus,
   Eye,
 } from "lucide-react";
+
+
+
+
+
+
 
 
   
@@ -47,11 +54,17 @@ const SAMPLE_ITEMS = [
 
 
 export default function Checkout() {
+  const [location, setLocation] = useState(null);
+
+  const handleLocationSelect = (coords) => {
+    console.log("Selected:", coords);
+    setLocation(coords);
+  }
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-   const [qrData, setQrData] = useState(null); // 🟢 this stores PayMongo QR response
+  const [qrData, setQrData] = useState(null); 
 
   
   const [qrPayment, setQrPayment] = useState(null);
@@ -378,7 +391,10 @@ const removeItem = (id) => {
               ) : (
                 <div className="mt-4">
                   <p className="text-sm">Pickup location: <span className="font-medium">{shipping.pickupLocation}</span></p>
-                  <div className="mt-3 p-3 border border-dashed border-gray-200 rounded-lg">Map placeholder — embed your map here.</div>
+                  <div className="mt-3 p-3 border border-dashed border-gray-200 rounded-lg"> <Map disableClick={false} Select={(coords) => setCustomerLocation(coords)} /></div>
+                   
+
+      
                 </div>
               )}
             </SectionCard>
@@ -386,31 +402,33 @@ const removeItem = (id) => {
             {/* Payment */}
             <SectionCard title="Payment" icon={<CreditCard size={18} />}>
               <div className="flex gap-3">
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${payment.method === 'card' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="pay" checked={payment.method === 'card'} onChange={() => setPayment({ ...payment, method: 'card' })} className="hidden" />
-                  Card
-                </label>
+                
                 <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${payment.method === 'cod' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
                   <input type="radio" name="pay" checked={payment.method === 'cod'} onChange={() => setPayment({ ...payment, method: 'cod' })} className="hidden" />
                   Cash on delivery
                 </label>
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => setPayment({ ...payment, method: 'wallet' })} className="hidden" />
+                {/* <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
+                  <input   type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => setPayment({ ...payment, method: 'wallet' })} className="hidden" disabled/>
                   GCash / Paymaya
+                </label> */}
+                <label
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-not-allowed 
+                    ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200 text-gray-400'} 
+                    ${true ? 'opacity-50' : ''}`} 
+                >
+                  <input
+                    type="radio"
+                    name="pay"
+                    checked={payment.method === 'wallet'}
+                    onChange={() => setPayment({ ...payment, method: 'wallet' })}
+                    className="hidden"
+                    disabled
+                  />
+                  GCash / Paymaya (comming soon)
                 </label>
               </div>
 
-              {payment.method === 'card' && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <Input label="Card number" value={payment.cardNumber} onChange={v => setPayment({ ...payment, cardNumber: v })} placeholder="1234 5678 9012 3456" />
-                  <Input label="Expiry" value={payment.expiry} onChange={v => setPayment({ ...payment, expiry: v })} placeholder="MM/YY" />
-                  <Input label="CVV" value={payment.cvv} onChange={v => setPayment({ ...payment, cvv: v })} placeholder="***" />
-                  <label className="flex items-center gap-2 col-span-1 md:col-span-3">
-                    <input type="checkbox" checked={payment.saveCard} onChange={e => setPayment({ ...payment, saveCard: e.target.checked })} />
-                    <span className="text-sm">Save card for future purchases</span>
-                  </label>
-                </div>
-              )}
+              
             </SectionCard>
 
           </div>
