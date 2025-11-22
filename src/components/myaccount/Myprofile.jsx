@@ -118,15 +118,7 @@ function MyProfile() {
                   disabled
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-coffee-800 mb-2">Date of Birth</label>
-                <input
-                  type="date"
-                  value={profile.dob}
-                  className="w-full p-3 sm:p-4 rounded-lg bg-coffee-100 text-coffee-900 border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-coffee-500"
-                  readOnly
-                />
-              </div>
+              
             </>
           )}
 

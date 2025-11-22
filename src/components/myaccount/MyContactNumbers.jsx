@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
-import { Trash2 } from "lucide-react";
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { Trash2, Edit2, Check, X } from "lucide-react";
 
 function MyContactNumbers() {
   const [contacts, setContacts] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [newNumber, setNewNumber] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editingNumber, setEditingNumber] = useState("");
 
   const userId = localStorage.getItem("authToken");
 
@@ -30,10 +32,40 @@ function MyContactNumbers() {
       await addDoc(collection(db, "users", userId, "contactNumber"), { number: newNumber });
       setNewNumber("");
       setShowForm(false);
-      fetchContacts(); // refresh list
+      fetchContacts();
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleDeleteContact = async (id) => {
+    try {
+      await deleteDoc(doc(db, "users", userId, "contactNumber", id));
+      fetchContacts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEditContact = (contact) => {
+    setEditingId(contact.id);
+    setEditingNumber(contact.number);
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await updateDoc(doc(db, "users", userId, "contactNumber", editingId), { number: editingNumber });
+      setEditingId(null);
+      setEditingNumber("");
+      fetchContacts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingNumber("");
   };
 
   return (
@@ -59,15 +91,33 @@ function MyContactNumbers() {
 
         {contacts.map(contact => (
           <div key={contact.id} className="flex items-center gap-3 border border-coffee-200 p-4 rounded-lg bg-coffee-50">
-            <span className="flex-1 text-coffee-900">{contact.number}</span>
-            <button className="text-coffee-600 hover:text-red-600 transition-colors">
-              <Trash2 size={18} />
-            </button>
+            {editingId === contact.id ? (
+              <>
+                <input
+                  type="text"
+                  value={editingNumber}
+                  onChange={(e) => setEditingNumber(e.target.value)}
+                  className="flex-1 p-2 border border-coffee-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-coffee-500"
+                />
+                <button onClick={handleSaveEdit} className="text-green-600 hover:text-green-800"><Check size={18} /></button>
+                <button onClick={handleCancelEdit} className="text-red-600 hover:text-red-800"><X size={18} /></button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-coffee-900">{contact.number}</span>
+                <button onClick={() => handleEditContact(contact)} className="text-coffee-600 hover:text-blue-600 transition-colors mr-2">
+                  <Edit2 size={18} />
+                </button>
+                <button onClick={() => handleDeleteContact(contact.id)} className="text-coffee-600 hover:text-red-600 transition-colors">
+                  <Trash2 size={18} />
+                </button>
+              </>
+            )}
           </div>
         ))}
 
         {showForm && (
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center mt-2">
             <span className="px-3 py-2 bg-coffee-100 border border-coffee-200 rounded-l-lg text-coffee-800 font-medium">
               +63
             </span>
@@ -88,10 +138,10 @@ function MyContactNumbers() {
           </div>
         )}
 
-        {contacts.length > 0 && !showForm && (
+        {contacts.length > 1 && !showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="w-full bg-coffee-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-coffee-800 transition-colors text-sm sm:text-base"
+            className="w-full bg-coffee-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-coffee-800 transition-colors text-sm sm:text-base mt-2"
           >
             Add New Contact Number
           </button>

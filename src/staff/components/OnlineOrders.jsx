@@ -30,19 +30,7 @@ export default function OnlineOrders() {
       maximumFractionDigits: 0,
     }).format(v);
 
-    seEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setOrders(ordersData);
-
-      // Play sound for new orders
-      if (ordersData.length > orders.length) {
-        new Audio(newOrderSound).play();
-      }
-    });
-
-    return () => unsubscribe();
-  }, [orders]);
+    
 
   const StatusBadge = ({ status }) => {
     const map = {
