@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import newOrderSound from "/sounds/new-order.mp3";
 
 export default function OnlineOrders() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,7 @@ export default function OnlineOrders() {
   const [toast, setToast] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
 
   const nextStatusMap = {
     Pending: "Preparing",
@@ -27,6 +29,20 @@ export default function OnlineOrders() {
       currency: "PHP",
       maximumFractionDigits: 0,
     }).format(v);
+
+    seEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "orders"), (snapshot) => {
+      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setOrders(ordersData);
+
+      // Play sound for new orders
+      if (ordersData.length > orders.length) {
+        new Audio(newOrderSound).play();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [orders]);
 
   const StatusBadge = ({ status }) => {
     const map = {

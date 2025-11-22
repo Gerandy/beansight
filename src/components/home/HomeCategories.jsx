@@ -1,126 +1,35 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
-import { db, storage } from "../../firebase";
 
-function MenuCategories({ onCategoryClick = () => {} }) {
-  const [categories, setCategories] = useState([]);
-  const GAP_PX = 32;
-  const [visibleCount, setVisibleCount] = useState(
-    typeof window !== "undefined" && window.innerWidth >= 1024 ? 4 : 3
-  );
-  const [startIdx, setStartIdx] = useState(0);
-  const [cardWidth, setCardWidth] = useState(0);
-  const desktopRef = useRef(null);
-  const mobileRef = useRef(null);
+function MenuCategories() {
+  const navigate = useNavigate();
+  const scrollRef = useRef(null);
 
-  // Fetch categories from Firestore + Storage
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "menuCategories"));
-        const cats = [];
+  // Static categories
+  const categories = [
+    { name: "Frappe", imgUrl: "/assets/icons/frappe.png" },
+    { name: "Fruity Series", imgUrl: "/assets/icons/frappe.png" },
+    { name: "Latte", imgUrl: "/assets/icons/latte.png" },
+    { name: "Snacks", imgUrl: "/assets/icons/snacks.png" },
+    { name: "Soda Series", imgUrl: "/assets/icons/soda.png" },
+    { name: "Strawberry Series", imgUrl: "/assets/icons/stawberry.png" },
+    { name: "Tea Series", imgUrl: "/assets/icons/tea.png" },
 
-        for (const doc of snapshot.docs) {
-          const data = doc.data();
-          let imgUrl = "";
+  ];
 
-          if (data.img) {
-            try {
-              imgUrl = await getDownloadURL(ref(storage, data.img));
-            } catch (err) {
-              console.error(`Failed to load image for ${data.name}`, err);
-            }
-          }
-
-          cats.push({ name: data.name, imgUrl });
-        }
-
-        setCategories(cats);
-      } catch (err) {
-        console.error("Failed to fetch menu categories", err);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  const recalc = () => {
-    const isDesktop = window.innerWidth >= 1024;
-    const vp = isDesktop ? desktopRef.current : mobileRef.current;
-    if (!vp) return;
-
-    const nextVisible = isDesktop ? 4 : 3;
-    const available = vp.clientWidth;
-    const totalGaps = (nextVisible - 1) * GAP_PX;
-    const widthPerCard = Math.floor((available - totalGaps) / nextVisible);
-
-    setVisibleCount(nextVisible);
-    setCardWidth(widthPerCard);
-
-    const newMaxStart = Math.max(0, categories.length - nextVisible);
-    setStartIdx((s) => Math.min(s, newMaxStart));
+  const scroll = (dir) => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 300; // adjust as needed
+    scrollRef.current.scrollBy({
+      left: dir === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
   };
 
-  useEffect(() => {
-    recalc();
-    const onResize = () => requestAnimationFrame(recalc);
-    window.addEventListener("resize", onResize);
-
-    const ro = new ResizeObserver(onResize);
-    if (desktopRef.current) ro.observe(desktopRef.current);
-    if (mobileRef.current) ro.observe(mobileRef.current);
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      ro.disconnect();
-    };
-  }, [categories]);
-
-  const maxStart = Math.max(0, categories.length - visibleCount);
-  const handleScroll = (dir) => {
-    setStartIdx((s) =>
-      dir === "left" ? Math.max(0, s - visibleCount) : Math.min(maxStart, s + visibleCount)
-    );
+  const handleCategoryClick = (categoryName) => {
+    navigate(`/menu?category=${encodeURIComponent(categoryName)}`);
   };
-
-  const translateX = -(startIdx * (cardWidth + GAP_PX));
-
-  const renderCard = (cat, width, imgSize) => (
-    <div
-      key={cat.name}
-      className="flex flex-col items-center select-none cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-      style={{ width }}
-      onClick={() => onCategoryClick(cat.name)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onCategoryClick(cat.name);
-        }
-      }}
-    >
-      <div
-        className="rounded-full flex items-center justify-center bg-white shadow-md"
-        style={{ width: imgSize, height: imgSize }}
-      >
-        {cat.imgUrl ? (
-          <img
-            src={cat.imgUrl}
-            alt={cat.name}
-            style={{ width: imgSize * 0.9, height: imgSize * 0.9 }}
-          />
-        ) : (
-          <div className="w-12 h-12 bg-gray-300 rounded-full animate-pulse" />
-        )}
-      </div>
-      <p className="mt-3 text-center font-bold text-coffee-900" style={{ fontSize: 18, lineHeight: 1.2 }}>
-        {cat.name}
-      </p>
-    </div>
-  );
 
   return (
     <div className="max-w-[1050px] mx-auto py-6 relative">
@@ -131,55 +40,45 @@ function MenuCategories({ onCategoryClick = () => {} }) {
         </p>
       </div>
 
-      {/* Desktop */}
-      <div className="hidden lg:flex items-center gap-2 px-4">
+      <div className="relative px-4 flex items-center gap-2">
         <button
-          onClick={() => handleScroll("left")}
-          className="rounded-full shadow p-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors flex-shrink-0"
-          aria-label="Scroll left"
-          disabled={startIdx === 0}
+          onClick={() => scroll("left")}
+          className="rounded-full shadow p-2 bg-coffee-700 text-white hover:bg-coffee-800 transition-colors flex-shrink-0"
         >
           <ChevronLeft size={18} />
         </button>
 
-        <div ref={desktopRef} className="relative flex-1 overflow-hidden" style={{ height: 230 }}>
-          <div className="flex transition-transform duration-300 ease-out" style={{ gap: `${GAP_PX}px`, transform: `translateX(${translateX}px)` }}>
-            {categories.map((cat) => renderCard(cat, cardWidth, 160))}
-          </div>
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto gap-6 scrollbar-hide py-4"
+        >
+          {categories.map((cat) => (
+            <div
+              key={cat.name}
+              className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+              style={{ width: 140 }}
+              onClick={() => handleCategoryClick(cat.name)}
+            >
+              <div
+                className="rounded-full flex items-center justify-center bg-white shadow-md"
+                style={{ width: 120, height:120 }}
+              >
+                <img
+                  src={cat.imgUrl}
+                  alt={cat.name}
+                  style={{ width: 115, height: 115 }}
+                />
+              </div>
+              <p className="mt-3 text-center font-bold text-coffee-900" style={{ fontSize: 14 }}>
+                {cat.name}
+              </p>
+            </div>
+          ))}
         </div>
 
         <button
-          onClick={() => handleScroll("right")}
-          className="rounded-full shadow p-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors flex-shrink-0"
-          aria-label="Scroll right"
-          disabled={startIdx >= maxStart}
-        >
-          <ChevronRight size={18} />
-        </button>
-      </div>
-
-      {/* Mobile */}
-      <div className="lg:hidden relative px-4">
-        <div ref={mobileRef} className="relative overflow-hidden" style={{ height: 180 }}>
-          <div className="flex transition-transform duration-300 ease-out" style={{ gap: `${GAP_PX}px`, transform: `translateX(${translateX}px)` }}>
-            {categories.map((cat) => renderCard(cat, cardWidth, 110))}
-          </div>
-        </div>
-
-        <button
-          onClick={() => handleScroll("left")}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full shadow p-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors"
-          aria-label="Scroll left"
-          disabled={startIdx === 0}
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <button
-          onClick={() => handleScroll("right")}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full shadow p-2 bg-coffee-700 text-white disabled:opacity-40 hover:bg-coffee-800 transition-colors"
-          aria-label="Scroll right"
-          disabled={startIdx >= maxStart}
+          onClick={() => scroll("right")}
+          className="rounded-full shadow p-2 bg-coffee-700 text-white hover:bg-coffee-800 transition-colors flex-shrink-0"
         >
           <ChevronRight size={18} />
         </button>

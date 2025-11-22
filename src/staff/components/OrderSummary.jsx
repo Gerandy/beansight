@@ -155,8 +155,8 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         <div className="flex gap-2">
           {[
             { key: "cash", label: "Cash", icon: <DollarSign size={14} /> },
-            { key: "card", label: "Card", icon: <CreditCard size={14} /> },
-            { key: "gcash", label: "GCash", icon: <Smartphone size={14} /> },
+            // { key: "card", label: "Card", icon: <CreditCard size={14} /> },
+            // { key: "gcash", label: "GCash", icon: <Smartphone size={14} /> },
           ].map(({ key, label, icon }) => (
             <button
               key={key}
