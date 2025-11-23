@@ -382,7 +382,7 @@ export default function UserManagementEnhanced() {
       <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-soft-xl p-8 border border-coffee-100">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold text-coffee-800 mb-2">User Management</h1>
-          <p className="text-coffee-600">Manage admins, staff, and customers.</p>
+          <p className="text-coffee-600">Manage admins, and staffs.</p>
         </header>
 
         <SummaryCards users={users} />

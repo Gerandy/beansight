@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
 import MenuCard from "./HomeCard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -23,24 +22,6 @@ function MenuFeatured() {
 
     fetchMenu();
   }, []);
-
-  const handleScroll = (direction) => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
-    const cardWidth = scrollContainer.offsetWidth;
-    const currentScroll = scrollContainer.scrollLeft;
-
-    const newScroll =
-      direction === "left"
-        ? currentScroll - cardWidth
-        : currentScroll + cardWidth;
-
-    scrollContainer.scrollTo({
-      left: newScroll,
-      behavior: "smooth",
-    });
-  };
 
   return (
     <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
@@ -66,42 +47,37 @@ function MenuFeatured() {
         ))}
       </div>
 
-      {/* Mobile Scroll */}
-      <div className="flex items-center lg:hidden relative">
-        <button
-          onClick={() => handleScroll("left")}
-          className="absolute left-0 z-10 bg-coffee-700 text-white rounded-full shadow p-2 hover:bg-coffee-800 transition-colors"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <div ref={scrollRef} className="flex w-full overflow-hidden mx-8">
-          <div className="flex transition-transform duration-300 ease-out">
-            {foodMenu.map((item) => (
-              <div
-                key={item.id}
-                className="w-[calc((100vw-96px)/2)] px-2 flex-shrink-0"
-              >
-                <Link to={`/menu/product-details/${item.id}`}>
-                  <MenuCard
-                    name={item.name}
-                    price={`${item.price}`}
-                    img={item.img}
-                    isNew={item.isNew}
-                  />
-                </Link>
-              </div>
-            ))}
+      {/* Mobile Swiper */}
+      <div
+        ref={scrollRef}
+        className="lg:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        {foodMenu.map((item) => (
+          <div
+            key={item.id}
+            className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
+          >
+            <Link to={`/menu/product-details/${item.id}`}>
+              <MenuCard
+                name={item.name}
+                price={`${item.price}`}
+                img={item.img}
+                isNew={item.isNew}
+              />
+            </Link>
           </div>
-        </div>
-
-        <button
-          onClick={() => handleScroll("right")}
-          className="absolute right-0 z-10 bg-coffee-700 text-white rounded-full shadow p-2 hover:bg-coffee-800 transition-colors"
-        >
-          <ChevronRight size={18} />
-        </button>
+        ))}
       </div>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }
