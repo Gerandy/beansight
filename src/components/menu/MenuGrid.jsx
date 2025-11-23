@@ -101,10 +101,8 @@ function MenuGrid({ selectedCategory = "All" }) {
         {currentProducts.map((p) => (
           <div
             key={p.id}
-            className="bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-6 flex flex-col relative hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group overflow-hidden"
+            className="bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-3 sm:p-6 flex flex-col relative hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group overflow-hidden"
           >
-            <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
-
             {/* Heart Icon for Favorites */}
             <button
               onClick={(e) => toggleFavorite(p.id, e)}
@@ -126,7 +124,7 @@ function MenuGrid({ selectedCategory = "All" }) {
               </span>
             )}
 
-            <div className="w-full aspect-square rounded-xl flex items-center justify-center mb-5 overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] relative z-10 shadow-sm">
+            <div className="w-full aspect-square rounded-xl flex items-center justify-center mb-3 sm:mb-5 overflow-hidden bg-gradient-to-br from-[#FFF5EB] to-[#FFE8D6] relative z-10 shadow-sm">
               <img
                 src={p.img}
                 alt={p.name}
@@ -134,16 +132,16 @@ function MenuGrid({ selectedCategory = "All" }) {
               />
             </div>
 
-            <h3 className="font-semibold text-[#4E342E] text-base md:text-base line-clamp-2 mb-2 min-h-[44px] relative z-10 tracking-wide">
+            <h3 className="font-semibold text-[#4E342E] text-sm sm:text-base line-clamp-2 mb-1 sm:mb-2 min-h-[36px] sm:min-h-[44px] relative z-10 tracking-wide">
               {p.name}
             </h3>
             
-            <p className="font-bold text-[#6B3E2E] text-2xl mb-4 relative z-10">
+            <p className="font-bold text-[#6B3E2E] text-lg sm:text-2xl mb-2 sm:mb-4 relative z-10">
               ₱{p.price}
             </p>
 
             <button
-              className="w-full bg-coffee-700 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-coffee-800 active:scale-95 transition-all duration-200 relative z-10"
+              className="w-full bg-coffee-700 text-white font-semibold py-2 px-3 sm:py-2.5 sm:px-4 rounded-lg hover:bg-coffee-800 active:scale-95 transition-all duration-200 relative z-10 text-base h-10 sm:h-12 flex items-center justify-center"
               onClick={() => navigate(`/menu/product-details/${p.id}`)}
             >
               Add to Cart
