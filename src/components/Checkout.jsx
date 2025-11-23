@@ -1,41 +1,76 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import Map from "./maps";
-
-import { CreditCard, Truck, MapPin, User, Mail, CheckCircle, Trash2, Plus, Minus } from "lucide-react";
-import { useData } from "../datafetcher";
+import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus } from "lucide-react";
 
 export default function Checkout() {
-  const { userData } = useData();
+  const [userData, setUserData] = useState({});
+  const [addresses, setAddresses] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const contactNum = userData.contactNumber?.[0];
 
-  const defaultAddress = userData.addresses?.find(addr => addr.isDefault);
+  const uid = localStorage.getItem("authToken");
+
+  // Fetch user document and addresses subcollection in real-time
+  useEffect(() => {
+    if (!uid) return;
+
+    const userRef = doc(db, "users", uid);
+    const unsubUser = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setUserData(docSnap.data());
+      }
+    });
+
+    const addressesRef = collection(db, "users", uid, "addresses");
+    const unsubAddresses = onSnapshot(addressesRef, (snapshot) => {
+      const addrData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAddresses(addrData);
+    });
+
+    return () => {
+      unsubUser();
+      unsubAddresses();
+    };
+  }, [uid]);
+
+  
+  const defaultAddress = addresses?.find(addr => addr.isDefault);
 
   // Shipping state
   const [shipping, setShipping] = useState({
     type: "delivery",
-    address: defaultAddress?.details || "",
-    city: defaultAddress?.city || "",
-    province: defaultAddress?.province || "",
-    zip: defaultAddress?.zipcode || "",
+    address: "",
+    city: "",
+    province: "",
+    zip: "",
     notes: "",
     pickupLocation: "Main Branch - Kawit",
-    schedule: "now", // now or later
+    schedule: "now",
     scheduledDate: "",
     scheduledTime: ""
   });
+
+  // Update shipping when default address changes
+  useEffect(() => {
+    if (defaultAddress) {
+      setShipping(s => ({
+        ...s,
+        address: defaultAddress?.details,
+        city: defaultAddress?.city,
+        province: defaultAddress?.province,
+        zip: defaultAddress?.zipcode
+      }));
+    }
+  }, [defaultAddress]);
 
   const [deliveryOption, setDeliveryOption] = useState("now");
   const [pickupTime, setPickupTime] = useState("now");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
-  // Payment state
   const [payment, setPayment] = useState({ method: "cod" });
 
   useEffect(() => {
@@ -64,14 +99,11 @@ export default function Checkout() {
   const handleCheckout = async () => {
     if (!items.length) return alert("Cart is empty!");
 
-    // Simple validation
     if (shipping.type === "delivery" && (!shipping.address || !shipping.city || !shipping.province || !shipping.zip)) {
       return alert("Please fill out all delivery fields.");
     }
 
     setLoading(true);
-
-    const uid = localStorage.getItem("authToken");
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
 
     const orderData = {
@@ -82,7 +114,7 @@ export default function Checkout() {
         firstName: userData.firstName,
         lastName: userData.lastName,
         email: userData.email,
-        phone: contactNum?.number || "",
+        phone: userData?.number || "",
         address: shipping.type === "delivery" ? shipping : {}
       },
       items,
@@ -130,7 +162,7 @@ export default function Checkout() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Input label="Full name" value={`${userData?.firstName || ""} ${userData?.lastName || ""}`} />
                 <Input label="Email" value={userData?.email || ""} required />
-                <Input label="Phone" value={contactNum?.number || ""} required />
+                <Input label="Phone" value={userData?.contactNumber || ""} required />
               </div>
             </SectionCard>
 

@@ -19,8 +19,8 @@ function MyAddresses() {
   });
   const [errors, setErrors] = useState({});
 
-  const provinces = ["Cavite"];
-  const cities = { Cavite: ["Kawit", "Imus", "Bacoor", "Cavite City", "General Trias", "Tanza"] };
+  const addressLabel = ["Residential","Office"];
+  
 
   // Google Maps refs
   const mapRef = useRef(null);
@@ -154,7 +154,7 @@ function MyAddresses() {
         const docRef = await addDoc(colRef, formData);
         setAddresses(prev => [...prev, { id: docRef.id, ...formData }]);
       }
-      setFormData({ label: "", details: "", province: "", city: "", zipcode: "", isDefault: false });
+      setFormData({ label: "", details: "", province: "", isDefault: true });
       setEditingAddress(null);
       setShowForm(false);
       setErrors({});
@@ -193,14 +193,28 @@ function MyAddresses() {
         <form onSubmit={handleSubmit} className="mt-6 border border-coffee-200 rounded-lg p-4 bg-coffee-50 space-y-4">
           <h3 className="text-lg font-semibold text-coffee-900 mb-4">{editingAddress ? "Edit Address" : "Add New Address"}</h3>
 
-          <input
-            type="text"
-            placeholder="Label"
+          <select
             value={formData.label}
-            onChange={e => setFormData({ ...formData, label: e.target.value })}
-            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${errors.label ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
-          />
-          {errors.label && <p className="text-red-600 text-sm mt-1">{errors.label}</p>}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                label: e.target.value
+              })
+            }
+            className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+          >
+            <option value="">Select Address Label</option>
+
+            {addressLabel.map((label) => (
+              <option key={label} value={label}>
+                {label}
+              </option>
+            ))}
+          </select>
+
+          {errors.label && (
+            <p className="text-red-600 text-sm mt-1">{errors.label}</p>
+          )}
 
           <input
             type="text"
@@ -211,7 +225,7 @@ function MyAddresses() {
 
           <textarea
             rows="2"
-            placeholder="Address details"
+            placeholder="Full Address"
             value={formData.details}
             onChange={e => setFormData({ ...formData, details: e.target.value })}
             className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${errors.details ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
@@ -221,34 +235,18 @@ function MyAddresses() {
           {/* Google Maps */}
           <div ref={mapRef} className="w-full h-64 rounded-lg border border-coffee-300"></div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <select value={formData.province} onChange={e => setFormData({ ...formData, province: e.target.value, city: "" })} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
-              <option value="">Select Province</option>
-              {provinces.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+          
 
-            <select value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} disabled={!formData.province} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
-              <option value="">Select City</option>
-              {cities[formData.province]?.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-
-          <input
-            type="text"
-            placeholder="Zipcode"
-            value={formData.zipcode}
-            onChange={e => setFormData({ ...formData, zipcode: e.target.value })}
-            className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
-          />
+          
 
           <div className="flex items-center mb-3">
-            <input type="checkbox" checked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="mr-2 accent-coffee-700" />
+            <input type="checkbox" defaultValuechecked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="mr-2 accent-coffee-700" />
             <label className="text-sm text-coffee-900">Set as default address</label>
           </div>
 
           <div className="flex gap-3">
             <button type="submit" className="flex-1 bg-coffee-700 text-white py-2 rounded-lg hover:bg-coffee-800 transition-colors">{editingAddress ? "Save Changes" : "Add Address"}</button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); }} className="flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
+            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); window.location.reload();}} className="flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
           </div>
         </form>
       )}
