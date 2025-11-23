@@ -7,6 +7,12 @@ import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart } from "lucide-react
 import logo from "../../assets/ahjinlogo.png";
 import HomeCard from "../home/HomeCard";
 
+const suggestedBeverages = [
+  { id: "latte", name: "Latte", price: 120, img: logo },
+  { id: "cappuccino", name: "Cappuccino", price: 130, img: logo },
+  { id: "espresso", name: "Espresso", price: 100, img: logo },
+];
+
 function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -17,24 +23,21 @@ function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState("Dusk");
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Fetch product and favorites
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const docRef = doc(db, "Inventory", id);
         const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setProduct({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          console.warn("Product not found in Firestore");
-        }
-      } catch (error) {
-        console.error("Error fetching product:", error);
+        if (docSnap.exists()) setProduct({ id: docSnap.id, ...docSnap.data() });
+        else console.warn("Product not found");
+      } catch (err) {
+        console.error("Error fetching product:", err);
       }
     };
+
     fetchProduct();
 
-    // Check if product is in favorites
     const savedFavorites = localStorage.getItem("favorites");
     if (savedFavorites) {
       const favoritesArray = JSON.parse(savedFavorites);
@@ -46,11 +49,8 @@ function ProductDetails() {
     const savedFavorites = localStorage.getItem("favorites");
     let favoritesArray = savedFavorites ? JSON.parse(savedFavorites) : [];
 
-    if (isFavorite) {
-      favoritesArray = favoritesArray.filter(favId => favId !== id);
-    } else {
-      favoritesArray.push(id);
-    }
+    if (isFavorite) favoritesArray = favoritesArray.filter(favId => favId !== id);
+    else favoritesArray.push(id);
 
     localStorage.setItem("favorites", JSON.stringify(favoritesArray));
     setIsFavorite(!isFavorite);
@@ -58,25 +58,16 @@ function ProductDetails() {
 
   const handleAddToCart = () => {
     if (!product) return;
-
-    const cartItem = {
+    addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       quantity,
       img: product.img || logo,
       size: selectedSize,
-    };
-
-    addToCart(cartItem);
+      category: product.category,
+    });
   };
-
-  // Example suggested products (replace with actual fetch if needed)
-  const suggestedProducts = [
-    { id: "latte", name: "Latte", price: 120, img: logo },
-    { id: "cappuccino", name: "Cappuccino", price: 130, img: logo },
-    { id: "espresso", name: "Espresso", price: 100, img: logo },
-  ];
 
   if (!product)
     return (
@@ -88,146 +79,120 @@ function ProductDetails() {
       </div>
     );
 
+  const isBeverage = product.category === "Beverage" && product.sizes === true;
+  const isBeverages = product.category === "Beverage";
+
   return (
     <div className="min-h-screen bg-gradient-to-br mt-15 text-[#7D5A50]">
       <div className="max-w-6xl mx-auto py-12 px-6">
-        {/* Product Section */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg flex flex-col lg:flex-row overflow-hidden">
-          {/* LEFT — Product Image & Info */}
+
+          {/* LEFT - Image & Controls */}
           <div className="lg:w-1/2 flex flex-col items-center justify-center p-10 bg-gradient-to-br from-[#FCECDC] to-[#FCDEC0] relative">
-            {/* Back Button - Moved to upper left */}
             <button
               className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition"
-              onClick={() => navigate(-1)} 
-              aria-label="Back to Menu"
+              onClick={() => navigate(-1)}
+              aria-label="Back"
             >
               <ArrowLeft size={24} />
             </button>
 
-            {/* Heart/Favorite Button - Upper right */}
             <button
               onClick={toggleFavorite}
               className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90 z-20"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart 
-                className={`w-6 h-6 transition-all duration-200 ${
-                  isFavorite 
-                    ? "fill-red-500 text-red-500" 
-                    : "text-[#7D5A50] hover:text-red-500"
-                }`}
-              />
+              <Heart className={`w-6 h-6 transition-all duration-200 ${isFavorite ? "fill-red-500 text-red-500" : "text-[#7D5A50] hover:text-red-500"}`} />
             </button>
 
-            {/* Decorative Blur Circle */}
             <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-[#E5B299] rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
 
             <div className="relative z-10 flex flex-col items-center">
               <div className="w-72 h-72 aspect-square bg-coffee-50 rounded-2xl shadow-md overflow-hidden">
-                <img
-                  src={product.img || logo}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
+                <img src={product.img || logo} alt={product.name} className="w-full h-full object-cover" />
               </div>
-              <h2 className="text-3xl font-extrabold mt-6 text-[#7D5A50]">
-                {product.name}
-              </h2>
+              <h2 className="text-3xl font-extrabold mt-6">{product.name}</h2>
               <p className="text-2xl font-semibold mt-2">₱ {Number(product.price).toFixed(2)}</p>
-              <p className="text-sm text-[#B4846C] italic mt-1">
-                {product.description}
-              </p>
+              {product.description && <p className="text-sm text-[#B4846C] italic mt-1">{product.description}</p>}
 
               {/* Quantity Selector */}
               <div className="flex items-center mt-6 bg-[#e9c8a8] rounded-full shadow-inner overflow-hidden">
-                <button
-                  className="px-4 py-2 text-2xl text-[#7D5A50] hover:bg-[#E5B299] transition"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                >
-                  −
-                </button>
-                <span className="px-6 py-2 text-lg font-semibold bg-white text-[#7D5A50]">
-                  {quantity}
-                </span>
-                <button
-                  className="px-4 py-2 text-2xl text-[#7D5A50] hover:bg-[#E5B299] transition"
-                  onClick={() => setQuantity(quantity + 1)}
-                >
-                  +
-                </button>
+                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299]" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
+                <span className="px-6 py-2 text-lg font-semibold bg-white">{quantity}</span>
+                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299]" onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
 
-              {/* Add to Cart Button */}
               <button
                 className="mt-8 flex items-center gap-2 bg-[#7D5A50] hover:bg-[#5C4036] transition-all duration-200 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md hover:scale-105 active:scale-95"
                 onClick={handleAddToCart}
               >
-                <ShoppingBag size={20} />
-                Add to My Bag
+                <ShoppingBag size={20} /> Add to My Bag
               </button>
             </div>
           </div>
 
-          {/* RIGHT — Product Information */}
+          {/* RIGHT - Product Info */}
           <div className="lg:w-1/2 p-10 text-[#4A352E] flex flex-col justify-center">
             <h3 className="text-2xl font-bold mb-6">Product Information</h3>
-
             <div className="space-y-5">
+
+              {/* Category */}
               <div className="bg-[#FCDEC0]/50 p-4 rounded-xl shadow-sm flex items-center gap-3">
-                <Coffee className="w-5 h-5 text-[#7D5A50]" />
+                <Coffee className="w-5 h-5" />
                 <p><strong>Category:</strong> {product.category || "Uncategorized"}</p>
               </div>
 
+              {/* Description */}
               {product.description && (
                 <div className="bg-[#FCDEC0]/50 p-4 rounded-xl shadow-sm flex items-start gap-3">
-                  <Info className="w-5 h-5 text-[#7D5A50] mt-1" />
+                  <Info className="w-5 h-5 mt-1" />
                   <p><strong>Description:</strong> {product.description}</p>
                 </div>
               )}
 
-              <div className="bg-[#FCDEC0]/50 p-4 rounded-xl shadow-sm flex items-start gap-3">
-                <Ruler className="w-5 h-5 text-[#7D5A50] mt-1" />
-                <div>
-                  <label className="block font-semibold mb-3">Dusk and Dawn Sizes</label>
-                  <div className="flex gap-2 sm:gap-4">
-                    {[
-                      { name: "Dusk", oz: 16 },
-                      { name: "Dawn", oz: 22 }
-                    ].map((size) => (
-                      <button
-                        key={size.name}
-                        type="button"
-                        onClick={() => setSelectedSize(size.name)}
-                        className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${
-                          selectedSize === size.name
-                            ? "bg-[#7D5A50] text-white shadow-md"
-                            : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"
-                        }`}
-                      >
-                        {size.name} ({size.oz} oz)
-                      </button>
+              {/* Sizes - Only for Beverages */}
+              {isBeverage && (
+                <div className="bg-[#FCDEC0]/50 p-4 rounded-xl shadow-sm flex items-start gap-3">
+                  <Ruler className="w-5 h-5 mt-1" />
+                  <div>
+                    <label className="block font-semibold mb-3">Dusk and Dawn Sizes</label>
+                    <div className="flex gap-2 sm:gap-4">
+                      {[
+                        { name: "Dusk", oz: 16 },
+                        { name: "Dawn", oz: 22 }
+                      ].map(size => (
+                        <button
+                          key={size.name}
+                          type="button"
+                          onClick={() => setSelectedSize(size.name)}
+                          className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
+                        >
+                          {size.name} ({size.oz} oz)
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* You May Also Like - Only for Beverages */}
+              {isBeverages && (
+                <div className="mt-12">
+                  <h4 className="text-xl font-semibold mb-4">You may also like</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {suggestedBeverages.map(item => (
+                      <HomeCard
+                        key={item.id}
+                        name={item.name}
+                        price={item.price}
+                        img={item.img}
+                        onClick={() => navigate(`/product/${item.id}`)}
+                      />
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* You May Also Like - Moved to bottom of right container */}
-            <div className="mt-12">
-              <h4 className="text-xl font-semibold mb-4 text-[#7D5A50]">
-                You may also like
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {suggestedProducts.map((item, index) => (
-                  <HomeCard
-                    key={index}
-                    name={item.name}
-                    price={item.price}
-                    img={item.img}
-                    onClick={() => navigate(`/product/${item.id}`)}
-                  />
-                ))}
-              </div>
             </div>
           </div>
         </div>

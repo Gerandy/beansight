@@ -1,25 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { db } from "../../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
+
+// Ensure Google Maps JS API is loaded in index.html
+// <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
 
 function MyAddresses() {
   const [addresses, setAddresses] = useState([]);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newAddress, setNewAddress] = useState({
+  const [showForm, setShowForm] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [formData, setFormData] = useState({
     label: "",
     details: "",
-    city: "",
     province: "",
+    city: "",
     zipcode: "",
     isDefault: false,
   });
+  const [errors, setErrors] = useState({});
 
-  // Fetch user addresses from Firestore
+  const provinces = ["Cavite"];
+  const cities = { Cavite: ["Kawit", "Imus", "Bacoor", "Cavite City", "General Trias", "Tanza"] };
+
+  // Google Maps refs
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
+  const autocompleteRef = useRef(null);
+  const inputRef = useRef(null);
+
+  // Fetch addresses
   useEffect(() => {
     const fetchAddresses = async () => {
       const userId = localStorage.getItem("authToken");
       if (!userId) return;
-
       try {
         const colRef = collection(db, "users", userId, "addresses");
         const snapshot = await getDocs(colRef);
@@ -29,27 +43,131 @@ function MyAddresses() {
         console.error("Error fetching addresses:", err);
       }
     };
-
     fetchAddresses();
   }, []);
 
-  // Add new address
-  const handleAddAddress = async (e) => {
+  // Initialize Google Maps
+  useEffect(() => {
+    if (!mapRef.current || !window.google) return;
+
+    const defaultLocation = { lat: 14.4453, lng: 120.9187 }; // Kawit, Cavite
+    mapInstance.current = new window.google.maps.Map(mapRef.current, {
+      center: defaultLocation,
+      zoom: 14,
+    });
+
+    markerInstance.current = new window.google.maps.Marker({
+      map: mapInstance.current,
+      draggable: true,
+      position: defaultLocation,
+    });
+
+    // Drag marker to update address
+    markerInstance.current.addListener("dragend", async () => {
+      const pos = markerInstance.current.getPosition();
+      const geocoder = new window.google.maps.Geocoder();
+      const res = await geocoder.geocode({ location: pos });
+      if (res.results[0]) fillAddressFromPlace(res.results[0]);
+    });
+
+    // Click map to move marker
+    mapInstance.current.addListener("click", (e) => {
+      const pos = e.latLng;
+      markerInstance.current.setPosition(pos);
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: pos }, (results, status) => {
+        if (status === "OK" && results[0]) fillAddressFromPlace(results[0]);
+      });
+    });
+  }, [showForm]);
+
+  // Autocomplete
+  useEffect(() => {
+    if (!inputRef.current || !window.google) return;
+
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+      componentRestrictions: { country: "ph" },
+      fields: ["address_components", "formatted_address", "geometry"],
+      types: ["address"],
+    });
+
+    autocompleteRef.current.addListener("place_changed", () => {
+      const place = autocompleteRef.current.getPlace();
+      if (!place.address_components) return;
+      fillAddressFromPlace(place);
+
+      if (place.geometry && mapInstance.current && markerInstance.current) {
+        const pos = place.geometry.location;
+        mapInstance.current.setCenter(pos);
+        markerInstance.current.setPosition(pos);
+      }
+    });
+  }, [showForm]);
+
+  const fillAddressFromPlace = (place) => {
+    let street = "", city = "", province = "", zipcode = "";
+
+    place.address_components.forEach(comp => {
+      const types = comp.types;
+      if (types.includes("street_number")) street = comp.long_name + " " + street;
+      if (types.includes("route")) street += comp.long_name;
+      if (types.includes("locality")) city = comp.long_name;
+      if (types.includes("administrative_area_level_1")) province = comp.long_name;
+      if (types.includes("postal_code")) zipcode = comp.long_name;
+    });
+
+    setFormData(prev => ({
+      ...prev,
+      details: street || place.formatted_address,
+      city,
+      province,
+      zipcode
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.label) newErrors.label = "Label is required";
+    if (!formData.details) newErrors.details = "Address details are required";
+    if (!formData.province) newErrors.province = "Province is required";
+    if (!formData.city) newErrors.city = "City is required";
+    if (!formData.zipcode) newErrors.zipcode = "Zipcode is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     const userId = localStorage.getItem("authToken");
     if (!userId) return;
 
     try {
-      const colRef = collection(db, "users", userId, "addresses");
-      const docRef = await addDoc(colRef, { ...newAddress });
-
-      // Update local state immediately
-      setAddresses(prev => [...prev, { id: docRef.id, ...newAddress }]);
-      setNewAddress({ label: "", details: "", city: "", province: "", zipcode: "", isDefault: false });
-      setShowAddForm(false);
+      if (editingAddress) {
+        const docRef = doc(db, "users", userId, "addresses", editingAddress.id);
+        await updateDoc(docRef, formData);
+        setAddresses(prev => prev.map(addr => addr.id === editingAddress.id ? { ...addr, ...formData } : addr));
+      } else {
+        const colRef = collection(db, "users", userId, "addresses");
+        const docRef = await addDoc(colRef, formData);
+        setAddresses(prev => [...prev, { id: docRef.id, ...formData }]);
+      }
+      setFormData({ label: "", details: "", province: "", city: "", zipcode: "", isDefault: false });
+      setEditingAddress(null);
+      setShowForm(false);
+      setErrors({});
     } catch (err) {
-      console.error("Error adding address:", err);
+      console.error("Error saving address:", err);
     }
+  };
+
+  const handleEdit = (address) => {
+    setEditingAddress(address);
+    setFormData(address);
+    setShowForm(true);
+    setErrors({});
   };
 
   return (
@@ -58,132 +176,88 @@ function MyAddresses() {
         My Addresses
       </h1>
 
-      {/* Existing addresses */}
       <div className="space-y-4">
-        {addresses.map((address) => (
-          <div key={address.id} className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <input
-              type="radio"
-              name="address"
-              defaultChecked={address.isDefault}
-              className="mt-1 accent-coffee-700 flex-shrink-0 w-5 h-5"
-            />
+        {addresses.map(addr => (
+          <div key={addr.id} className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <input type="radio" name="address" defaultChecked={addr.isDefault} className="mt-1 accent-coffee-700 w-5 h-5" />
             <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-base sm:text-lg text-coffee-900 mb-1">{address.label}</h2>
-              <p className="text-sm text-coffee-700 leading-relaxed">
-                {address.details}, {address.city}, {address.province} {address.zipcode}
-              </p>
+              <h2 className="font-bold text-base sm:text-lg text-coffee-900 mb-1">{addr.label}</h2>
+              <p className="text-sm text-coffee-700 leading-relaxed">{addr.details}, {addr.city}, {addr.province} {addr.zipcode}</p>
             </div>
-            <button className="px-4 py-2 bg-coffee-400 text-white rounded-lg font-medium hover:bg-coffee-500 transition-colors text-sm flex-shrink-0">
-              Edit
-            </button>
+            <button onClick={() => handleEdit(addr)} className="px-4 py-2 bg-coffee-400 text-white rounded-lg font-medium hover:bg-coffee-500 transition-colors text-sm flex-shrink-0">Edit</button>
           </div>
         ))}
       </div>
 
-      {/* Add new address */}
-      <div className="mt-6">
-        {!showAddForm ? (
-          <button 
-            onClick={() => setShowAddForm(true)}
-            className="w-full text-white bg-coffee-700 hover:bg-coffee-800 font-bold py-3 sm:py-3.5 rounded-lg transition-colors text-sm sm:text-base"
-          >
-            Add New Address
-          </button>
-        ) : (
-          <form onSubmit={handleAddAddress} className="border border-coffee-200 rounded-lg p-4 bg-coffee-50">
-            <h3 className="text-lg font-semibold text-coffee-900 mb-4">Add New Address</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-coffee-900 mb-1">Label</label>
-                <input
-                  type="text"
-                  required
-                  value={newAddress.label}
-                  onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })}
-                  className="w-full border border-coffee-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-700"
-                  placeholder="e.g., Home, Office"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-coffee-900 mb-1">Address Details</label>
-                <textarea
-                  required
-                  value={newAddress.details}
-                  onChange={(e) => setNewAddress({ ...newAddress, details: e.target.value })}
-                  className="w-full border border-coffee-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-700"
-                  rows="2"
-                  placeholder="Enter street, barangay, etc."
-                />
-              </div>
+      {showForm && (
+        <form onSubmit={handleSubmit} className="mt-6 border border-coffee-200 rounded-lg p-4 bg-coffee-50 space-y-4">
+          <h3 className="text-lg font-semibold text-coffee-900 mb-4">{editingAddress ? "Edit Address" : "Add New Address"}</h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-coffee-900 mb-1">City</label>
-                  <input
-                    type="text"
-                    required
-                    value={newAddress.city}
-                    onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                    className="w-full border border-coffee-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-700"
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-coffee-900 mb-1">Province</label>
-                  <input
-                    type="text"
-                    required
-                    value={newAddress.province}
-                    onChange={(e) => setNewAddress({ ...newAddress, province: e.target.value })}
-                    className="w-full border border-coffee-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-700"
-                    placeholder="Province"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-coffee-900 mb-1">Zipcode</label>
-                  <input
-                    type="text"
-                    required
-                    value={newAddress.zipcode}
-                    onChange={(e) => setNewAddress({ ...newAddress, zipcode: e.target.value })}
-                    className="w-full border border-coffee-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-coffee-700"
-                    placeholder="Zipcode"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={newAddress.isDefault}
-                  onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
-                  className="mr-2 accent-coffee-700"
-                />
-                <label className="text-sm text-coffee-900">Set as default address</label>
-              </div>
-            </div>
-            
-            <div className="flex gap-3 mt-4">
-              <button
-                type="submit"
-                className="flex-1 bg-coffee-700 text-white py-2 rounded-lg font-medium hover:bg-coffee-800 transition-colors"
-              >
-                Save Address
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAddForm(false)}
-                className="flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg font-medium hover:bg-coffee-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+          <input
+            type="text"
+            placeholder="Label"
+            value={formData.label}
+            onChange={e => setFormData({ ...formData, label: e.target.value })}
+            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${errors.label ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+          />
+          {errors.label && <p className="text-red-600 text-sm mt-1">{errors.label}</p>}
+
+          <input
+            type="text"
+            ref={inputRef}
+            placeholder="Search address on map"
+            className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+          />
+
+          <textarea
+            rows="2"
+            placeholder="Address details"
+            value={formData.details}
+            onChange={e => setFormData({ ...formData, details: e.target.value })}
+            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${errors.details ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+          />
+          {errors.details && <p className="text-red-600 text-sm mt-1">{errors.details}</p>}
+
+          {/* Google Maps */}
+          <div ref={mapRef} className="w-full h-64 rounded-lg border border-coffee-300"></div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <select value={formData.province} onChange={e => setFormData({ ...formData, province: e.target.value, city: "" })} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
+              <option value="">Select Province</option>
+              {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+
+            <select value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} disabled={!formData.province} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
+              <option value="">Select City</option>
+              {cities[formData.province]?.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <input
+            type="text"
+            placeholder="Zipcode"
+            value={formData.zipcode}
+            onChange={e => setFormData({ ...formData, zipcode: e.target.value })}
+            className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+          />
+
+          <div className="flex items-center mb-3">
+            <input type="checkbox" checked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="mr-2 accent-coffee-700" />
+            <label className="text-sm text-coffee-900">Set as default address</label>
+          </div>
+
+          <div className="flex gap-3">
+            <button type="submit" className="flex-1 bg-coffee-700 text-white py-2 rounded-lg hover:bg-coffee-800 transition-colors">{editingAddress ? "Save Changes" : "Add Address"}</button>
+            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); }} className="flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {!showForm && !editingAddress && (
+        <button onClick={() => setShowForm(true)} className="w-full text-white bg-coffee-700 hover:bg-coffee-800 font-bold py-3 sm:py-3.5 rounded-lg transition-colors text-sm sm:text-base mt-4">
+          Add New Address
+        </button>
+      )}
     </div>
   );
 }

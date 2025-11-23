@@ -28,12 +28,16 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     senior: { label: "Senior Citizen", value: 20 },
     pwd: { label: "PWD", value: 20 },
   };
+  const normalizedCart = cartItems.map(item => ({
+  ...item,
+  quantity: item.quantity ?? item.qty ?? 1,
+  }));
 
   // COMPUTATIONS
-  const subtotal = useMemo(
-    () => cartItems.reduce((s, it) => s + Number(it.price) * Number(it.qty), 0),
-    [cartItems]
-  );
+ const subtotal = useMemo(
+  () => normalizedCart.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
+  [normalizedCart]
+);
 
   const discountAmount = (subtotal * discountTypes[discountType].value) / 100;
   const tipAmount = (subtotal * tip) / 100;
@@ -47,11 +51,13 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     return alert("Cash given is less than total");
 
   const orderId = `POS-${Date.now().toString().slice(-6)}`;
+  const username = {customerName,uid:"walk-in"};
 
   const orderData = {
     id: orderId,
     source: "POS", // 🔵 distinguish POS vs online checkout
-    items: cartItems,
+    items: normalizedCart,
+    user: username,
     subtotal,
     discountType,
     discountAmount,
@@ -59,7 +65,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     total,
     paymentType,
     cashGiven: paymentType === "cash" ? Number(cashGiven) : null,
-    customerName: customerName || "Walk-in Customer",
+    // customerName: customerName || "Walk-in Customer",
     status: "Completed",
     createdAt: serverTimestamp(),
     completedAt: new Date().toISOString(),
@@ -149,8 +155,8 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         <div className="flex gap-2">
           {[
             { key: "cash", label: "Cash", icon: <DollarSign size={14} /> },
-            { key: "card", label: "Card", icon: <CreditCard size={14} /> },
-            { key: "gcash", label: "GCash", icon: <Smartphone size={14} /> },
+            // { key: "card", label: "Card", icon: <CreditCard size={14} /> },
+            // { key: "gcash", label: "GCash", icon: <Smartphone size={14} /> },
           ].map(({ key, label, icon }) => (
             <button
               key={key}

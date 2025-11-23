@@ -13,68 +13,203 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Calendar } from "lucide-react";
+import { db } from "../firebase"; // Adjust path
+import { collection, getDocs } from "firebase/firestore";
 
-const salesData = [
-  { day: "Mon", sales: 5200 },
-  { day: "Tue", sales: 7200 },
-  { day: "Wed", sales: 6800 },
-  { day: "Thu", sales: 8200 },
-  { day: "Fri", sales: 9100 },
-  { day: "Sat", sales: 10400 },
-  { day: "Sun", sales: 8900 },
-];
+// Helper to calculate % change
+function calcPercentageChange(current, previous) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
 
-const categoryData = [
-  { category: "Burgers", value: 45 },
-  { category: "Drinks", value: 25 },
-  { category: "Desserts", value: 15 },
-  { category: "Fries", value: 10 },
-  { category: "Others", value: 5 },
-];
+// Helper to check if a date is in this week/month/year
+function filterByPeriod(date, period) {
+  const d = new Date(date);
+  const now = new Date();
 
-const customerData = [
-  { name: "Returning", value: 65 },
-  { name: "New", value: 35 },
-];
+  if (period === "This Week") {
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    return d >= startOfWeek && d <= endOfWeek;
+  }
 
-const topItems = [
-  { id: 1, name: "Kape", sales: 520 },
-  { id: 2, name: "Coffee", sales: 410 },
-  { id: 3, name: "Hot Coffee", sales: 380 },
-  { id: 4, name: "Iced Coffee", sales: 350 },
-  { id: 5, name: "Cappuccino", sales: 290 },
-];
+  if (period === "This Month") {
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  }
 
-const recentOrders = [
-  { id: "#1021", name: "Maria G.", total: "₱320", status: "Completed" },
-  { id: "#1020", name: "John D.", total: "₱540", status: "Pending" },
-  { id: "#1019", name: "Emma R.", total: "₱230", status: "Cancelled" },
-  { id: "#1018", name: "Carlos M.", total: "₱410", status: "Completed" },
-];
+  if (period === "This Year") {
+    return d.getFullYear() === now.getFullYear();
+  }
 
-const staffData = [
-  { name: "John", value: 85 },
-  { name: "Jane", value: 75 },
-  { name: "Carlos", value: 60 },
-  { name: "Emily", value: 50 },
-];
+  return false;
+}
 
 export default function Dashboard() {
   const [dateRange, setDateRange] = useState("This Week");
+  const [orders, setOrders] = useState([]);
+
+  // -------------------------------
+  // Fetch Orders from Firestore
+  // -------------------------------
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "orders"));
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setOrders(data);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  // -------------------------------
+  // Compute Dashboard Analytics
+  // -------------------------------
+  const {
+    totalSales,
+    totalOrders,
+    newCustomersCount,
+    menuItemsSold,
+    salesData,
+    categoryData,
+    topItems,
+    customerData,
+    staffData,
+    recentOrders,
+    kpiChanges
+  } = useMemo(() => {
+    const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    // Separate orders by current and previous period
+    const now = new Date();
+    const getPreviousPeriod = (period) => {
+      if (period === "This Week") {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        const startPrevWeek = new Date(startOfWeek);
+        startPrevWeek.setDate(startPrevWeek.getDate() - 7);
+        const endPrevWeek = new Date(startOfWeek);
+        endPrevWeek.setDate(endPrevWeek.getDate() - 1);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= startPrevWeek && d <= endPrevWeek;
+        });
+      }
+      if (period === "This Month") {
+        const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const nextMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= prevMonth && d <= nextMonth;
+        });
+      }
+      if (period === "This Year") {
+        const prevYear = new Date(now.getFullYear() - 1, 0, 1);
+        const endPrevYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
+        return orders.filter(o => {
+          const d = new Date(o.completedAt);
+          return d >= prevYear && d <= endPrevYear;
+        });
+      }
+      return [];
+    };
+
+    const previousOrders = getPreviousPeriod(dateRange);
+
+    // KPI calculations
+    let totalSales = 0;
+    let menuItemsSold = 0;
+    let totalOrders = 0;
+    const customerSet = new Set();
+    const salesMap = {};
+    const categoryMap = {};
+    const topItemsMap = {};
+    const staffMap = {};
+
+    orders.forEach(order => {
+      const completedDate = new Date(order.completedAt);
+      if (filterByPeriod(completedDate, dateRange)) {
+        totalSales += order.total;
+        console.log(order.total);
+
+        totalOrders += 1;
+        if (!customerSet.has(order.customerName)) customerSet.add(order.customerName);
+
+        order.items.forEach(item => {
+          categoryMap[item.category] = (categoryMap[item.category] || 0) + item.quantity;
+          if (!topItemsMap[item.name]) topItemsMap[item.name] = { id: item.id, name: item.name, sales: 0 };
+          topItemsMap[item.name].sales += item.quantity;
+          menuItemsSold += item.quantity;
+        });
+
+        const staff = order.cashierName || "Unknown";
+        staffMap[staff] = (staffMap[staff] || 0) + order.total;
+
+        // Sales trend
+        const day = dayNames[completedDate.getDay()];
+        salesMap[day] = (salesMap[day] || 0) + order.total;
+      }
+    });
+
+    // Previous period totals
+    let prevTotalSales = 0;
+    let prevMenuItems = 0;
+    let prevTotalOrders = previousOrders.length;
+    const prevCustomerSet = new Set();
+    previousOrders.forEach(order => {
+      prevTotalSales += order.total;
+      order.items.forEach(item => prevMenuItems += item.quantity);
+      if (!prevCustomerSet.has(order.customerName)) prevCustomerSet.add(order.customerName);
+    });
+    const prevNewCustomers = prevCustomerSet.size;
+
+    const kpiChanges = {
+      totalSales: calcPercentageChange(totalSales, prevTotalSales),
+      totalOrders: calcPercentageChange(totalOrders, prevTotalOrders),
+      menuItemsSold: calcPercentageChange(menuItemsSold, prevMenuItems),
+      newCustomers: calcPercentageChange(customerSet.size, prevNewCustomers),
+    };
+
+    // Chart & Table Data
+    const salesData = dayNames.map(day => ({ day, sales: salesMap[day] || 0 }));
+    const categoryData = Object.entries(categoryMap).map(([category, value]) => ({ category, value }));
+    const topItems = Object.values(topItemsMap).sort((a, b) => b.sales - a.sales).slice(0, 5);
+    const customerData = [
+      { name: "Returning", value: orders.length - customerSet.size },
+      { name: "New", value: customerSet.size },
+    ];
+    const staffData = Object.entries(staffMap).map(([name, value]) => ({ name, value }));
+    const recentOrders = [...orders].sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt)).slice(0, 10);
+
+    return {
+      totalSales,
+      totalOrders,
+      newCustomersCount: customerSet.size,
+      menuItemsSold,
+      salesData,
+      categoryData,
+      topItems,
+      customerData,
+      staffData,
+      recentOrders,
+      kpiChanges,
+    };
+  }, [orders, dateRange]);
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-coffee-900">
-            ☕ Dashboard Overview
-          </h1>
-          <p className="text-coffee-600 text-sm">
-            Welcome back! Here's your latest business summary.
-          </p>
+          <h1 className="text-3xl font-extrabold text-coffee-900">☕ Dashboard Overview</h1>
+          <p className="text-coffee-600 text-sm">Welcome back! Here's your latest business summary.</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
           <Calendar className="text-coffee-600 w-4 h-4" />
@@ -93,10 +228,10 @@ export default function Dashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {[
-          { title: "Total Sales Today", value: "₱45,320", change: "▲ 12%" },
-          { title: "Total Orders", value: "932", change: "▲ 5%" },
-          { title: "New Customers", value: "87", change: "▲ 9%" },
-          { title: "Menu Items Sold", value: "1,482", change: "▲ 7%" },
+          { title: "Total Sales", value: `₱${totalSales.toLocaleString()}`, change: `▲ ${kpiChanges.totalSales.toFixed(1)}%` },
+          { title: "Total Orders", value: totalOrders, change: `▲ ${kpiChanges.totalOrders.toFixed(1)}%` },
+          { title: "New Customers", value: newCustomersCount, change: `▲ ${kpiChanges.newCustomers.toFixed(1)}%` },
+          { title: "Menu Items Sold", value: menuItemsSold, change: `▲ ${kpiChanges.menuItemsSold.toFixed(1)}%` },
         ].map((card, i) => (
           <div
             key={i}
@@ -108,7 +243,6 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Trend */}
@@ -175,9 +309,9 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {topItems.map((item) => (
+              {topItems.map((item, index) => (
                 <tr key={item.id} className="border-b hover:bg-coffee-100 transition">
-                  <td className="py-2 px-4 text-coffee-800">{item.id}</td>
+                  <td className="py-2 px-4 text-coffee-800">{index + 1}</td>
                   <td className="py-2 px-4 text-coffee-800">{item.name}</td>
                   <td className="py-2 px-4 font-semibold text-coffee-800">{item.sales}</td>
                 </tr>
@@ -211,10 +345,10 @@ export default function Dashboard() {
               <div key={order.id} className="py-3 flex justify-between items-center hover:bg-coffee-50 px-2 rounded-lg transition">
                 <div>
                   <p className="font-semibold text-coffee-800">{order.id}</p>
-                  <p className="text-sm text-coffee-600">{order.name}</p>
+                  <p className="text-sm text-coffee-600">{order.customerName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-coffee-800">{order.total}</p>
+                  <p className="font-semibold text-coffee-800">₱{order.total}</p>
                   <span
                     className={`text-xs font-medium px-2 py-1 rounded-full ${
                       order.status === "Completed"
@@ -232,6 +366,11 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+    
+
+      {/* Charts Section */}
+      {/* ...rest of charts, tables, and layout remain the same, using salesData, categoryData, topItems, customerData, staffData, recentOrders */}
     </div>
+    
   );
 }

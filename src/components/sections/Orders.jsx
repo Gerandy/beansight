@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Package, Clock, CheckCircle, ShoppingCart, RefreshCw } from "lucide-react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../firebase";
 
 const Orders = () => {
@@ -19,7 +19,7 @@ const Orders = () => {
     return;
   }
 
-  const ordersCol = collection(db, "orders");
+  const ordersCol = query(collection(db, "orders"),("createdAt", "desc"));
 
   // Live listener
   const unsubscribe = onSnapshot(

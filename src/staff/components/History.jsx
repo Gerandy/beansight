@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Eye, X, ChevronDown } from "lucide-react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
+import { select } from "framer-motion/m";
 
 export default function History() {
 	const [orders, setOrders] = useState([]);
@@ -218,7 +219,7 @@ export default function History() {
 											<td className="py-3 px-4 font-medium text-[var(--color-coffee-800)]">
 												#{o.id}
 											</td>
-											<td className="py-3 px-50">{o.user?.firstName}</td>
+											<td className="py-3 px-50">{o.user?.firstName || o.user?.customerName || "Anonymous"}</td>
 											<td className="py-3 px-0">
 												{o.date}
 												<div className="text-xs text-[var(--color-coffee-700)]">
@@ -378,13 +379,13 @@ export default function History() {
 													})} 
 							</p>
 							<p>
-								<strong>Customer:</strong> {selectedOrder.user?.firstName}
+								<strong>Customer:</strong> {selectedOrder.user?.firstName || selectedOrder.customerName}
 							</p>
 							<p>
-								<strong>Payment:</strong> {selectedOrder.paymentMethod}
+								<strong>Payment:</strong> {selectedOrder.paymentMethod ||selectedOrder.paymentType}
 							</p>
 							<p>
-								<strong>Type:</strong> {selectedOrder.type}
+								<strong>Type:</strong> {selectedOrder.source === "POS" ? "Walk In" : "Online"}
 							</p>
 							<p>
 								<strong>Cashier:</strong> {selectedOrder.staff}
@@ -407,10 +408,10 @@ export default function History() {
 											<span>
 												{i.name} x{i.quantity}
 												<br></br>
-												Delivery Fee 
+												
 											</span>
 											<span className="font-medium">
-												{currency(i.price * i.quantity + 50)}
+												{currency(i.price * i.quantity)}
 											</span>
 										</li>
 									))}
