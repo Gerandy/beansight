@@ -1,12 +1,11 @@
-import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 function MenuCategories() {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
 
-  // Static categories
   const categories = [
     { name: "Frappe", imgUrl: "/assets/icons/frappe.png" },
     { name: "Fruity Series", imgUrl: "/assets/icons/frappe.png" },
@@ -15,16 +14,33 @@ function MenuCategories() {
     { name: "Soda Series", imgUrl: "/assets/icons/soda.png" },
     { name: "Strawberry Series", imgUrl: "/assets/icons/stawberry.png" },
     { name: "Tea Series", imgUrl: "/assets/icons/tea.png" },
-
   ];
 
-  const scroll = (dir) => {
-    if (!scrollRef.current) return;
-    const scrollAmount = 300; // adjust as needed
-    scrollRef.current.scrollBy({
-      left: dir === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
+  // Card width for desktop (4 visible)
+  const [cardWidth, setCardWidth] = useState(0);
+  const desktopRowRef = useRef(null);
+
+  useEffect(() => {
+    const recalc = () => {
+      if (desktopRowRef.current) {
+        const available = desktopRowRef.current.clientWidth;
+        const gap = 24 * 3; // 4 cards, 3 gaps
+        setCardWidth(Math.floor((available - gap) / 4));
+      }
+    };
+    recalc();
+    window.addEventListener("resize", recalc);
+    return () => window.removeEventListener("resize", recalc);
+  }, []);
+
+  // Desktop scroll handler
+  const scrollDesktop = (dir) => {
+    if (desktopRowRef.current) {
+      desktopRowRef.current.scrollBy({
+        left: dir === "right" ? cardWidth * 2 : -cardWidth * 2,
+        behavior: "smooth",
+      });
+    }
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -40,33 +56,23 @@ function MenuCategories() {
         </p>
       </div>
 
-      <div className="relative px-4 flex items-center gap-2">
-        <button
-          onClick={() => scroll("left")}
-          className="rounded-full shadow p-2 bg-coffee-700 text-white hover:bg-coffee-800 transition-colors flex-shrink-0"
-        >
-          <ChevronLeft size={18} />
-        </button>
-
-        <div
-          ref={scrollRef}
-          className="flex overflow-x-auto gap-6 scrollbar-hide py-4"
-        >
+      {/* Mobile: swipeable, 2 cards visible, no arrows */}
+      <div className="lg:hidden relative px-4">
+        <div className="flex overflow-x-auto gap-4 scrollbar-hide py-4 snap-x snap-mandatory">
           {categories.map((cat) => (
             <div
               key={cat.name}
-              className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-              style={{ width: 140 }}
+              className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 w-[calc((100vw-2rem-32px)/3)] snap-start"
               onClick={() => handleCategoryClick(cat.name)}
             >
               <div
                 className="rounded-full flex items-center justify-center bg-white shadow-md"
-                style={{ width: 120, height:120 }}
+                style={{ width: 110, height: 110 }}
               >
                 <img
                   src={cat.imgUrl}
                   alt={cat.name}
-                  style={{ width: 115, height: 115 }}
+                  style={{ width: 70, height: 70 }}
                 />
               </div>
               <p className="mt-3 text-center font-bold text-coffee-900" style={{ fontSize: 14 }}>
@@ -75,12 +81,51 @@ function MenuCategories() {
             </div>
           ))}
         </div>
+      </div>
 
+      {/* Desktop: scrollable row, 4 visible, arrows float */}
+      <div className="hidden lg:block relative px-4">
         <button
-          onClick={() => scroll("right")}
-          className="rounded-full shadow p-2 bg-coffee-700 text-white hover:bg-coffee-800 transition-colors flex-shrink-0"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full"
+          onClick={() => scrollDesktop("left")}
+          aria-label="Scroll left"
         >
-          <ChevronRight size={18} />
+          <ChevronLeft size={24} />
+        </button>
+        <div
+          ref={desktopRowRef}
+          className="flex overflow-x-auto gap-6 scrollbar-hide py-4"
+          style={{ scrollBehavior: "smooth" }}
+        >
+          {categories.map((cat) => (
+            <div
+              key={cat.name}
+              className="desktop-card flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+              style={{ width: `${cardWidth}px` }}
+              onClick={() => handleCategoryClick(cat.name)}
+            >
+              <div
+                className="rounded-full flex items-center justify-center bg-white shadow-md"
+                style={{ width: 160, height: 160 }}
+              >
+                <img
+                  src={cat.imgUrl}
+                  alt={cat.name}
+                  style={{ width: 96, height: 96 }}
+                />
+              </div>
+              <p className="mt-3 text-center font-bold text-coffee-900" style={{ fontSize: 18 }}>
+                {cat.name}
+              </p>
+            </div>
+          ))}
+        </div>
+        <button
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full"
+          onClick={() => scrollDesktop("right")}
+          aria-label="Scroll right"
+        >
+          <ChevronRight size={24} />
         </button>
       </div>
     </div>

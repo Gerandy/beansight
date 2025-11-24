@@ -18,6 +18,11 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
     setIsAuthed(!!localStorage.getItem("authToken"));
   }, [location.pathname]);
 
+  // Automatically close cart sidebar on route change
+  useEffect(() => {
+    setCartOpen(false);
+  }, [location.pathname]);
+
   useEffect(() => {
     const onStorage = (e) => {
       if (e.key === "authToken") setIsAuthed(!!e.newValue);
@@ -122,6 +127,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
               </div>
 
               <button
+                id="navbar-cart-icon"
                 onClick={() => setCartOpen((prev) => !prev)}
                 className="relative z-40 hover:scale-110 transition-transform"
                 aria-label="Open cart"

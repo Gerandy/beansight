@@ -22,6 +22,7 @@ function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("Dusk");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [flyImage, setFlyImage] = useState(null);
 
   // Fetch product and favorites
   useEffect(() => {
@@ -67,6 +68,41 @@ function ProductDetails() {
       size: selectedSize,
       category: product.category,
     });
+    triggerFlyToCart();
+  };
+
+  // Animation function
+  const triggerFlyToCart = () => {
+    const productImg = document.getElementById("product-img");
+    const cartIcon = document.getElementById("navbar-cart-icon");
+    if (!productImg || !cartIcon) return;
+
+    const imgRect = productImg.getBoundingClientRect();
+    const cartRect = cartIcon.getBoundingClientRect();
+
+    const flyImg = document.createElement("img");
+    flyImg.src = product.img || logo;
+    flyImg.style.position = "fixed";
+    flyImg.style.left = imgRect.left + "px";
+    flyImg.style.top = imgRect.top + "px";
+    flyImg.style.width = imgRect.width + "px";
+    flyImg.style.height = imgRect.height + "px";
+    flyImg.style.zIndex = 9999;
+    flyImg.style.transition = "all 0.8s cubic-bezier(.42,.01,.56,1.02)";
+    flyImg.style.borderRadius = "16px";
+    document.body.appendChild(flyImg);
+
+    setTimeout(() => {
+      flyImg.style.left = cartRect.left + "px";
+      flyImg.style.top = cartRect.top + "px";
+      flyImg.style.width = "40px";
+      flyImg.style.height = "40px";
+      flyImg.style.opacity = "0.2";
+    }, 10);
+
+    setTimeout(() => {
+      document.body.removeChild(flyImg);
+    }, 900);
   };
 
   if (!product)
@@ -86,7 +122,6 @@ function ProductDetails() {
     <div className="min-h-screen bg-gradient-to-br mt-15 text-[#7D5A50]">
       <div className="max-w-6xl mx-auto py-12 px-6">
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg flex flex-col lg:flex-row overflow-hidden">
-
           {/* LEFT - Image & Controls */}
           <div className="lg:w-1/2 flex flex-col items-center justify-center p-10 bg-gradient-to-br from-[#FCECDC] to-[#FCDEC0] relative">
             <button
@@ -108,7 +143,10 @@ function ProductDetails() {
             <div className="absolute top-1/2 left-1/2 w-72 h-72 bg-[#E5B299] rounded-full blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2"></div>
 
             <div className="relative z-10 flex flex-col items-center">
-              <div className="w-72 h-72 aspect-square bg-coffee-50 rounded-2xl shadow-md overflow-hidden">
+              <div
+                id="product-img"
+                className="w-72 h-72 aspect-square bg-coffee-50 rounded-2xl shadow-md overflow-hidden"
+              >
                 <img src={product.img || logo} alt={product.name} className="w-full h-full object-cover" />
               </div>
               <h2 className="text-3xl font-extrabold mt-6">{product.name}</h2>
@@ -130,7 +168,6 @@ function ProductDetails() {
               </button>
             </div>
           </div>
-
           {/* RIGHT - Product Info */}
           <div className="lg:w-1/2 p-10 text-[#4A352E] flex flex-col justify-center">
             <h3 className="text-2xl font-bold mb-6">Product Information</h3>

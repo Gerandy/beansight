@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck, ScrollText } from "lucide-react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, addDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 export default function Signup() {
@@ -22,33 +22,112 @@ export default function Signup() {
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [agreed, setAgreed] = useState(false);
 
-  const scrollRef = useRef(null);
+  const [address, setAddress] = useState({
+    label: "",
+    details: "",
+    province: "",
+    city: "",
+    zipcode: "",
+  });
+  const [addressErrors, setAddressErrors] = useState({});
+  const provinces = ["Cavite"];
+  const cities = { Cavite: ["Kawit", "Imus", "Bacoor", "Cavite City", "General Trias", "Tanza"] };
+
+  // Google Maps refs
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
+  const autocompleteRef = useRef(null);
+  const inputRef = useRef(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     if (localStorage.getItem("authToken")) navigate("/Myaccount", { replace: true });
   }, [navigate]);
 
-  const strength = (() => {
-    let s = 0;
-    if (pwd.length >= 8) s++;
-    if (/[A-Z]/.test(pwd)) s++;
-    if (/[a-z]/.test(pwd)) s++;
-    if (/\d/.test(pwd)) s++;
-    if (/[^A-Za-z0-9]/.test(pwd)) s++;
-    return s;
-  })();
+  // Google Maps setup
+  useEffect(() => {
+    if (!mapRef.current || !window.google) return;
+    const defaultLocation = { lat: 14.4453, lng: 120.9187 };
+    mapInstance.current = new window.google.maps.Map(mapRef.current, {
+      center: defaultLocation,
+      zoom: 14,
+    });
+    markerInstance.current = new window.google.maps.Marker({
+      map: mapInstance.current,
+      draggable: true,
+      position: defaultLocation,
+    });
+    markerInstance.current.addListener("dragend", async () => {
+      const pos = markerInstance.current.getPosition();
+      const geocoder = new window.google.maps.Geocoder();
+      const res = await geocoder.geocode({ location: pos });
+      if (res.results[0]) fillAddressFromPlace(res.results[0]);
+    });
+    mapInstance.current.addListener("click", (e) => {
+      const pos = e.latLng;
+      markerInstance.current.setPosition(pos);
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: pos }, (results, status) => {
+        if (status === "OK" && results[0]) fillAddressFromPlace(results[0]);
+      });
+    });
+  }, []);
 
-  const onScrollTerms = (e) => {
-    const el = e.target;
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 8;
-    if (atBottom) setTermsScrolledToEnd(true);
+  useEffect(() => {
+    if (!inputRef.current || !window.google) return;
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+      componentRestrictions: { country: "ph" },
+      fields: ["address_components", "formatted_address", "geometry"],
+      types: ["address"],
+    });
+    autocompleteRef.current.addListener("place_changed", () => {
+      const place = autocompleteRef.current.getPlace();
+      if (!place.address_components) return;
+      fillAddressFromPlace(place);
+      if (place.geometry && mapInstance.current && markerInstance.current) {
+        const pos = place.geometry.location;
+        mapInstance.current.setCenter(pos);
+        markerInstance.current.setPosition(pos);
+      }
+    });
+  }, []);
+
+  const fillAddressFromPlace = (place) => {
+    let street = "", city = "", province = "", zipcode = "";
+    place.address_components.forEach(comp => {
+      const types = comp.types;
+      if (types.includes("street_number")) street = comp.long_name + " " + street;
+      if (types.includes("route")) street += comp.long_name;
+      if (types.includes("locality")) city = comp.long_name;
+      if (types.includes("administrative_area_level_1")) province = comp.long_name;
+      if (types.includes("postal_code")) zipcode = comp.long_name;
+    });
+    setAddress(prev => ({
+      ...prev,
+      details: street || place.formatted_address,
+      city,
+      province,
+      zipcode
+    }));
   };
 
-  const confirmRead = () => {
-    setHasReadTerms(true);
-    setTermsOpen(false);
+  const validateAddress = () => {
+    const errs = {};
+    if (!address.label) errs.label = "Label required";
+    if (!address.details) errs.details = "Address required";
+    if (!address.province) errs.province = "Province required";
+    if (!address.city) errs.city = "City required";
+    if (!address.zipcode) errs.zipcode = "Zipcode required";
+    setAddressErrors(errs);
+    return Object.keys(errs).length === 0;
   };
+
+  useEffect(() => {
+    if (pwd.length < 8) return setPwd2("");
+    setError("");
+  }, [pwd]);
 
   const onSignup = async (e) => {
     e.preventDefault();
@@ -59,6 +138,7 @@ export default function Signup() {
     }
     if (pwd !== pwd2) return setError("Passwords do not match.");
     if (!hasReadTerms || !agreed) return setError("Please read the Terms to the end and agree before signing up.");
+    if (!validateAddress()) return;
 
     try {
       // 1️⃣ Create Firebase Auth user
@@ -74,6 +154,8 @@ export default function Signup() {
         role: "client", // default role
         createdAt: new Date(),
       });
+      // Save address to Firestore
+      await addDoc(collection(db, "users", userId, "addresses"), { ...address, isDefault: true });
 
       // 3️⃣ Save token & role in localStorage
       localStorage.setItem("authToken", userId);
@@ -96,11 +178,12 @@ export default function Signup() {
     pwd2 &&
     pwd === pwd2 &&
     hasReadTerms &&
-    agreed;
+    agreed &&
+    validateAddress();
 
   return (
     <>
-      <div className="max-w-md mx-auto mt-20 sm:mt-28 p-4 sm:p-6 bg-white/95 rounded-xl shadow-lg ring-1 ring-black/5">
+      <div className="max-w-2xl mx-auto mt-20 sm:mt-20 p-2 sm:p-8 bg-white/95 rounded-xl shadow-lg ring-1 ring-black/5 w-[95vw] sm:w-auto">
         <div className="flex items-center gap-2 mb-2">
           <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6 text-coffee-600" />
           <h1 className="text-xl sm:text-2xl font-bold text-coffee-800">Create Account</h1>
@@ -196,6 +279,52 @@ export default function Signup() {
             </div>
           </div>
 
+          {/* Address Section */}
+          <div className="mt-6 border border-coffee-200 rounded-lg p-4 bg-coffee-50 space-y-4">
+            <h3 className="text-lg font-semibold text-coffee-900 mb-4">Your Address</h3>
+            <input
+              type="text"
+              placeholder="Label (e.g. Home)"
+              value={address.label}
+              onChange={e => setAddress({ ...address, label: e.target.value })}
+              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${addressErrors.label ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+            />
+            {addressErrors.label && <p className="text-red-600 text-sm mt-1">{addressErrors.label}</p>}
+            <input
+              type="text"
+              ref={inputRef}
+              placeholder="Search address on map"
+              className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+            />
+            <textarea
+              rows="2"
+              placeholder="Address details"
+              value={address.details}
+              onChange={e => setAddress({ ...address, details: e.target.value })}
+              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${addressErrors.details ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+            />
+            {addressErrors.details && <p className="text-red-600 text-sm mt-1">{addressErrors.details}</p>}
+            <div ref={mapRef} className="w-full h-64 rounded-lg border border-coffee-300"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <select value={address.province} onChange={e => setAddress({ ...address, province: e.target.value, city: "" })} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
+                <option value="">Select Province</option>
+                {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={address.city} onChange={e => setAddress({ ...address, city: e.target.value })} disabled={!address.province} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
+                <option value="">Select City</option>
+                {cities[address.province]?.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <input
+              type="text"
+              placeholder="Zipcode"
+              value={address.zipcode}
+              onChange={e => setAddress({ ...address, zipcode: e.target.value })}
+              className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+            />
+            {addressErrors.zipcode && <p className="text-red-600 text-sm mt-1">{addressErrors.zipcode}</p>}
+          </div>
+
           {/* Terms & Agreement */}
           <div className="rounded-lg border text-coffee-700 border-gray-200 p-3 bg-gray-50">
             <div className="flex items-start gap-3">
@@ -269,24 +398,6 @@ export default function Signup() {
       </div>
 
       {/* Scrollable content */}
-      {/* Terms Modal */}
-{termsOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl flex flex-col">
-      
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b">
-        <h2 className="text-lg font-semibold text-coffee-800">Terms of Service & Privacy Policy</h2>
-        <button
-          onClick={() => setTermsOpen(false)}
-          className="text-gray-500 hover:text-gray-700"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Scrollable content */}
       <div
         ref={scrollRef}
         onScroll={onScrollTerms}
@@ -331,33 +442,6 @@ export default function Signup() {
           <div className="h-16" />
         </div>
       </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between gap-3 px-5 py-4 border-t">
-        <span className={`text-sm ${termsScrolledToEnd ? "text-green-700" : "text-gray-600"}`}>
-          {termsScrolledToEnd ? "You reached the end." : "Scroll to the end to enable confirmation."}
-        </span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setTermsOpen(false)}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={confirmRead}
-            disabled={!termsScrolledToEnd}
-            className={`px-4 py-2 rounded-lg text-white font-medium transition
-              ${termsScrolledToEnd ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
-          >
-            I've read the Terms
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
 
       {/* Footer */}
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-t">
