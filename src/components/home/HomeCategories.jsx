@@ -67,7 +67,7 @@ function MenuCategories() {
             >
               <div
                 className="rounded-full flex items-center justify-center bg-white shadow-md"
-                style={{ width: 110, height: 110 }}
+                style={{ width: 100, height: 100 }}
               >
                 <img
                   src={cat.imgUrl}
