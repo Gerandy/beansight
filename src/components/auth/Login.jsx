@@ -26,7 +26,7 @@ export default function Login({ open, onClose }) {
 
     // Store in localStorage
     localStorage.setItem("authToken", userId);
-    localStorage.setItem("firstName", userData.firstName || "");
+    localStorage.setItem("firstName", userData?.firstName || "");
 
       onClose(); // close modal
       window.location.reload();

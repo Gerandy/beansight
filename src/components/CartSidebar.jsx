@@ -8,13 +8,18 @@ function CartSidebar({ cartOpen, setCartOpen }) {
   const [deliveryOption, setDeliveryOption] = useState("now");
 
   const { cart = [], removeFromCart, updateQuantity, totalPrice  = 0 } = useCart() || {};
+  
+  
+
+
 
 
 
   const deliveryFee = cart.length > 0 ? 49 : 0;
   const grandTotal = totalPrice + deliveryFee;
 
-
+  
+  
   useEffect(() => {
     if (showDeliveryModal) {
       const timer = setTimeout(() => setModalVisible(true), 10);
