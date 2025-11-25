@@ -261,7 +261,7 @@ export default function Signup() {
     hasReadTerms &&
     agreed &&
     validateAddress();
-
+//asa
   return (
     <>
       <div className="max-w-2xl mx-auto mt-20 sm:mt-20 p-2 sm:p-8 bg-white/95 rounded-xl shadow-lg ring-1 ring-black/5 w-[95vw] sm:w-auto">
