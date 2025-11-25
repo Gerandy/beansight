@@ -37,6 +37,7 @@ export default function Signup() {
   const markerInstance = useRef(null);
   const autocompleteRef = useRef(null);
   const inputRef = useRef(null);
+  const scrollRef = useRef(null); // <-- Add this line
 
   const navigate = useNavigate();
 
@@ -261,7 +262,20 @@ export default function Signup() {
     hasReadTerms &&
     agreed &&
     validateAddress();
-//asa
+
+  const onScrollTerms = (e) => {
+    const el = e.target;
+    // Check if scrolled to bottom (allowing a small margin)
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 8) {
+      setTermsScrolledToEnd(true);
+    }
+  };
+
+  const confirmRead = () => {
+    setHasReadTerms(true);
+    setTermsOpen(false);
+  };
+
   return (
     <>
       <div className="max-w-2xl mx-auto mt-20 sm:mt-20 p-2 sm:p-8 bg-white/95 rounded-xl shadow-lg ring-1 ring-black/5 w-[95vw] sm:w-auto">
