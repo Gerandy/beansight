@@ -24,6 +24,7 @@ function MobileMenu({ menuOpen, setMenuOpen }) {
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("firstName");
     setIsAuthed(false);
     setMenuOpen(false);
     navigate("/");
