@@ -48,52 +48,128 @@ export default function Signup() {
   }, [navigate]);
 
   // Google Maps setup
-  useEffect(() => {
-    if (!mapRef.current || !window.google) return;
-    const defaultLocation = { lat: 14.4453, lng: 120.9187 };
-    mapInstance.current = new window.google.maps.Map(mapRef.current, {
-      center: defaultLocation,
-      zoom: 14,
-    });
-    markerInstance.current = new window.google.maps.Marker({
-      map: mapInstance.current,
-      draggable: true,
-      position: defaultLocation,
-    });
-    markerInstance.current.addListener("dragend", async () => {
-      const pos = markerInstance.current.getPosition();
-      const geocoder = new window.google.maps.Geocoder();
-      const res = await geocoder.geocode({ location: pos });
-      if (res.results[0]) fillAddressFromPlace(res.results[0]);
-    });
-    mapInstance.current.addListener("click", (e) => {
-      const pos = e.latLng;
-      markerInstance.current.setPosition(pos);
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ location: pos }, (results, status) => {
-        if (status === "OK" && results[0]) fillAddressFromPlace(results[0]);
-      });
-    });
-  }, []);
+ useEffect(() => {
+  if (!mapRef.current || !window.google) return;
 
-  useEffect(() => {
-    if (!inputRef.current || !window.google) return;
-    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-      componentRestrictions: { country: "ph" },
-      fields: ["address_components", "formatted_address", "geometry"],
-      types: ["address"],
-    });
-    autocompleteRef.current.addListener("place_changed", () => {
-      const place = autocompleteRef.current.getPlace();
-      if (!place.address_components) return;
-      fillAddressFromPlace(place);
-      if (place.geometry && mapInstance.current && markerInstance.current) {
-        const pos = place.geometry.location;
-        mapInstance.current.setCenter(pos);
-        markerInstance.current.setPosition(pos);
-      }
-    });
-  }, []);
+  const storeCenter = { lat: 14.442729456654444, lng: 120.91027924183216 };
+  const deliveryRadius = 5000; // 5km
+
+  // Initialize map (temporary center, will recenter to user location)
+  mapInstance.current = new window.google.maps.Map(mapRef.current, {
+    center: storeCenter,
+    zoom: 14,
+  });
+
+  // Draw delivery zone circle
+  const zoneCircle = new window.google.maps.Circle({
+    map: mapInstance.current,
+    center: storeCenter,
+    radius: deliveryRadius,
+    fillColor: "#00AAFF33",
+    strokeColor: "#0077FF",
+    strokeWeight: 2,
+  });
+
+  // Initialize marker (position will be set later)
+  markerInstance.current = new window.google.maps.Marker({
+    map: mapInstance.current,
+    draggable: true,
+    position: storeCenter,
+  });
+
+  // Helper: check if inside zone
+  function isInsideZone(pos) {
+    return window.google.maps.geometry.spherical.computeDistanceBetween(
+      pos,
+      zoneCircle.getCenter()
+    ) <= zoneCircle.getRadius();
+  }
+
+  // Helper: snap to nearest point on circle edge
+  function snapToCircleEdge(pos) {
+    const center = zoneCircle.getCenter();
+    const distance = window.google.maps.geometry.spherical.computeDistanceBetween(pos, center);
+
+    if (distance <= zoneCircle.getRadius()) return pos;
+
+    const heading = window.google.maps.geometry.spherical.computeHeading(center, pos);
+    return window.google.maps.geometry.spherical.computeOffset(center, zoneCircle.getRadius(), heading);
+  }
+
+  // --- Function to update marker position and fill address ---
+  async function updateMarkerPosition(pos) {
+    markerInstance.current.setPosition(pos);
+    mapInstance.current.setCenter(pos);
+
+    const geocoder = new window.google.maps.Geocoder();
+    const res = await geocoder.geocode({ location: pos });
+    if (res.results[0]) fillAddressFromPlace(res.results[0]);
+  }
+
+  // --- Try to get user location ---
+  function setUserLocation() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          let userPos = new window.google.maps.LatLng(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+
+          if (!isInsideZone(userPos)) {
+            userPos = snapToCircleEdge(userPos);
+          }
+
+          updateMarkerPosition(userPos);
+        },
+        (err) => {
+          console.warn("Geolocation failed, using store center:", err);
+          updateMarkerPosition(storeCenter);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      // Browser doesn't support geolocation
+      updateMarkerPosition(storeCenter);
+    }
+  }
+
+  setUserLocation();
+
+  // --- DRAG MARKER ---
+  markerInstance.current.addListener("dragend", async () => {
+    let pos = markerInstance.current.getPosition();
+
+    if (!isInsideZone(pos)) {
+      alert("⚠️ Marker outside delivery zone. Snapping to nearest point.");
+      pos = snapToCircleEdge(pos);
+    }
+
+    updateMarkerPosition(pos);
+  });
+
+  // --- CLICK MAP ---
+  mapInstance.current.addListener("click", async (e) => {
+    let pos = e.latLng;
+
+    if (!isInsideZone(pos)) {
+      alert("⚠️ Location outside delivery zone. Snapping to nearest point.");
+      pos = snapToCircleEdge(pos);
+    }
+
+    updateMarkerPosition(pos);
+  });
+
+}, []);
+
+
+
+
+
 
   const fillAddressFromPlace = (place) => {
     let street = "", city = "", province = "", zipcode = "";
