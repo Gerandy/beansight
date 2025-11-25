@@ -29,9 +29,7 @@ export default function Signup() {
     city: "",
     zipcode: "",
   });
-  const [addressErrors, setAddressErrors] = useState({});
-  const provinces = ["Cavite"];
-  const cities = { Cavite: ["Kawit", "Imus", "Bacoor", "Cavite City", "General Trias", "Tanza"] };
+ 
 
   // Google Maps refs
   const mapRef = useRef(null);
@@ -39,7 +37,6 @@ export default function Signup() {
   const markerInstance = useRef(null);
   const autocompleteRef = useRef(null);
   const inputRef = useRef(null);
-  const scrollRef = useRef(null);
 
   const navigate = useNavigate();
 
@@ -49,18 +46,18 @@ export default function Signup() {
 
   // Google Maps setup
  useEffect(() => {
-  if (!mapRef.current || !window.google) return;
+  if (!mapRef.current || !window.google || !inputRef.current) return;
 
   const storeCenter = { lat: 14.442729456654444, lng: 120.91027924183216 };
-  const deliveryRadius = 5000; // 5km
+  const deliveryRadius = 3000; // 5 km
 
-  // Initialize map (temporary center, will recenter to user location)
+  // Initialize map
   mapInstance.current = new window.google.maps.Map(mapRef.current, {
     center: storeCenter,
     zoom: 14,
   });
 
-  // Draw delivery zone circle
+  // Draw delivery zone
   const zoneCircle = new window.google.maps.Circle({
     map: mapInstance.current,
     center: storeCenter,
@@ -68,16 +65,18 @@ export default function Signup() {
     fillColor: "#00AAFF33",
     strokeColor: "#0077FF",
     strokeWeight: 2,
+    clickable: false,
+    fillOpacity: 0.2,
   });
 
-  // Initialize marker (position will be set later)
+  // Initialize marker
   markerInstance.current = new window.google.maps.Marker({
     map: mapInstance.current,
     draggable: true,
     position: storeCenter,
   });
 
-  // Helper: check if inside zone
+  // --- Helper Functions ---
   function isInsideZone(pos) {
     return window.google.maps.geometry.spherical.computeDistanceBetween(
       pos,
@@ -85,19 +84,16 @@ export default function Signup() {
     ) <= zoneCircle.getRadius();
   }
 
-  // Helper: snap to nearest point on circle edge
   function snapToCircleEdge(pos) {
     const center = zoneCircle.getCenter();
     const distance = window.google.maps.geometry.spherical.computeDistanceBetween(pos, center);
-
     if (distance <= zoneCircle.getRadius()) return pos;
 
     const heading = window.google.maps.geometry.spherical.computeHeading(center, pos);
     return window.google.maps.geometry.spherical.computeOffset(center, zoneCircle.getRadius(), heading);
   }
 
-  // --- Function to update marker position and fill address ---
-  async function updateMarkerPosition(pos) {
+  async function updateMarker(pos) {
     markerInstance.current.setPosition(pos);
     mapInstance.current.setCenter(pos);
 
@@ -106,62 +102,74 @@ export default function Signup() {
     if (res.results[0]) fillAddressFromPlace(res.results[0]);
   }
 
-  // --- Try to get user location ---
-  function setUserLocation() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          let userPos = new window.google.maps.LatLng(
-            position.coords.latitude,
-            position.coords.longitude
-          );
+  // --- Geolocation ---
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        let userPos = new window.google.maps.LatLng(
+          position.coords.latitude,
+          position.coords.longitude
+        );
 
-          if (!isInsideZone(userPos)) {
-            userPos = snapToCircleEdge(userPos);
-          }
-
-          updateMarkerPosition(userPos);
-        },
-        (err) => {
-          console.warn("Geolocation failed, using store center:", err);
-          updateMarkerPosition(storeCenter);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
+        if (!isInsideZone(userPos)) {
+          userPos = snapToCircleEdge(userPos);
         }
-      );
-    } else {
-      // Browser doesn't support geolocation
-      updateMarkerPosition(storeCenter);
-    }
+
+        updateMarker(userPos);
+      },
+      (err) => {
+        console.warn("Geolocation failed, using store center:", err);
+        updateMarker(storeCenter);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    updateMarker(storeCenter);
   }
 
-  setUserLocation();
-
-  // --- DRAG MARKER ---
+  // --- Marker Drag ---
   markerInstance.current.addListener("dragend", async () => {
     let pos = markerInstance.current.getPosition();
-
     if (!isInsideZone(pos)) {
       alert("⚠️ Marker outside delivery zone. Snapping to nearest point.");
       pos = snapToCircleEdge(pos);
     }
-
-    updateMarkerPosition(pos);
+    updateMarker(pos);
   });
 
-  // --- CLICK MAP ---
+  // --- Click Map ---
   mapInstance.current.addListener("click", async (e) => {
     let pos = e.latLng;
-
     if (!isInsideZone(pos)) {
       alert("⚠️ Location outside delivery zone. Snapping to nearest point.");
       pos = snapToCircleEdge(pos);
     }
+    updateMarker(pos);
+  });
 
-    updateMarkerPosition(pos);
+  // --- Autocomplete ---
+  autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+    componentRestrictions: { country: "ph" },
+    fields: ["address_components", "formatted_address", "geometry"],
+    types: ["address"],
+  });
+
+  autocompleteRef.current.addListener("place_changed", () => {
+    const place = autocompleteRef.current.getPlace();
+    if (!place.address_components || !place.geometry?.location) return;
+
+    let pos = place.geometry.location;
+    if (!isInsideZone(pos)) {
+      alert("⚠️ Address outside delivery zone. Snapping to nearest point.");
+      pos = snapToCircleEdge(pos);
+    }
+
+    updateMarker(pos);
+    fillAddressFromPlace(place);
   });
 
 }, []);
@@ -170,16 +178,12 @@ export default function Signup() {
 
 
 
-
   const fillAddressFromPlace = (place) => {
-    let street = "", city = "", province = "", zipcode = "";
+    let street = "", city = "", province = "Cavite", zipcode = "";
     place.address_components.forEach(comp => {
       const types = comp.types;
       if (types.includes("street_number")) street = comp.long_name + " " + street;
       if (types.includes("route")) street += comp.long_name;
-      if (types.includes("locality")) city = comp.long_name;
-      if (types.includes("administrative_area_level_1")) province = comp.long_name;
-      if (types.includes("postal_code")) zipcode = comp.long_name;
     });
     setAddress(prev => ({
       ...prev,
@@ -257,19 +261,6 @@ export default function Signup() {
     hasReadTerms &&
     agreed &&
     validateAddress();
-
-  const onScrollTerms = (e) => {
-    const el = e.target;
-    // Check if scrolled to bottom
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 8) {
-      setTermsScrolledToEnd(true);
-    }
-  };
-
-  const confirmRead = () => {
-    setHasReadTerms(true);
-    setTermsOpen(false);
-  };
 
   return (
     <>
@@ -377,9 +368,9 @@ export default function Signup() {
               placeholder="Label (e.g. Home)"
               value={address.label}
               onChange={e => setAddress({ ...address, label: e.target.value })}
-              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${addressErrors.label ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 `}
             />
-            {addressErrors.label && <p className="text-red-600 text-sm mt-1">{addressErrors.label}</p>}
+            
             <input
               type="text"
               ref={inputRef}
@@ -391,28 +382,13 @@ export default function Signup() {
               placeholder="Address details"
               value={address.details}
               onChange={e => setAddress({ ...address, details: e.target.value })}
-              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 ${addressErrors.details ? "border-red-600 ring-red-500" : "border-coffee-300 ring-coffee-700"}`}
+              className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 `}
             />
-            {addressErrors.details && <p className="text-red-600 text-sm mt-1">{addressErrors.details}</p>}
+            
             <div ref={mapRef} className="w-full h-64 rounded-lg border border-coffee-300"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <select value={address.province} onChange={e => setAddress({ ...address, province: e.target.value, city: "" })} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
-                <option value="">Select Province</option>
-                {provinces.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <select value={address.city} onChange={e => setAddress({ ...address, city: e.target.value })} disabled={!address.province} className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700">
-                <option value="">Select City</option>
-                {cities[address.province]?.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <input
-              type="text"
-              placeholder="Zipcode"
-              value={address.zipcode}
-              onChange={e => setAddress({ ...address, zipcode: e.target.value })}
-              className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
-            />
-            {addressErrors.zipcode && <p className="text-red-600 text-sm mt-1">{addressErrors.zipcode}</p>}
+            
+           
+            
           </div>
 
           {/* Terms & Agreement */}
