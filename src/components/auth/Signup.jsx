@@ -25,9 +25,8 @@ export default function Signup() {
   const [address, setAddress] = useState({
     label: "",
     details: "",
-    province: "",
-    city: "",
-    zipcode: "",
+    
+    
   });
  
 
@@ -95,13 +94,15 @@ export default function Signup() {
   }
 
   async function updateMarker(pos) {
-    markerInstance.current.setPosition(pos);
-    mapInstance.current.setCenter(pos);
+  if (!markerInstance.current || !mapInstance.current) return; // <- safeguard
 
-    const geocoder = new window.google.maps.Geocoder();
-    const res = await geocoder.geocode({ location: pos });
-    if (res.results[0]) fillAddressFromPlace(res.results[0]);
-  }
+  markerInstance.current.setPosition(pos);
+  mapInstance.current.setCenter(pos);
+
+  const geocoder = new window.google.maps.Geocoder();
+  const res = await geocoder.geocode({ location: pos });
+  if (res.results[0]) fillAddressFromPlace(res.results[0]);
+}
 
   // --- Geolocation ---
   if (navigator.geolocation) {
@@ -180,7 +181,7 @@ export default function Signup() {
 
 
   const fillAddressFromPlace = (place) => {
-    let street = "", city = "", province = "Cavite", zipcode = "";
+    let street = "";
     place.address_components.forEach(comp => {
       const types = comp.types;
       if (types.includes("street_number")) street = comp.long_name + " " + street;
@@ -189,9 +190,9 @@ export default function Signup() {
     setAddress(prev => ({
       ...prev,
       details: street || place.formatted_address,
-      city,
-      province,
-      zipcode
+      
+      
+      
     }));
   };
 
@@ -199,10 +200,6 @@ export default function Signup() {
     const errs = {};
     if (!address.label) errs.label = "Label required";
     if (!address.details) errs.details = "Address required";
-    if (!address.province) errs.province = "Province required";
-    if (!address.city) errs.city = "City required";
-    if (!address.zipcode) errs.zipcode = "Zipcode required";
-    setAddressErrors(errs);
     return Object.keys(errs).length === 0;
   };
 

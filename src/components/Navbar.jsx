@@ -5,14 +5,19 @@ import { Handbag } from "lucide-react";
 import CartSidebar from "./CartSidebar";
 import Login from "./auth/Login";
 import { useCart } from "./CartContext";
+import { db } from "../firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
   const [isAuthed, setIsAuthed] = useState(!!localStorage.getItem("authToken"));
   const [loginOpen, setLoginOpen] = useState(false);
   const { cart } = useCart();
+  
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  
 
   useEffect(() => {
     setIsAuthed(!!localStorage.getItem("authToken"));
@@ -40,6 +45,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("firstName");
+    localStorage.removeItem("favorites");
     setIsAuthed(false);
     window.location.href = "/";
   };
