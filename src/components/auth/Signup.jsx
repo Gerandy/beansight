@@ -218,7 +218,7 @@ export default function Signup() {
     if (!validateAddress()) return;
 
     try {
-      // 1️⃣ Create Firebase Auth user
+      // 1️⃣ Create Firebase Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, email, pwd);
       const userId = userCredential.user.uid;
 
