@@ -235,7 +235,7 @@ export default function Signup() {
         role: "client", // default role
         createdAt: new Date(),
       });
-      // Save address to Firestore
+      // Save address to Firestorefs
       await addDoc(collection(db, "users", userId, "addresses"), { ...address, isDefault: true });
 
       // 3️⃣ Save token & role in localStorage
