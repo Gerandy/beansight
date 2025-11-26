@@ -17,7 +17,7 @@ function Slider() {
 
   // Fetch banners from Firestore
   useEffect(() => {
-    const loadBanners = async () => {
+    const loadBanners = async () => { a
       try {
         const snapshot = await getDocs(collection(db, "banners"));
         const banners = snapshot.docs.map((doc) => ({
@@ -42,13 +42,9 @@ function Slider() {
 
   return (
     <div className="w-full flex justify-center" style={{ marginTop: "88px" }}>
-      <div className="relative w-full max-w-5xl mx-auto px-4">
+      <div className="relative w-full max-w-5xl mx-auto px-4 min-h-0 md:min-h-[400px]">
         <Swiper
           modules={[Navigation, Autoplay, Pagination]}
-          navigation={{
-            nextEl: ".custom-swiper-button-next",
-            prevEl: ".custom-swiper-button-prev",
-          }}
           pagination={{
             clickable: true,
             bulletClass: 'swiper-pagination-bullet',
@@ -72,14 +68,6 @@ function Slider() {
               </div>
             </SwiperSlide>
           ))}
-
-          {/* Custom Navigation Buttons */}
-          <div className="custom-swiper-button-prev">
-            <span>&#8249;</span>
-          </div>
-          <div className="custom-swiper-button-next">
-            <span>&#8250;</span>
-          </div>
         </Swiper>
       </div>
     </div>
