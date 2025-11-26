@@ -1,3 +1,4 @@
+// firebase.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -10,13 +11,15 @@ const firebaseConfig = {
   storageBucket: "beansight-cc92a.firebasestorage.app",
   messagingSenderId: "187187391881",
   appId: "1:187187391881:web:b65418455da6121740c558",
-  measurementId: "G-2LZ1VD25TH"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+export {app};
 
-// Export Firestore instance
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
 export const storage = getStorage(app);
+
+
+export default app;

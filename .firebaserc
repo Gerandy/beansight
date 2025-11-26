@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "beansight-cc92a"
-  }
+    "default": "beansight-cc92a",
+    "staging": "beansight-cc92a"
+  },
+  "targets": {},
+  "etags": {}
 }

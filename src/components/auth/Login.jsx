@@ -1,7 +1,13 @@
-import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../firebase";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 import ResetPassword from "./ResetPassword";
 import logo from "../../assets/beansight.png";
 
@@ -11,29 +17,116 @@ export default function Login({ open, onClose }) {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [userData, setUserData] = useState(null);
 
+  const navigate = useNavigate();
+  const auth = getAuth();
+
+  // Initialize invisible reCAPTCHA for OTP
+  useEffect(() => {
+    if (!window.recaptchaVerifier) {
+      const container = document.getElementById("recaptcha-container");
+      if (!container) return;
+
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, container, {
+        size: "invisible",
+        callback: (response) => {
+          console.log("reCAPTCHA solved", response);
+        },
+      });
+      window.recaptchaVerifier.render().catch((err) => console.error(err));
+    }
+
+    // Enable appVerificationDisabledForTesting in development
+    if (process.env.NODE_ENV === "development") {
+      auth.settings = auth.settings || {};
+      auth.settings.appVerificationDisabledForTesting = true;
+    }
+  }, []);
+
+  // Handle Email/Password login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const userId = userCredential.user.uid;
+      const uid = userCredential.user.uid;
 
-      // Get firstName from Firestore
-      const docSnap = await getDoc(doc(db, "users", userId));
-      const userData = docSnap.exists() ? docSnap.data() : {};
+      // Fetch user data from Firestore
+      const docSnap = await getDoc(doc(db, "users", uid));
+      if (!docSnap.exists()) throw new Error("User data not found");
+      const data = docSnap.data();
+      setUserData(data);
 
-    // Store in localStorage
-    localStorage.setItem("authToken", userId);
-    localStorage.setItem("firstName", userData?.firstName || "");
+      if (data.role === "client") {
+        // Client: direct login
+        saveUserSession(uid, data);
+        onClose();
+        navigate("/home");
+        window.location.reload();
+      } else if (data.role === "staff" || data.role === "admin") {
+        // Staff/Admin: send OTP
+        if (!data.contactNumber) throw new Error("No phone number found for OTP.");
 
-      onClose(); // close modal
-      window.location.reload();
+        const phoneNumber = "+63" + data.contactNumber.slice(1); // convert to +63 format
+        const appVerifier = window.recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+
+        setConfirmationResult(result);
+        setOtpSent(true);
+      } else {
+        throw new Error("User role not recognized");
+      }
     } catch (err) {
       console.error(err);
       setError(err.message);
     }
+  };
+
+  // Handle OTP verification
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!confirmationResult || !userData) return setError("No OTP request found.");
+
+    try {
+      // Confirm OTP
+      await confirmationResult.confirm(otpCode);
+
+      // Use the existing email/password user UID
+      const uid = auth.currentUser.uid;
+      saveUserSession(uid, userData);
+
+      onClose();
+      navigate(userData.role === "admin" ? "/admin" : "/staff");
+    } catch (err) {
+      console.error(err);
+      setError("Invalid OTP code.");
+    }
+  };
+
+  // Save user session to localStorage
+  const saveUserSession = (uid, data) => {
+    localStorage.setItem("authToken", uid);
+    localStorage.setItem("userRole", data.role);
+    localStorage.setItem("firstName", data.firstName || "");
+    localStorage.setItem("favorites", JSON.stringify(data.favorites || []));
+  };
+
+  // Handle guest login
+  const handleGuestLogin = () => {
+    localStorage.setItem("authToken", "guest");
+    localStorage.setItem("userRole", "guest");
+    localStorage.setItem("firstName", "Guest");
+    localStorage.setItem("favorites", JSON.stringify([]));
+    onClose();
+    navigate("/home");
+    window.location.reload();
   };
 
   if (!open) return null;
@@ -50,16 +143,9 @@ export default function Login({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fadeIn">
-      <div
-        className="bg-white rounded-3xl p-8 w-full max-w-md shadow-soft-xl relative animate-slideUp"
-        style={{ fontFamily: "var(--font-sans)" }}
-      >
+      <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-soft-xl relative animate-slideUp" style={{ fontFamily: "var(--font-sans)" }}>
         {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
-          aria-label="Close"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors" aria-label="Close">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -67,16 +153,14 @@ export default function Login({ open, onClose }) {
 
         {/* Logo */}
         <div className="flex justify-center mb-0">
-          <img src={logo} alt="Sol-Ace Cafe logo" className="w-50 h-50 object-contain" />
+          <img src={logo} alt="Beansight Logo" className="w-50 h-50 object-contain" />
         </div>
 
-        {/* Title */}
         <h2 className="text-3xl font-bold text-gray-900 text-center logo-font">Welcome back!</h2>
         <p className="text-gray-600 text-center mt-1 mb-6">Sign in to your account.</p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email Input */}
-          <div>
+        {!otpSent ? (
+          <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="email"
               placeholder="Email address"
@@ -85,82 +169,68 @@ export default function Login({ open, onClose }) {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-          </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className="w-full bg-gray-50 border-0 px-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-coffee-500 focus:bg-white transition-all pr-12"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
 
-          {/* Password Input */}
-          <div className="relative">
+            {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
+
+            <div className="text-center">
+              <button type="button" onClick={() => setShowResetPassword(true)} className="text-coffee-600 font-semibold text-sm hover:text-coffee-700">
+                Forgot your password?
+              </button>
+            </div>
+
+            <button type="submit" className="w-full bg-gradient-to-r from-coffee-500 to-coffee-600 text-white font-bold py-4 rounded-full hover:from-coffee-600 hover:to-coffee-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]">
+              Log In
+            </button>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-4 text-sm text-gray-500">OR</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              className="w-full bg-white border-2 border-gray-300 text-gray-900 font-bold py-4 rounded-full hover:bg-gray-50 transition-all"
+            >
+              Continue as guest
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className="w-full bg-gray-50 border-0 px-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-coffee-500 focus:bg-white transition-all pr-12"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="text"
+              placeholder="Enter OTP code"
+              className="w-full bg-gray-50 border-0 px-4 py-4 rounded-xl text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-coffee-500 focus:bg-white transition-all"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value)}
               required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              {showPassword ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              )}
+            {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
+            <button type="submit" className="w-full bg-gradient-to-r from-coffee-500 to-coffee-600 text-white font-bold py-4 rounded-full hover:from-coffee-600 hover:to-coffee-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]">
+              Verify OTP
             </button>
-          </div>
+          </form>
+        )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Forgot Password */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setShowResetPassword(true)}
-              className="text-coffee-600 font-semibold text-sm hover:text-coffee-700"
-            >
-              Forgot your password?
-            </button>
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-coffee-500 to-coffee-600 text-white font-bold py-4 rounded-full hover:from-coffee-600 hover:to-coffee-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Log In
-          </button>
-
-          {/* Divider */}
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-4 text-sm text-gray-500">OR</span>
-            </div>
-          </div>
-
-          {/* Guest Button */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full bg-white border-2 border-gray-300 text-gray-900 font-bold py-4 rounded-full hover:bg-gray-50 transition-all"
-          >
-            Continue as guest
-          </button>
-        </form>
       </div>
+      <div id="recaptcha-container"></div>
     </div>
   );
 }

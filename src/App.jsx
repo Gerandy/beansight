@@ -1,24 +1,28 @@
+// App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import "./App.css";
 import { useState } from "react";
-import MobileMenu from "./components/MobileMenu";
+
 import Navbar from "./components/Navbar";
+import MobileMenu from "./components/MobileMenu";
+import Footer from "./components/sections/Footer";
+
+// Public Pages
 import Home from "./components/sections/Home";
 import Menu from "./components/sections/Menu";
 import ProductDetails from "./components/sections/ProductDetails";
-import Myaccount from "./components/sections/Myaccount";
-import Myprofile from "./components/myaccount/Myprofile";
-import Footer from "./components/sections/Footer";
-import MyAddresses from "./components/myaccount/MyAddresses";
-import MyContactNumbers from "./components/myaccount/MyContactNumbers";
-import MyFavorites from "./components/myaccount/MyFavorites";
 import Orders from "./components/sections/Orders";
 import Checkout from "./components/Checkout";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
-import RequireAuth from "./components/auth/RequireAuth";
 
-// ----- Admin -----
+// MyAccount (Client)
+import Myaccount from "./components/sections/Myaccount";
+import Myprofile from "./components/myaccount/Myprofile";
+import MyAddresses from "./components/myaccount/MyAddresses";
+import MyContactNumbers from "./components/myaccount/MyContactNumbers";
+import MyFavorites from "./components/myaccount/MyFavorites";
+
+// Admin
 import AdminLayout from "./admin/layouts/Adminlayouts";
 import Dashboard from "./admin/dashboard";
 import Sales from "./admin/sales";
@@ -30,12 +34,15 @@ import Product from "./admin/Products";
 import UserManagement from "./admin/UserManagement";
 import OrderManagement from "./admin/OrderManagement";
 
-// ----- Staff (POS) -----
+// Staff
 import StaffLayout from "./staff/layouts/StaffLayout";
 import PosPage from "./staff/POSPage";
 import OnlineOrders from "./staff/components/OnlineOrders";
 import History from "./staff/components/History";
 import StaffProduct from "./staff/components/StaffProduct";
+
+// ProtectedRoute
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,10 +66,7 @@ function App() {
 
               <main className="flex-grow">
                 <Routes>
-
-                  {/* 🔥 Redirect root to /home */}
                   <Route path="/" element={<Navigate to="/home" replace />} />
-
                   <Route path="/home" element={<Home />} />
                   <Route path="/menu" element={<Menu cartOpen={cartOpen} />} />
                   <Route path="/menu/product-details/:id" element={<ProductDetails />} />
@@ -71,12 +75,13 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
 
+                  {/* Client Account */}
                   <Route
-                    path="/Myaccount"
+                    path="/Myaccount/*"
                     element={
-                      <RequireAuth>
+                      <ProtectedRoute role="client">
                         <Myaccount />
-                      </RequireAuth>
+                      </ProtectedRoute>
                     }
                   >
                     <Route index element={<Myprofile />} />
@@ -85,7 +90,6 @@ function App() {
                     <Route path="contacts" element={<MyContactNumbers />} />
                     <Route path="favorites" element={<MyFavorites />} />
                   </Route>
-
                 </Routes>
               </main>
 
@@ -95,7 +99,14 @@ function App() {
         />
 
         {/* ---------- Admin Site ---------- */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="sales" element={<Sales />} />
@@ -109,14 +120,20 @@ function App() {
         </Route>
 
         {/* ---------- Staff Site ---------- */}
-        <Route path="/staff" element={<StaffLayout />}>
+        <Route
+          path="/staff/*"
+          element={
+            <ProtectedRoute role="staff">
+              <StaffLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<PosPage />} />
           <Route path="pos" element={<PosPage />} />
           <Route path="online-orders" element={<OnlineOrders />} />
           <Route path="history" element={<History />} />
           <Route path="products" element={<StaffProduct />} />
         </Route>
-
       </Routes>
     </Router>
   );

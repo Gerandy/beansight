@@ -252,7 +252,7 @@ export default function OrderManagement() {
             >
               <option value="All">All Types</option>
               <option value="Online">Online</option>
-              <option value="Walk-in">Walk-in</option>
+              <option value="POS">Walk-in</option>
             </select>
 
             <div className="relative">

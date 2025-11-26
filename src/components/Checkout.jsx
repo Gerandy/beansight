@@ -44,10 +44,6 @@ export default function Checkout() {
   const [shipping, setShipping] = useState({
     type: "delivery",
     address: "",
-    city: "",
-    province: "",
-    zip: "",
-    notes: "",
     pickupLocation: "Main Branch - Kawit",
     schedule: "now",
     scheduledDate: "",
@@ -60,14 +56,12 @@ export default function Checkout() {
       setShipping(s => ({
         ...s,
         address: defaultAddress?.details,
-        city: defaultAddress?.city,
-        province: defaultAddress?.province,
-        zip: defaultAddress?.zipcode
+
       }));
     }
   }, [defaultAddress]);
 
-  const [deliveryOption, setDeliveryOption] = useState("now");
+
   const [pickupTime, setPickupTime] = useState("now");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -99,7 +93,7 @@ export default function Checkout() {
   const handleCheckout = async () => {
     if (!items.length) return alert("Cart is empty!");
 
-    if (shipping.type === "delivery" && (!shipping.address || !shipping.city || !shipping.province || !shipping.zip)) {
+    if (shipping.type === "delivery" && (!shipping.address )) {
       return alert("Please fill out all delivery fields.");
     }
 
