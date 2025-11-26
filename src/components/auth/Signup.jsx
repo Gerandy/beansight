@@ -152,7 +152,7 @@ export default function Signup() {
     updateMarker(pos);
   });
 
-  // --- Autocomplete ---
+  // --- Autocomplete --
   autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
     componentRestrictions: { country: "ph" },
     fields: ["address_components", "formatted_address", "geometry"],
