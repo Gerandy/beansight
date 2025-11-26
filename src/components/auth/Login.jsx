@@ -67,6 +67,7 @@ export default function Login({ open, onClose }) {
         saveUserSession(uid, data);
         onClose();
         navigate("/home");
+        window.location.reload();
       } else if (data.role === "staff" || data.role === "admin") {
         // Staff/Admin: send OTP
         if (!data.contactNumber) throw new Error("No phone number found for OTP.");
@@ -125,6 +126,7 @@ export default function Login({ open, onClose }) {
     localStorage.setItem("favorites", JSON.stringify([]));
     onClose();
     navigate("/home");
+    window.location.reload();
   };
 
   if (!open) return null;
