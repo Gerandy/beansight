@@ -3,11 +3,14 @@ import MenuCard from "./HomeCard";
 import { db } from "../../firebase"; 
 import { doc, getDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function Favorites() {
   const favoritesArr = localStorage.getItem("favorites"); 
   const [favoriteProducts, setFavoriteProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -56,6 +59,13 @@ function Favorites() {
     );
   }
 
+  // Carousel logic for desktop
+  const showCarousel = favoriteProducts.length > itemsPerPage;
+  const maxIndex = favoriteProducts.length - itemsPerPage;
+  const visibleProducts = showCarousel
+    ? favoriteProducts.slice(carouselIndex, carouselIndex + itemsPerPage)
+    : favoriteProducts;
+
   return (
     <div className="max-w-[1050px] mx-auto px-4 py-8 relative">
       {/* Header */}
@@ -66,36 +76,64 @@ function Favorites() {
         <p className="text-gray-950 mb-6">Your New favorite foods!</p>
       </div>
 
-      {/* Desktop Grid */}
-      <div className={`hidden lg:grid ${favoriteProducts.length > 5 ? "grid-cols-5" : `grid-cols-${favoriteProducts.length}`} gap-4`}>
-        {favoriteProducts.slice(0, 5).map((product) => (
-          <Link to={`/menu/product-details/${product.id}`} key={product.id}>
-            <MenuCard name={product.name} price={product.price} img={product.img} />
-          </Link>
-        ))}
-      </div>
-
-      {/* Swiper for mobile or >5 favorites */}
-      {(favoriteProducts.length > 5 || window.innerWidth < 1024) && (
-        <div
-          className="lg:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
-        >
-          {favoriteProducts.map((product) => (
-            <div
-              key={product.id}
-              className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
-            >
-              <Link to={`/menu/product-details/${product.id}`}>
-                <MenuCard name={product.name} price={product.price} img={product.img} />
-              </Link>
-            </div>
+      {/* Desktop Carousel */}
+      <div className="hidden lg:flex items-center relative">
+        {showCarousel && (
+          <button
+            className={`absolute left-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
+              carouselIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+            onClick={() => setCarouselIndex((i) => Math.max(i - 1, 0))}
+            disabled={carouselIndex === 0}
+            aria-label="Previous"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <div className="grid grid-cols-5 gap-4 w-full">
+          {visibleProducts.map((product) => (
+            <Link to={`/menu/product-details/${product.id}`} key={product.id}>
+              <MenuCard name={product.name} price={product.price} img={product.img} />
+            </Link>
+          ))}
+          {/* Fill empty columns if less than 5 */}
+          {Array.from({ length: itemsPerPage - visibleProducts.length }).map((_, idx) => (
+            <div key={`empty-${idx}`} />
           ))}
         </div>
-      )}
+        {showCarousel && (
+          <button
+            className={`absolute right-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
+              carouselIndex >= maxIndex ? "cursor-not-allowed" : "cursor-pointer"
+            }`}
+            onClick={() => setCarouselIndex((i) => Math.min(i + 1, maxIndex))}
+            disabled={carouselIndex >= maxIndex}
+            aria-label="Next"
+          >
+            <ChevronRight size={20} />
+          </button>
+        )}
+      </div>
+
+      {/* Swiper for mobile */}
+      <div
+        className="lg:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        {favoriteProducts.map((product) => (
+          <div
+            key={product.id}
+            className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
+          >
+            <Link to={`/menu/product-details/${product.id}`}>
+              <MenuCard name={product.name} price={product.price} img={product.img} />
+            </Link>
+          </div>
+        ))}
+      </div>
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

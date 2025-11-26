@@ -17,7 +17,7 @@ function Slider() {
 
   // Fetch banners from Firestore
   useEffect(() => {
-    const loadBanners = async () => { a
+    const loadBanners = async () => {
       try {
         const snapshot = await getDocs(collection(db, "banners"));
         const banners = snapshot.docs.map((doc) => ({
