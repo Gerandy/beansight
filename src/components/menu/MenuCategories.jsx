@@ -50,7 +50,14 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
     <div className="relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] shadow-sm border-b border-coffee-200 sticky top-16 z-20">
       <div
         ref={scrollRef}
-        className={`flex space-x-6 py-3 px-2 sm:px-8 lg:px-16 scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] scrollbar-hide w-full min-w-0 overflow-x-auto`}
+        className="
+        flex space-x-6 py-3 px-2 
+        scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] scrollbar-hide
+        w-full min-w-0
+        overflow-x-auto
+        sm:px-8 lg:px-16
+        sm:overflow-x-visible sm:justify-between
+      "
         style={{
           scrollSnapType: "x mandatory",
           WebkitOverflowScrolling: "touch",
@@ -63,7 +70,7 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
               setLocalSelected(cat);
               onSelect(cat);
             }}
-            className={`text-sm font-medium whitespace-nowrap hover:cursor-pointer transition-colors px-4 py-2 rounded-full min-w-[120px] w-32 text-center ${
+            className={`flex items-center justify-center text-sm font-medium whitespace-nowrap hover:cursor-pointer transition-colors px-10 py-2 rounded-full min-w-[120px] w-32 ${
               localSelected === cat
                 ? "text-coffee-700 font-bold border-b-2 border-coffee-500 bg-white"
                 : "text-coffee-700 hover:text-coffee-800"
