@@ -89,7 +89,7 @@ function ProductDetails() {
               
               <div className="flex items-baseline gap-4 mb-6">
                 <span className="text-4xl font-bold text-coffee-700">
-                  ₱{product.price}.00
+                  ₱{Number(product.price).toFixed(2)}
                 </span>
                 {/* Optional: Show old price if on sale */}
                 {/* <span className="text-xl text-coffee-400 line-through">₱120.00</span> */}
