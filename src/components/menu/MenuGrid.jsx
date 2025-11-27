@@ -145,12 +145,12 @@ function MenuGrid({ selectedCategory = "All" }) {
               />
             </div>
 
-            <h3 className="font-semibold text-[#4E342E] text-sm sm:text-base line-clamp-2 mb-1 sm:mb-2 min-h-[36px] sm:min-h-[44px] relative z-10 tracking-wide">
+            <h3 className="font-semibold text-[#4E342E] text-lg sm:text-2xl line-clamp-2 mb-1 sm:mb-2 min-h-[36px] sm:min-h-[44px] relative z-10 tracking-wide">
               {p.name}
             </h3>
 
             <p className="font-bold text-[#6B3E2E] text-lg sm:text-2xl mb-2 sm:mb-4 relative z-10">
-              ₱{p.price}
+              ₱{Number(p.price).toFixed(2)}
             </p>
           </div>
         ))}

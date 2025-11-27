@@ -16,10 +16,10 @@ function MenuCard({ name, price, img, isNew }) {
       </div>
 
       <div className="flex flex-col flex-1 justify-start w-full relative z-10 space-y-0.5 sm:space-y-2 pt-0.5 sm:pt-1">
-        <h2 className="text-[#4E342E] text-xs sm:text-base font-semibold tracking-wide line-clamp-2 leading-tight">
+        <h2 className="text-[#4E342E] text-xl sm:text-xl font-semibold tracking-wide line-clamp-2 leading-tight">
           {name}
         </h2>
-        <p className="text-[#6B3E2E] font-bold text-lg sm:text-2xl">₱{price}</p>
+        <p className="text-[#6B3E2E] font-bold text-base sm:text-2">₱{Number(price).toFixed(2)}</p>
       </div>
     </div>
   );

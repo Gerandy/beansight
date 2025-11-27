@@ -9,10 +9,22 @@ import {
   Pencil,
   Plus,
   X,
+  Copy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs, query, where, addDoc, updateDoc, doc, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Adjust path to your firebase.js
+import {
+  collection,
+  doc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  where,
+  setDoc,
+} from "firebase/firestore";
+import { db, auth, functions } from "../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
 
 // === Summary Cards ===
 const SummaryCards = ({ users }) => {
@@ -46,6 +58,60 @@ const SummaryCards = ({ users }) => {
   );
 };
 
+// === Temp Password Modal ===
+const TempPasswordModal = ({ isOpen, onClose, email, password }) => {
+  if (!isOpen) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(password);
+    alert("Password copied to clipboard!");
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl relative"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <button
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+              onClick={onClose}
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Temporary Password Generated</h2>
+            <p className="mb-2 text-gray-700">Email: <span className="font-semibold">{email}</span></p>
+            <p className="mb-4 text-gray-700">Temporary Password: <span className="font-mono font-bold">{password}</span></p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-2 bg-coffee-600 hover:bg-coffee-700 text-white px-4 py-2 rounded-lg transition"
+              >
+                <Copy size={16} /> Copy
+              </button>
+              <button
+                onClick={onClose}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 // === User Modal ===
 const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
   if (!isOpen) return null;
@@ -66,18 +132,13 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", duration: 0.4 }}
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-[#7B4B2A] hover:text-[#5B321B] transition"
-            >
+            <button onClick={onClose} className="absolute top-4 right-4 text-[#7B4B2A] hover:text-[#5B321B] transition">
               <X size={20} />
             </button>
-
             <div className="flex items-center gap-2 mb-4">
               <Users className="text-[#7B4B2A] w-5 h-5" />
               <h2 className="text-xl font-semibold text-[#5B321B]">{title}</h2>
             </div>
-
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">First Name</label>
@@ -89,7 +150,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                   placeholder="Enter first name"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">Last Name</label>
                 <input
@@ -100,7 +160,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                   placeholder="Enter last name"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">Email</label>
                 <input
@@ -111,7 +170,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                   placeholder="example@beansight.com"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">Contact Number</label>
                 <input
@@ -122,7 +180,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                   placeholder="09927274046"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">Role</label>
                 <select
@@ -134,7 +191,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                   <option>staff</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-[#7B4B2A] mb-1">Status</label>
                 <select
@@ -148,7 +204,6 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
                 </select>
               </div>
             </div>
-
             <div className="flex justify-end gap-3 mt-6">
               <button
                 className="px-4 py-2 rounded-xl bg-[#F1E1C8] text-[#5B321B] font-medium hover:bg-[#E9D5AF] transition"
@@ -251,7 +306,11 @@ const UserTable = ({ users, onEdit, onDelete, onStatusToggle, onAdd }) => {
                 >
                   <div className="flex items-center gap-1">
                     {key.charAt(0).toUpperCase() + key.slice(1)}
-                    {sortKey === key ? (sortAsc ? <ChevronUp size={14} /> : <ChevronDown size={14} />) : <ArrowUpDown size={14} className="opacity-40" />}
+                    {sortKey === key
+                      ? sortAsc
+                        ? <ChevronUp size={14} />
+                        : <ChevronDown size={14} />
+                      : <ArrowUpDown size={14} className="opacity-40" />}
                   </div>
                 </th>
               ))}
@@ -309,70 +368,85 @@ const UserTable = ({ users, onEdit, onDelete, onStatusToggle, onAdd }) => {
   );
 };
 
-// === Main User Management Page ===
+// === User Management ===
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [modalUser, setModalUser] = useState({ firstName: "", lastName: "", email: "", role: "staff", status: "Active", contactNumber: "" });
+  const [modalUser, setModalUser] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    role: "staff",
+    status: "Active",
+    contactNumber: "",
+  });
+  const [tempPasswordData, setTempPasswordData] = useState({ isOpen: false, email: "", password: "" });
 
-  // Fetch only admin and staff users
+  // Fetch users with role in ["admin", "staff"] in real-time
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("role", "in", ["admin", "staff"]));
-        const snapshot = await getDocs(q);
-        const fetchedUsers = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setUsers(fetchedUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-    fetchUsers();
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("role", "in", ["admin", "staff"]));
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setUsers(data);
+    });
+
+    return () => unsub();
   }, []);
 
-  // Add new user to Firestore
+  // Add/Edit user
   const handleSaveUser = async () => {
-    if (!modalUser.firstName || !modalUser.lastName || !modalUser.email) return alert("Please fill out all fields.");
+    if (!modalUser.firstName || !modalUser.lastName || !modalUser.email) return alert("Please fill out all required fields.");
     try {
       if (editingUser) {
         const userRef = doc(db, "users", editingUser.id);
         await updateDoc(userRef, modalUser);
-        setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...modalUser, id: editingUser.id } : u)));
       } else {
-        const docRef = await addDoc(collection(db, "users"), modalUser);
-        setUsers((prev) => [...prev, { ...modalUser, id: docRef.id }]);
+        // Generate temporary password
+        const generateTempPassword = httpsCallable(functions, "generateTempPassword");
+        const result = await generateTempPassword({ email: modalUser.email });
+        const tempPassword = result.data.tempPassword;
+
+        const userCredential = await createUserWithEmailAndPassword(auth, modalUser.email, tempPassword);
+        const uid = userCredential.user.uid;
+
+        await setDoc(doc(db, "users", uid), {
+          uid,
+          ...modalUser,
+          createdAt: new Date(),
+          favorites: [],
+        });
+
+        setTempPasswordData({
+          isOpen: true,
+          email: modalUser.email,
+          password: tempPassword,
+        });
       }
       setShowModal(false);
+      setEditingUser(null);
     } catch (err) {
       console.error("Error saving user:", err);
+      alert("Error saving user: " + err.message);
     }
   };
 
-  // Delete user from Firestore
   const handleDeleteUser = async (user) => {
     try {
-      const userRef = doc(db, "users", user.id);
-      await deleteDoc(userRef);
-      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+      await deleteDoc(doc(db, "users", user.id));
     } catch (err) {
-      console.error("Error deleting user:", err);
+      console.error(err);
     }
   };
 
-  // Toggle status and update Firestore
   const handleStatusToggle = async (user) => {
-    const newStatus =
-      user.status === "Active" ? "Inactive" : user.status === "Inactive" ? "Suspended" : "Active";
+    const newStatus = user.status === "Active" ? "Inactive" : user.status === "Inactive" ? "Suspended" : "Active";
     try {
-      const userRef = doc(db, "users", user.id);
-      await updateDoc(userRef, { status: newStatus });
-      setUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
-      );
+      await updateDoc(doc(db, "users", user.id), { status: newStatus });
     } catch (err) {
-      console.error("Error updating status:", err);
+      console.error(err);
     }
   };
 
@@ -384,7 +458,7 @@ export default function UserManagement() {
 
   const handleEditUser = (user) => {
     setEditingUser(user);
-    setModalUser(user);
+    setModalUser({ ...user });
     setShowModal(true);
   };
 
@@ -413,6 +487,13 @@ export default function UserManagement() {
           user={modalUser}
           setUser={setModalUser}
           title={editingUser ? "Edit User" : "Add New User"}
+        />
+
+        <TempPasswordModal
+          isOpen={tempPasswordData.isOpen}
+          onClose={() => setTempPasswordData({ isOpen: false, email: "", password: "" })}
+          email={tempPasswordData.email}
+          password={tempPasswordData.password}
         />
       </div>
     </div>

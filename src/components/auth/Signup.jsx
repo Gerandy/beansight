@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck, ScrollText } from "lucide-react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification  } from "firebase/auth";
 import { doc, setDoc, collection, addDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
@@ -222,9 +222,14 @@ export default function Signup() {
     try {
       // 1️⃣ Create Firebase Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, email, pwd);
-      const userId = userCredential.user.uid;
+      const user = userCredential.user;
+      const userId = user.uid;
 
-      // 2️⃣ Store extra user info in Firestore
+      // 2️⃣ Send email verification
+      await sendEmailVerification(user);
+      alert("Verification email sent! Please check your inbox before logging in.");
+
+      // 3️⃣ Store extra user info in Firestore
       await setDoc(doc(db, "users", userId), {
         firstName,
         lastName,
@@ -232,16 +237,19 @@ export default function Signup() {
         contactNumber,
         role: "client", // default role
         createdAt: new Date(),
+        emailVerified: false, // optional field
       });
-      // Save address to Firestorefs
+
+      // Save address to Firestore
       await addDoc(collection(db, "users", userId, "addresses"), { ...address, isDefault: true });
 
-      // 3️⃣ Save token & role in localStorage
+      // 4️⃣ Optionally store token & role (but user cannot log in until verified)
       localStorage.setItem("authToken", userId);
       localStorage.setItem("role", "client");
 
-      // 4️⃣ Redirect to Myaccount
-      navigate("/Myaccount", { replace: true });
+      // 5️⃣ Redirect to a page telling user to verify email
+      navigate("/verify-email", { replace: true });
+
     } catch (err) {
       console.error(err);
       setError(err.message);
