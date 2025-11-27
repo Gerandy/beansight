@@ -150,7 +150,7 @@ function MenuGrid({ selectedCategory = "All" }) {
             </h3>
 
             <p className="font-bold text-[#6B3E2E] text-lg sm:text-2xl mb-2 sm:mb-4 relative z-10">
-              ₱{p.price}
+              ₱{Number(p.price).toFixed(2)}
             </p>
           </div>
         ))}
