@@ -12,6 +12,9 @@ function Favorites() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const itemsPerPage = 5;
 
+  // Animation state
+  const [animDirection, setAnimDirection] = useState(null);
+
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!favoritesArr) {
@@ -41,6 +44,27 @@ function Favorites() {
 
     fetchFavorites();
   }, [favoritesArr]);
+
+  // Handle carousel navigation with animation
+  const handlePrev = () => {
+    if (carouselIndex > 0) {
+      setAnimDirection("left");
+      setTimeout(() => {
+        setCarouselIndex((i) => Math.max(i - 1, 0));
+        setAnimDirection(null);
+      }, 250);
+    }
+  };
+
+  const handleNext = () => {
+    if (carouselIndex < maxIndex) {
+      setAnimDirection("right");
+      setTimeout(() => {
+        setCarouselIndex((i) => Math.min(i + 1, maxIndex));
+        setAnimDirection(null);
+      }, 250);
+    }
+  };
 
   if (loading) {
     return (
@@ -83,14 +107,22 @@ function Favorites() {
             className={`absolute left-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
               carouselIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
             }`}
-            onClick={() => setCarouselIndex((i) => Math.max(i - 1, 0))}
+            onClick={handlePrev}
             disabled={carouselIndex === 0}
             aria-label="Previous"
           >
             <ChevronLeft size={20} />
           </button>
         )}
-        <div className="grid grid-cols-5 gap-4 w-full">
+        <div
+          className={`grid grid-cols-5 gap-4 w-full transition-transform duration-300 ${
+            animDirection === "left"
+              ? "animate-slide-left"
+              : animDirection === "right"
+              ? "animate-slide-right"
+              : ""
+          }`}
+        >
           {visibleProducts.map((product) => (
             <Link to={`/menu/product-details/${product.id}`} key={product.id}>
               <MenuCard name={product.name} price={product.price} img={product.img} />
@@ -106,7 +138,7 @@ function Favorites() {
             className={`absolute right-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
               carouselIndex >= maxIndex ? "cursor-not-allowed" : "cursor-pointer"
             }`}
-            onClick={() => setCarouselIndex((i) => Math.min(i + 1, maxIndex))}
+            onClick={handleNext}
             disabled={carouselIndex >= maxIndex}
             aria-label="Next"
           >
@@ -138,6 +170,22 @@ function Favorites() {
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
+        }
+        .animate-slide-left {
+          animation: slideLeft 0.25s;
+        }
+        .animate-slide-right {
+          animation: slideRight 0.25s;
+        }
+        @keyframes slideLeft {
+          0% { transform: translateX(0); }
+          40% { transform: translateX(-30px); }
+          100% { transform: translateX(0); }
+        }
+        @keyframes slideRight {
+          0% { transform: translateX(0); }
+          40% { transform: translateX(30px); }
+          100% { transform: translateX(0); }
         }
       `}</style>
     </div>

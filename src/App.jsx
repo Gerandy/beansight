@@ -33,6 +33,9 @@ import Reports from "./admin/reports";
 import Product from "./admin/Products";
 import UserManagement from "./admin/UserManagement";
 import OrderManagement from "./admin/OrderManagement";
+import Advertisement from "./admin/settings/advertisement";
+import Maps from "./admin/settings/maps";
+import Preferences from "./admin/settings/storepreferences";
 
 // Staff
 import StaffLayout from "./staff/layouts/StaffLayout";
@@ -117,6 +120,9 @@ function App() {
           <Route path="products" element={<Product />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="order-management" element={<OrderManagement />} />
+          <Route path="settings/advertisement" element={<Advertisement />} />
+          <Route path="settings/maps" element={<Maps />} />
+          <Route path="settings/storepreferences" element={<Preferences />} />
         </Route>
 
         {/* ---------- Staff Site ---------- */}

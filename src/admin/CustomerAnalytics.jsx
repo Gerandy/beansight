@@ -143,7 +143,7 @@ export default function CustomerAnalytics() {
 
   return (
     <div className="p-6 space-y-8 font-sans min-h-screen">
-      <h1 className="text-3xl font-bold text-coffee-900 mb-6">👥 Customer Analytics</h1>
+      <h1 className="text-3xl font-bold text-coffee-900 mb-6">👥 Customers Report</h1>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

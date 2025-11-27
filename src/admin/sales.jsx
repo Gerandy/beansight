@@ -191,7 +191,7 @@ export default function Sales() {
   // ---------------------------
   return (
     <div className="p-6 space-y-8 font-sans">
-      <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Analytics</h1>
+      <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Report</h1>
 
       {loading && <div className="text-sm text-coffee-600">Loading...</div>}
       {error && <div className="text-sm text-red-600">Error: {error}</div>}

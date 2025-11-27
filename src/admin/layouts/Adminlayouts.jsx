@@ -12,6 +12,8 @@ import {
   ClipboardList,
   UserCog,
   LogOut,
+  Settings,
+  Coffee,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -20,6 +22,8 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(true); // Always true on load
 
   const analyticsPages = [
     "/admin/sales",
@@ -34,7 +38,6 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    // clear auth/session here if needed
     navigate("/login");
     setSidebarOpen(false);
   };
@@ -54,16 +57,36 @@ export default function AdminLayout() {
     return (
       <div className="flex flex-col h-full justify-between">
         <div>
-          <h2
-            className={`text-2xl font-bold mb-6 ${
-              isMobile ? "text-white" : "text-black"
-            }`}
-          >
-            SOL-ACE ☕
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            {collapsed ? (
+              <Coffee size={32} className={isMobile ? "text-white" : "text-black"} />
+            ) : (
+              <h2
+                className={`text-2xl font-bold ${
+                  isMobile ? "text-white" : "text-black"
+                }`}
+              >
+                SOL-ACE ☕
+              </h2>
+            )}
+            {!isMobile && (
+              <button
+                className="p-2 rounded hover:bg-yellow-200"
+                onClick={() => setCollapsed((prev) => !prev)}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <Menu size={22} />
+              </button>
+            )}
+          </div>
 
-          <nav className="space-y-2">
-            {/* Dashboard Dropdown */}
+          {/* Analytics Section */}
+          <div className="mb-4">
+            {!collapsed && (
+              <div className="uppercase text-xs font-bold text-yellow-900 mb-2 pl-2 tracking-wider">
+                Analytics
+              </div>
+            )}
             <div>
               <div
                 className={`flex justify-between items-center p-2 rounded cursor-pointer transition ${
@@ -71,102 +94,177 @@ export default function AdminLayout() {
                     ? "text-white hover:bg-yellow-400 hover:text-black"
                     : "hover:bg-yellow-950 hover:text-white"
                 }`}
+                onClick={() => {
+                  setDashboardOpen((prev) => !prev);
+                }}
               >
-                <div
-                  className="flex items-center gap-2 flex-1"
-                  onClick={() => {
-                    navigate("/admin/dashboard");
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <LayoutDashboard size={20} /> Dashboard
+                <div className="flex items-center gap-2 flex-1">
+                  <LayoutDashboard size={20} />
+                  {!collapsed && "Dashboard"}
                 </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDashboardOpen(!dashboardOpen);
-                  }}
-                  className="p-1 rounded hover:bg-yellow-800"
-                >
-                  {dashboardOpen ? (
-                    <ChevronDown size={18} />
-                  ) : (
-                    <ChevronRight size={18} />
-                  )}
-                </button>
+                {!collapsed && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDashboardOpen(!dashboardOpen);
+                    }}
+                    className="p-1 rounded hover:bg-yellow-800"
+                  >
+                    {dashboardOpen ? (
+                      <ChevronDown size={18} />
+                    ) : (
+                      <ChevronRight size={18} />
+                    )}
+                  </button>
+                )}
               </div>
-
-              {dashboardOpen && (
+              {dashboardOpen && !collapsed && (
                 <div className="ml-6 mt-1 space-y-1 animate-dropdown">
                   <NavLink
                     to="/admin/sales"
                     className={({ isActive }) => linkClasses(isActive)}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <BarChart size={18} /> Sales Report
+                    <BarChart size={18} /> {!collapsed && "Sales Report"}
                   </NavLink>
-
                   <NavLink
                     to="/admin/menu-performance"
                     className={({ isActive }) => linkClasses(isActive)}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <PieChart size={18} /> Menu Performance
+                    <PieChart size={18} /> {!collapsed && "Menu Performance"}
                   </NavLink>
-
                   <NavLink
                     to="/admin/customers"
                     className={({ isActive }) => linkClasses(isActive)}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    <Users size={18} /> Customers Analytics
+                    <Users size={18} /> {!collapsed && "Customers Report"}
                   </NavLink>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Main Menu Links */}
+          {/* Management Section */}
+          <div className="mb-4">
+            {!collapsed && (
+              <div className="uppercase text-xs font-bold text-yellow-900 mb-2 pl-2 tracking-wider">
+                Management
+              </div>
+            )}
             <NavLink
               to="/admin/products"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <Boxes size={20} /> Products
+              <Boxes size={20} /> {!collapsed && "Products"}
             </NavLink>
-
             <NavLink
               to="/admin/inventory"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <Boxes size={20} /> Inventory
+              <Boxes size={20} /> {!collapsed && "Inventory"}
             </NavLink>
-
             <NavLink
               to="/admin/order-management"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <ClipboardList size={20} /> Order History
+              <ClipboardList size={20} /> {!collapsed && "Order History"}
             </NavLink>
-
             <NavLink
               to="/admin/user-management"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <UserCog size={20} /> User Management
+              <UserCog size={20} /> {!collapsed && "User Management"}
             </NavLink>
+          </div>
 
+          {/* Reports Section */}
+          <div className="mb-4">
+            {!collapsed && (
+              <div className="uppercase text-xs font-bold text-yellow-900 mb-2 pl-2 tracking-wider">
+                Reports
+              </div>
+            )}
             <NavLink
               to="/admin/reports"
               className={({ isActive }) => linkClasses(isActive)}
               onClick={() => setSidebarOpen(false)}
             >
-              <FileText size={20} /> Reports
+              <FileText size={20} /> {!collapsed && "Reports"}
             </NavLink>
-          </nav>
+          </div>
+
+          {/* Settings Section (Collapsible) */}
+          <div className="mb-4">
+            {!collapsed && (
+              <div className="uppercase text-xs font-bold text-yellow-900 mb-2 pl-2 tracking-wider">
+                Settings
+              </div>
+            )}
+            <div
+              className={`flex justify-between items-center p-2 rounded cursor-pointer transition ${
+                isMobile
+                  ? "text-white hover:bg-yellow-400 hover:text-black"
+                  : "hover:bg-yellow-950 hover:text-white"
+              }`}
+              onClick={() => {
+                setSettingsOpen((prev) => !prev);
+                if (!settingsOpen) {
+                  navigate("/admin/settings/general");
+                  setSidebarOpen(false);
+                }
+              }}
+            >
+              <div className="flex items-center gap-2 flex-1">
+                <Settings size={20} /> {!collapsed && "Settings"}
+              </div>
+              {!collapsed && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSettingsOpen(!settingsOpen);
+                  }}
+                  className="p-1 rounded hover:bg-yellow-800"
+                >
+                  {settingsOpen ? (
+                    <ChevronDown size={18} />
+                  ) : (
+                    <ChevronRight size={18} />
+                  )}
+                </button>
+              )}
+            </div>
+            {settingsOpen && !collapsed && (
+              <div className="ml-6 mt-1 space-y-1 animate-dropdown">
+                <NavLink
+                  to="/admin/settings/advertisement"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Advertisement"}
+                </NavLink>
+                <NavLink
+                  to="/admin/settings/storepreferences"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Store Preferences"}
+                </NavLink>
+                <NavLink
+                  to="/admin/settings/maps"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Maps Settings"}
+                </NavLink>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Logout button at the bottom */}
@@ -179,7 +277,7 @@ export default function AdminLayout() {
                 : "hover:bg-yellow-950 hover:text-white"
             }`}
           >
-            <LogOut size={18} /> Logout
+            <LogOut size={18} /> {!collapsed && "Logout"}
           </button>
         </div>
       </div>
@@ -189,7 +287,11 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <aside className="w-64 bg-mcyellow text-black p-5 hidden md:flex md:flex-col md:sticky md:top-0 md:h-screen md:overflow-auto">
+      <aside
+        className={`${
+          collapsed ? "w-20" : "w-64"
+        } bg-mcyellow text-black p-5 hidden md:flex md:flex-col md:sticky md:top-0 md:h-screen md:overflow-auto hide-scrollbar transition-all duration-200`}
+      >
         {SidebarContent()}
       </aside>
 
