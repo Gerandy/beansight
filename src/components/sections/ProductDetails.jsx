@@ -162,7 +162,7 @@ function ProductDetails() {
 
               <button
                 className="mt-8 flex items-center gap-2 bg-[#7D5A50] hover:bg-[#5C4036] transition-all duration-200 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md hover:scale-105 active:scale-95"
-                onClick={handleAddToCart}
+                onClick={() => {handleAddToCart(); setQuantity(1);}}
               >
                 <ShoppingBag size={20} /> Add to My Bag
               </button>
