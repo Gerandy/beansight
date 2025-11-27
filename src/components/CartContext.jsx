@@ -30,12 +30,16 @@ export function CartProvider({ children }) {
       const existing = prev.find((i) => i.id === item.id);
 
       if (existing) {
+        // If item exists, add the selected quantity
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id
+            ? { ...i, quantity: i.quantity + (item.quantity || 1) }
+            : i
         );
       }
 
-      return [...prev, { ...item, quantity: 1 }];
+      // If new item, use the selected quantity
+      return [...prev, { ...item, quantity: item.quantity || 1 }];
     });
   };
 

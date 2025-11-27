@@ -15,17 +15,6 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
   }, [selected]);
 
   const scrollRef = useRef(null);
-  const [showArrows, setShowArrows] = useState(false);
-
-  const checkOverflow = () => {
-    if (scrollRef.current) {
-      const el = scrollRef.current;
-      // add a small tolerance so tiny rounding differences don't show arrows
-      setShowArrows(el.scrollWidth > el.clientWidth + 8);
-    } else {
-      setShowArrows(false);
-    }
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -51,50 +40,28 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
         if (mounted) setError(err?.message || String(err));
       } finally {
         if (mounted) setLoading(false);
-        // ensure overflow check runs after DOM updates
-        setTimeout(checkOverflow, 100);
       }
     };
 
     loadCategories();
-    window.addEventListener("resize", checkOverflow);
-    // initial check after mount
-    setTimeout(checkOverflow, 120);
-    return () => {
-      mounted = false;
-      window.removeEventListener("resize", checkOverflow);
-    };
   }, []);
-
-  useEffect(() => {
-    // re-check overflow when categories change
-    setTimeout(checkOverflow, 80);
-  }, [categories]);
-
-  const SCROLL_STEP = 240;
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      const amount = direction === "left" ? -SCROLL_STEP : SCROLL_STEP;
-      scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
-    }
-  };
 
   return (
     <div className="relative bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] shadow-sm border-b border-coffee-200 sticky top-16 z-20">
-      {showArrows && (
-        <button
-          type="button"
-          onClick={() => scroll("left")}
-          aria-label="Scroll categories left"
-          className="absolute left-2 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-      )}
-
       <div
         ref={scrollRef}
-        className="flex justify-between space-x-6 overflow-x-hidden py-3 px-12 scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5]"
+        className="
+        flex space-x-6 py-3 px-2 
+        scroll-smooth bg-gradient-to-br from-[#FAE5D3] to-[#F8D2B5] scrollbar-hide
+        w-full min-w-0
+        overflow-x-auto
+        sm:px-8 lg:px-16
+        sm:overflow-x-visible sm:justify-between
+      "
+        style={{
+          scrollSnapType: "x mandatory",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {categories.map((cat, idx) => (
           <button
@@ -103,28 +70,19 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
               setLocalSelected(cat);
               onSelect(cat);
             }}
-            className={`text-sm font-medium whitespace-nowrap hover:cursor-pointer transition-colors ${
+            className={`flex items-center justify-center text-sm font-medium whitespace-nowrap hover:cursor-pointer transition-colors px-10 py-2 rounded-full min-w-[120px] w-32 ${
               localSelected === cat
-                ? "text-coffee-900 font-bold border-b-2 border-coffee-900"
-                : "text-coffee-700 hover:text-coffee-900"
+                ? "text-coffee-700 font-bold border-b-2 border-coffee-500 bg-white"
+                : "text-coffee-700 hover:text-coffee-800"
             }`}
+            style={{
+              scrollSnapAlign: "center",
+            }}
           >
             {cat}
           </button>
         ))}
       </div>
-
-      {/* Right arrow */}
-      {showArrows && (
-        <button
-          type="button"
-          onClick={() => scroll("right")}
-          aria-label="Scroll categories right"
-          className="absolute right-2 top-1/2 -translate-y-1/2 bg-coffee-700 text-white shadow-md p-2 rounded-full z-30 hover:bg-coffee-800 transition-colors"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      )}
     </div>
   );
 }
