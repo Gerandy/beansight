@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "./CartContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function CartSidebar({ cartOpen, setCartOpen }) {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
@@ -8,7 +8,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
   const [deliveryOption, setDeliveryOption] = useState("now");
 
   const { cart = [], removeFromCart, updateQuantity, totalPrice  = 0 } = useCart() || {};
-  
+  const navigate = useNavigate();
   
 
 
@@ -47,7 +47,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
           </div>
           <button
             className="text-yellow-950 font-bold text-sm hover:underline hover:cursor-pointer"
-            onClick={() => setShowDeliveryModal(true)}
+            onClick={() => navigate("/menu")}
           >
             Continue Ordering
           </button>
