@@ -49,7 +49,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
             className="text-yellow-950 font-bold text-sm hover:underline hover:cursor-pointer"
             onClick={() => setShowDeliveryModal(true)}
           >
-            Change
+            Continue Ordering
           </button>
         </div>
 
