@@ -86,7 +86,7 @@ function MenuCategories() {
       {/* Desktop: scrollable row, 4 visible, arrows float */}
       <div className="hidden lg:block relative px-4">
         <button
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full cursor-pointer"
           onClick={() => scrollDesktop("left")}
           aria-label="Scroll left"
         >
@@ -121,7 +121,7 @@ function MenuCategories() {
           ))}
         </div>
         <button
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full cursor-pointer"
           onClick={() => scrollDesktop("right")}
           aria-label="Scroll right"
         >

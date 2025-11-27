@@ -6,6 +6,7 @@ import { db } from "../../firebase"; // adjust path if needed
 export default function StaffLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
+  const [showPasswordModal, setShowPasswordModal] = useState(false); // <-- Add this
   const location = useLocation();
   const prevCountRef = useRef(newOrderCount);
   const audioRef = useRef(null);
@@ -140,6 +141,12 @@ useEffect(() => {
                     style={{ zIndex: 50 }}
                   >
                     <div className="py-1">
+                      <button
+                        className="w-full text-left px-4 py-2 text-sm text-coffee-700 hover:bg-coffee-50"
+                        onClick={() => setShowPasswordModal(true)}
+                      >
+                        Change Password
+                      </button>
                       <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-coffee-50">
                         Logout
                       </button>
@@ -177,6 +184,50 @@ useEffect(() => {
           <Outlet />
         </div>
       </main>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+            <h2 className="text-lg font-semibold mb-4">Change Password</h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                // Add your password change logic here
+                setShowPasswordModal(false);
+              }}
+            >
+              <div className="mb-3">
+                <label className="block text-sm mb-1">Current Password</label>
+                <input type="password" className="w-full border rounded px-3 py-2" required />
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm mb-1">New Password</label>
+                <input type="password" className="w-full border rounded px-3 py-2" required />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm mb-1">Confirm New Password</label>
+                <input type="password" className="w-full border rounded px-3 py-2" required />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                  onClick={() => setShowPasswordModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-coffee-700 text-white hover:bg-coffee-800"
+                >
+                  Change
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
