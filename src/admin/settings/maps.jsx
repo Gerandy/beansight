@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { GoogleMap, Marker, Circle, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+import {getDoc, setDoc, doc} from "firebase/firestore"
+import { db } from "../../firebase";
 
 // Tooltip modal for help
 function ModalTooltip({ open, text, onClose }) {
@@ -41,10 +43,10 @@ const containerStyle = {
 };
 
 export default function MapsSettings() {
-  const [location, setLocation] = useState({ lat: 14.5995, lng: 120.9842 }); // Default to Manila
+  const [location, setLocation] = useState({ lat: 0, lng: 0 }); // Default to Manila
   const [address, setAddress] = useState("");
   const [landmark, setLandmark] = useState("");
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(null);
   const [feeType, setFeeType] = useState("per_km");
   const [feePerKm, setFeePerKm] = useState(10);
   const [flatFee, setFlatFee] = useState(0);
@@ -55,14 +57,36 @@ export default function MapsSettings() {
   const [message, setMessage] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
-
+  const [longitude, setlongitude] = useState(null);
+  const [latitude, setlatitude] = useState(null);
   const autocompleteRef = useRef(null);
+
+
+  useEffect(() =>{
+      const load = async () => {
+        const docSnap = await getDoc(doc(db, "settings", "mapRadius"));  
+        if (docSnap.exists()){
+          const radiusValue = docSnap.data().value
+          const longongtitude = docSnap.data().long
+          const latatitude = docSnap.data().lat
+          setlatitude(latatitude)
+          setlongitude(longongtitude)
+          setRadius(radiusValue)
+          setLocation({lat: latatitude, lng: longongtitude})
+          
+        }
+      }
+      load();
+    },[])
 
   // Load Google Maps JS API
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "",
+    googleMapsApiKey: "sad",
     libraries: ["places", "maps"],
   });
+
+  
+  
 
   // Handle marker drag
   const onMarkerDragEnd = useCallback((e) => {
@@ -70,7 +94,9 @@ export default function MapsSettings() {
       lat: e.latLng.lat(),
       lng: e.latLng.lng(),
     });
+    
   }, []);
+  
 
   // Handle address autocomplete
   const onPlaceChanged = () => {
@@ -110,7 +136,7 @@ export default function MapsSettings() {
 
   // Reset handler
   const handleReset = () => {
-    setLocation({ lat: 14.5995, lng: 120.9842 });
+    setLocation({ lat: latitude, lng: longitude });
     setAddress("");
     setLandmark("");
     setRadius(5);
@@ -184,7 +210,7 @@ export default function MapsSettings() {
                   />
                   <Circle
                     center={location}
-                    radius={getRadiusMeters()}
+                    radius={radius}
                     options={{
                       fillColor: "#ffe4c4",
                       fillOpacity: 0.2,
