@@ -329,10 +329,13 @@ export default function Signup() {
               <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Contact number</label>
               <input
                 className="w-full border border-gray-300 p-2 sm:p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500"
-                placeholder="+1 234 567 8900"
+                placeholder="09XXXXXXXXX"
                 type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={11}
                 value={contactNumber}
-                onChange={(e) => setContactNumber(e.target.value)}
+                onChange={(e) => setContactNumber(e.target.value.replace(/\D/g, ""))}
               />
             </div>
           </div>
