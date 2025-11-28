@@ -62,9 +62,11 @@ export default function AdminLayout() {
               <Coffee size={32} className={isMobile ? "text-white" : "text-black"} />
             ) : (
               <h2
-                className={`text-2xl font-bold ${
-                  isMobile ? "text-white" : "text-black"
-                }`}
+                className={`text-2xl font-bold ${isMobile ? "text-white" : "text-black"} cursor-pointer`}
+                onClick={() => navigate("/admin")}
+                tabIndex={0}
+                role="button"
+                aria-label="Go to admin home"
               >
                 SOL-ACE ☕
               </h2>
