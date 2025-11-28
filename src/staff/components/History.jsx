@@ -118,7 +118,7 @@ export default function History() {
 					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
 						<div className="flex items-center bg-white border border-[var(--color-coffee-100)] rounded-md px-2 py-1 gap-2 w-full sm:w-[260px]">
 							<svg
-								className="w-5 h-5 text-[var(--color-coffee-600)]"
+								className="cursor-pointer w-5 h-5 text-[var(--color-coffee-600)]"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -145,7 +145,7 @@ export default function History() {
 								<select
 									value={primarySort}
 									onChange={(e) => setPrimarySort(e.target.value)}
-									className="appearance-none bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-medium py-2 pl-3 pr-8 rounded-md text-sm shadow-sm"
+									className="cursor-pointer appearance-none bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-medium py-2 pl-3 pr-8 rounded-md text-sm shadow-sm"
 								>
 									{sortOptions.map((o) => (
 										<option key={o.value} value={o.value}>
@@ -171,7 +171,7 @@ export default function History() {
 							setItemsPerPage(Number(e.target.value));
 							setCurrentPage(1);
 						}}
-						className="bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] rounded-md px-2 py-1 text-xs shadow-sm"
+						className="cursor-pointer bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] rounded-md px-2 py-1 text-xs shadow-sm"
 					>
 						<option value={5}>5</option>
 						<option value={10}>10</option>
@@ -242,7 +242,7 @@ export default function History() {
 											<td className="py-3 px-4 text-right">
 												<button
 													onClick={() => setSelectedOrder(o)}
-													className="px-3 py-1 text-sm bg-white border border-[var(--color-coffee-100)] rounded hover:bg-[var(--color-coffee-50)]"
+													className="cursor-pointer px-3 py-1 text-sm bg-white border border-[var(--color-coffee-100)] rounded hover:bg-[var(--color-coffee-50)]"
 												>
 													View
 												</button>
@@ -302,7 +302,7 @@ export default function History() {
 								<button
 									onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 									disabled={currentPage === 1}
-									className="px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+									className="cursor-pointer px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 								>
 									← Previous
 								</button>
@@ -320,7 +320,7 @@ export default function History() {
 												<button
 													key={page}
 													onClick={() => setCurrentPage(page)}
-													className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+													className={`cursor-pointer px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
 														currentPage === page
 															? "bg-[var(--color-coffee-600)] text-white"
 															: "bg-white border border-[var(--color-coffee-100)] text-[var(--color-coffee-800)] hover:bg-[var(--color-coffee-50)]"
@@ -343,7 +343,7 @@ export default function History() {
 								<button
 									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 									disabled={currentPage === totalPages}
-									className="px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+									className="cursor-pointer px-4 py-2 text-sm bg-white border border-[var(--color-coffee-100)] rounded-md hover:bg-[var(--color-coffee-50)] text-[var(--color-coffee-800)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 								>
 									Next →
 								</button>
@@ -359,7 +359,7 @@ export default function History() {
 					<div className="bg-white rounded-2xl shadow-2xl w-[90%] sm:w-full sm:max-w-md p-6 relative">
 						<button
 							onClick={() => setSelectedOrder(null)}
-							className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+							className="cursor-pointer absolute top-4 right-4 text-gray-500 hover:text-gray-800"
 						>
 							<X size={20} />
 						</button>

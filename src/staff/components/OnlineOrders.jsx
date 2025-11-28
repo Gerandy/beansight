@@ -181,7 +181,7 @@ export default function OnlineOrders() {
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
+              className="cursor-pointer flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
             >
               <option value="Active">Active </option>
               <option value="All">All statuses</option>
@@ -195,7 +195,7 @@ export default function OnlineOrders() {
             <select
               value={primarySort}
               onChange={(e) => setPrimarySort(e.target.value)}
-              className="flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
+              className="cursor-pointer flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
             >
               <option value="placedAt">Sort: Newest</option>
               <option value="total">Sort: Total</option>
@@ -206,7 +206,7 @@ export default function OnlineOrders() {
             <select
               value={secondarySort}
               onChange={(e) => setSecondarySort(e.target.value)}
-              className="flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
+              className="cursor-pointer flex-1 bg-white border border-coffee-200 text-coffee-800 rounded-md px-3 py-2 text-xs sm:text-sm shadow-sm"
             >
               <option value="none">No secondary</option>
               <option value="placedAt">Then: Newest</option>
@@ -225,7 +225,7 @@ export default function OnlineOrders() {
                 setItemsPerPage(Number(e.target.value));
                 setCurrentPage(1);
               }}
-              className="bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
+              className="cursor-pointer bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -290,7 +290,7 @@ export default function OnlineOrders() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => toggleExpand(order.id)}
-                            className="px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
+                            className="cursor-pointer px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
                           >
                             {expanded.includes(order.id) ? "Hide" : "Details"}
                           </button>
@@ -299,7 +299,7 @@ export default function OnlineOrders() {
                               onClick={() =>
                                 handleStatusChange(order.id, order.status)
                               }
-                              className="px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
+                              className="cursor-pointer px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
                             >
                               Move to {nextStatusMap[order.status]}
                             </button>
@@ -351,7 +351,7 @@ export default function OnlineOrders() {
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="cursor-pointer px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 ← Previous
               </button>
@@ -369,7 +369,7 @@ export default function OnlineOrders() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+                        className={`cursor-pointer px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
                           currentPage === page
                             ? "bg-coffee-600 text-white"
                             : "bg-white border border-coffee-200 text-coffee-800 hover:bg-coffee-100"
@@ -392,7 +392,7 @@ export default function OnlineOrders() {
               <button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="cursor-pointer px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
               </button>

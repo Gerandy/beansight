@@ -88,7 +88,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
+            className="cursor-pointer bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 py-1 text-xs shadow-sm"
           >
             <option value={8}>8</option>
             <option value={12}>12</option>
@@ -144,7 +144,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
                   onAdd(p);
               }}
               disabled={!p.availability}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm active:scale-95 transition-all shadow-sm
+              className={`cursor-pointer flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm active:scale-95 transition-all shadow-sm
                 ${
                   p.availability
                     ? "bg-coffee-500 text-white hover:bg-coffee-600"
@@ -172,7 +172,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
           <button
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             ← Previous
           </button>
@@ -190,7 +190,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
+                    className={`cursor-pointer px-3 py-1.5 text-sm rounded-md font-semibold transition-colors ${
                       currentPage === page
                         ? "bg-coffee-600 text-white"
                         : "bg-white border border-coffee-200 text-coffee-800 hover:bg-coffee-100"
@@ -213,7 +213,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
           <button
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next →
           </button>
