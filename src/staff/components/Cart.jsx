@@ -35,7 +35,7 @@ export default function Cart({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => onChangeQty(it.id, -1)}
-                      className="px-2 py-1 bg-gray-200 rounded-sm"
+                      className="cursor-pointer px-2 py-1 bg-gray-200 rounded-sm"
                     >
                       −
                     </button>
@@ -44,7 +44,7 @@ export default function Cart({
 
                     <button
                       onClick={() => onChangeQty(it.id, 1)}
-                      className="px-2 py-1 bg-gray-200 rounded-sm"
+                      className="cursor-pointer px-2 py-1 bg-gray-200 rounded-sm"
                     >
                       +
                     </button>
@@ -52,7 +52,7 @@ export default function Cart({
                     {/* Remove Button */}
                     <button
                       onClick={() => onRemove(it.id)}
-                      className="ml-2 text-red-500 text-sm"
+                      className="cursor-pointer ml-2 text-red-500 text-sm"
                       title="Remove"
                     >
                       ✕

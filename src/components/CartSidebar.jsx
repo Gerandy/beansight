@@ -82,7 +82,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button
-                        className="border rounded px-2 text-gray-800"
+                        className="border rounded px-2 text-gray-800 cursor-pointer"
                         onClick={() =>
                           updateQuantity(item.id, Math.max(1, item.quantity - 1))
                         }
@@ -91,7 +91,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                       </button>
                       <span className="text-gray-800">{item.quantity}</span>
                       <button
-                        className="border rounded px-2 text-gray-800"
+                        className="border rounded px-2 text-gray-800 cursor-pointer"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       >
                         +
@@ -100,7 +100,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                   </div>
                 </div>
                 <button
-                  className="text-red-500 font-bold text-sm hover:underline"
+                  className="text-red-500 font-bold text-sm hover:underline cursor-pointer"
                   onClick={() => removeFromCart(item.id)}
                 >
                   Remove
@@ -127,7 +127,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
           </div>
           <Link to="/checkout">
               <button
-                className={`mt-3 w-full py-2 rounded-lg font-bold transition ${
+                className={`mt-3 w-full py-2 rounded-lg font-bold transition cursor-pointer ${
                   cart.length === 0
                     ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                     : "bg-yellow-950 text-white hover:bg-yellow-800"

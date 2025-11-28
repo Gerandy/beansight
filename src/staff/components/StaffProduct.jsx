@@ -115,7 +115,7 @@ export default function StaffProductManagement() {
         <div className="bg-coffee-100 backdrop-blur-sm rounded-2xl p-4 md:p-5 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 mb-6 shadow-soft-lg">
           <div className="flex items-center gap-3 w-full flex-1">
             <div className="relative flex items-center w-full">
-              <Search className="absolute left-3 text-[#c49a77] w-4 h-4" />
+              <Search className="cursor-pointer absolute left-3 text-[#c49a77] w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search products, categories or descriptions..."
@@ -125,14 +125,14 @@ export default function StaffProductManagement() {
               />
             </div>
 
-            <button className="p-2 rounded-xl bg-white/70 border border-[#f3e7dc] hover:bg-[#f8eee5] transition-colors">
+            <button className="cursor-pointer p-2 rounded-xl bg-white/70 border border-[#f3e7dc] hover:bg-[#f8eee5] transition-colors">
               <Filter className="w-4 h-4 text-[#c49a77]" />
             </button>
 
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white/70 border border-[#f3e7dc] text-sm focus:outline-none text-[#7a6957]"
+              className="cursor-pointer px-3 py-2 rounded-xl bg-white/70 border border-[#f3e7dc] text-sm focus:outline-none text-[#7a6957]"
             >
               <option>All</option>
               <option>Beverage</option>
@@ -145,7 +145,7 @@ export default function StaffProductManagement() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="px-3 py-2 rounded-xl bg-white/70 border border-[#f3e7dc] text-sm focus:outline-none text-[#7a6957]"
+                className="cursor-pointer px-3 py-2 rounded-xl bg-white/70 border border-[#f3e7dc] text-sm focus:outline-none text-[#7a6957]"
               >
                 <option>Newest</option>
                 <option>Oldest</option>
@@ -156,7 +156,7 @@ export default function StaffProductManagement() {
 
             <button
               onClick={handleReset}
-              className="px-4 py-2 text-sm rounded-xl bg-white/70 border border-[#f3e7dc] text-[#c49a77] hover:bg-[#f8eee5] transition-colors"
+              className="cursor-pointer px-4 py-2 text-sm rounded-xl bg-white/70 border border-[#f3e7dc] text-[#c49a77] hover:bg-[#f8eee5] transition-colors"
             >
               Reset
             </button>
@@ -172,7 +172,7 @@ export default function StaffProductManagement() {
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="bg-white border border-[#f3e7dc] text-[#7a6957] rounded-xl px-2 py-1 text-xs shadow-sm"
+            className="cursor-pointer bg-white border border-[#f3e7dc] text-[#7a6957] rounded-xl px-2 py-1 text-xs shadow-sm"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -213,7 +213,7 @@ export default function StaffProductManagement() {
                   <td className="p-4">
                     <button
                       onClick={() => toggleAvailability(p.id, p.availability)}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 
+                      className={`cursor-pointer px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 
                         ${p.availability ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                       `}
                     >
@@ -243,7 +243,7 @@ export default function StaffProductManagement() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="cursor-pointer px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               ← Previous
             </button>
@@ -261,7 +261,7 @@ export default function StaffProductManagement() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1.5 text-sm rounded-xl font-semibold transition-colors ${
+                      className={`cursor-pointer px-3 py-1.5 text-sm rounded-xl font-semibold transition-colors ${
                         currentPage === page
                           ? "bg-[#c49a77] text-white"
                           : "bg-white border border-[#f3e7dc] text-[#7a6957] hover:bg-[#f8eee5]"
@@ -284,7 +284,7 @@ export default function StaffProductManagement() {
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="cursor-pointer px-4 py-2 text-sm bg-white border border-[#f3e7dc] rounded-xl hover:bg-[#f8eee5] text-[#7a6957] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Next →
             </button>

@@ -125,7 +125,7 @@ function ProductDetails() {
           {/* LEFT - Image & Controls */}
           <div className="lg:w-1/2 flex flex-col items-center justify-center p-10 bg-gradient-to-br from-[#FCECDC] to-[#FCDEC0] relative">
             <button
-              className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition"
+              className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition cursor-pointer"
               onClick={() => navigate(-1)}
               aria-label="Back"
             >
@@ -134,7 +134,7 @@ function ProductDetails() {
 
             <button
               onClick={toggleFavorite}
-              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90 z-20"
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-md hover:bg-white transition-all duration-200 active:scale-90 z-20 cursor-pointer"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart className={`w-6 h-6 transition-all duration-200 ${isFavorite ? "fill-red-500 text-red-500" : "text-[#7D5A50] hover:text-red-500"}`} />
@@ -155,13 +155,13 @@ function ProductDetails() {
 
               {/* Quantity Selector */}
               <div className="flex items-center mt-6 bg-[#e9c8a8] rounded-full shadow-inner overflow-hidden">
-                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299]" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
+                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299] cursor-pointer" onClick={() => setQuantity(Math.max(1, quantity - 1))}>−</button>
                 <span className="px-6 py-2 text-lg font-semibold bg-white">{quantity}</span>
-                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299]" onClick={() => setQuantity(quantity + 1)}>+</button>
+                <button className="px-4 py-2 text-2xl hover:bg-[#E5B299] cursor-pointer" onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
 
               <button
-                className="mt-8 flex items-center gap-2 bg-[#7D5A50] hover:bg-[#5C4036] transition-all duration-200 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md hover:scale-105 active:scale-95"
+                className="mt-8 flex items-center gap-2 bg-[#7D5A50] hover:bg-[#5C4036] transition-all duration-200 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md hover:scale-105 active:scale-95 cursor-pointer"
                 onClick={() => {handleAddToCart(); setQuantity(1);}}
               >
                 <ShoppingBag size={20} /> Add to My Bag

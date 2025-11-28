@@ -98,7 +98,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         <select
           value={discountType}
           onChange={(e) => setDiscountType(e.target.value)}
-          className="border border-[var(--color-coffee-200)] rounded-md px-2 py-1 text-sm"
+          className="cursor-pointer border border-[var(--color-coffee-200)] rounded-md px-2 py-1 text-sm"
         >
           {Object.entries(discountTypes).map(([key, { label }]) => (
             <option key={key} value={key}>
@@ -161,7 +161,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
             <button
               key={key}
               onClick={() => setPaymentType(key)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-all duration-150 ${
+              className={`cursor-pointer flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-all duration-150 ${
                 paymentType === key
                   ? "bg-[var(--color-coffee-600)] text-white"
                   : "bg-white border-[var(--color-coffee-300)] hover:bg-[var(--color-coffee-100)]"
@@ -202,7 +202,7 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       <div className="mt-5 space-y-2">
         <button
           onClick={handleComplete}
-          className="w-full flex items-center justify-center gap-2 bg-[var(--color-coffee-600)] text-white py-2 rounded-md hover:bg-[var(--color-coffee-700)] transition-all duration-150 shadow-sm"
+          className="cursor-pointer w-full flex items-center justify-center gap-2 bg-[var(--color-coffee-600)] text-white py-2 rounded-md hover:bg-[var(--color-coffee-700)] transition-all duration-150 shadow-sm"
         >
           <CheckCircle size={16} /> Complete Sale
         </button>
@@ -210,13 +210,13 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         <div className="flex gap-2">
           <button
             onClick={handlePrint}
-            className="flex-1 flex items-center justify-center gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150"
+            className="cursor-pointer flex-1 flex items-center justify-center gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150"
           >
             <Printer size={16} /> Print
           </button>
           <button
             onClick={handleClear}
-            className="flex-1 flex items-center justify-center gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150"
+            className="cursor-pointer flex-1 flex items-center justify-center gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150"
           >
             <Trash2 size={16} /> Clear
           </button>

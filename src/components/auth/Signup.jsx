@@ -354,7 +354,7 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
-                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700"
+                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700 cursor-pointer"
               >
                 {showPwd ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
@@ -366,7 +366,7 @@ export default function Signup() {
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Confirm password</label>
             <div className="relative">
               <input
-                className="w-full border border-gray-300 p-2 sm:p-2.5 rounded-lg pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-500"
+                className="w-full border border-gray-300 p-2 sm:p-2.5 rounded-lg pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:border-coffee-"
                 placeholder="••••••••"
                 type={showPwd2 ? "text" : "password"}
                 value={pwd2}
@@ -375,9 +375,9 @@ export default function Signup() {
               <button
                 type="button"
                 onClick={() => setShowPwd2((v) => !v)}
-                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700"
+                className="absolute inset-y-0 right-2 flex items-center text-gray-500 hover:text-coffee-700 cursor-pointer"
               >
-                {showPwd2 ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
+                {showPwd2 ? <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 " /> : <Eye className="h-4 w-4 sm:h-5 sm:w-5" />}
               </button>
             </div>
           </div>
@@ -422,7 +422,7 @@ export default function Signup() {
                   setTermsOpen(true);
                   setTermsScrolledToEnd(false);
                 }}
-                className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-coffee-700 hover:text-coffee-800 hover:underline"
+                className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold text-coffee-700 hover:text-coffee-800 hover:underline cursor-pointer"
               >
                 <ScrollText className="h-4 w-4" /> Read Terms of Service & Privacy Policy
               </button>
@@ -435,12 +435,12 @@ export default function Signup() {
               <input
                 id="agree"
                 type="checkbox"
-                className="mt-0.5 sm:mt-1 h-4 w-4 rounded border-gray-300 text-coffee-600 focus:ring-coffee-600 flex-shrink-0"
+                className="mt-0.5 sm:mt-1 h-4 w-4 rounded border-gray-300 text-coffee-600 focus:ring-coffee-600 flex-shrink-0 cursor-pointer"
                 checked={agreed}
                 disabled={!hasReadTerms}
                 onChange={(e) => setAgreed(e.target.checked)}
               />
-              <label htmlFor="agree" className="text-xs sm:text-sm text-gray-700">
+              <label htmlFor="agree" className="text-xs sm:text-sm text-gray-700 ">
                 I agree to the Terms of Service and Privacy Policy.
                 {!hasReadTerms && (
                   <span className="ml-1 text-[10px] sm:text-xs text-red-600">(Please read them first)</span>
@@ -453,8 +453,8 @@ export default function Signup() {
 
           <button
             disabled={!canSubmit}
-            className={`w-full py-2 sm:py-2.5 rounded-lg text-white font-semibold text-sm sm:text-base transition
-              ${canSubmit ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
+            className={`w-full py-2 sm:py-2.5 rounded-lg text-white font-semibold text-sm sm:text-base transition 
+              ${canSubmit ? "bg-coffee-600 hover:bg-coffee-700 cursor-pointer" : "bg-coffee-300 cursor-not-allowed"}`}
           >
             Create Account
           </button>
@@ -539,14 +539,14 @@ export default function Signup() {
         <div className="flex gap-2">
           <button
             onClick={() => setTermsOpen(false)}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={confirmRead}
             disabled={!termsScrolledToEnd}
-            className={`px-4 py-2 rounded-lg text-white font-medium transition
+            className={`px-4 py-2 rounded-lg text-white font-medium transition cursor-pointer
               ${termsScrolledToEnd ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-300 cursor-not-allowed"}`}
           >
             I've read the Terms
