@@ -124,7 +124,7 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
                     <button
                       type="button"
                       onClick={() => setLoginOpen(true)}
-                      className="font-sans font-bold text-lg text-orange-100 hover:text-white transition-colors"
+                      className="font-sans font-bold text-lg text-orange-100 hover:text-white transition-colors cursor-pointer"
                     >
                       Log In
                     </button>
@@ -138,14 +138,14 @@ function Navbar({ menuOpen, setMenuOpen, cartOpen, setCartOpen }) {
                 className="relative z-40 hover:scale-110 transition-transform"
                 aria-label="Open cart"
               >
-                <Handbag className="text-orange-100 h-6 w-6 md:h-8 md:w-8 hover:text-white transition-colors" />
+                <Handbag className="text-orange-100 h-6 w-6 md:h-8 md:w-8 hover:text-white transition-colors cursor-pointer" />
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-2">
                   {cartCount}
                 </span>
               </button>
 
               <div
-                className="w-7 h-5 relative cursor-pointer z-40 md:hidden hover:scale-110"
+                className="w-7 h-5 relative cursor-pointer z-40 md:hidden hover:scale-110 "
                 onClick={() => setMenuOpen((prev) => !prev)}
               >
                 &#9776;

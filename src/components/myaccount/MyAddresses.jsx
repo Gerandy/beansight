@@ -179,12 +179,12 @@ function MyAddresses() {
       <div className="space-y-4">
         {addresses.map(addr => (
           <div key={addr.id} className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            <input type="radio" name="address" defaultChecked={addr.isDefault} className="mt-1 accent-coffee-700 w-5 h-5" />
+            <input type="radio" name="address" defaultChecked={addr.isDefault} className="cursor-pointer mt-1 accent-coffee-700 w-5 h-5" />
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-base sm:text-lg text-coffee-900 mb-1">{addr.label}</h2>
               <p className="text-sm text-coffee-700 leading-relaxed">{addr.details}, {addr.city}, {addr.province} {addr.zipcode}</p>
             </div>
-            <button onClick={() => handleEdit(addr)} className="px-4 py-2 bg-coffee-400 text-white rounded-lg font-medium hover:bg-coffee-500 transition-colors text-sm flex-shrink-0">Edit</button>
+            <button onClick={() => handleEdit(addr)} className="cursor-pointer px-4 py-2 bg-coffee-400 text-white rounded-lg font-medium hover:bg-coffee-500 transition-colors text-sm flex-shrink-0">Edit</button>
           </div>
         ))}
       </div>
@@ -201,7 +201,7 @@ function MyAddresses() {
                 label: e.target.value
               })
             }
-            className="w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
+            className="cursor-pointer w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 border-coffee-300 ring-coffee-700"
           >
             <option value="">Select Address Label</option>
 
@@ -240,19 +240,19 @@ function MyAddresses() {
           
 
           <div className="flex items-center mb-3">
-            <input type="checkbox" defaultValuechecked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="mr-2 accent-coffee-700" />
+            <input type="checkbox" defaultValuechecked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="cursor-pointer mr-2 accent-coffee-700" />
             <label className="text-sm text-coffee-900">Set as default address</label>
           </div>
 
           <div className="flex gap-3">
-            <button type="submit" className="flex-1 bg-coffee-700 text-white py-2 rounded-lg hover:bg-coffee-800 transition-colors">{editingAddress ? "Save Changes" : "Add Address"}</button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); window.location.reload();}} className="flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
+            <button type="submit" className="cursor-pointer flex-1 bg-coffee-700 text-white py-2 rounded-lg hover:bg-coffee-800 transition-colors">{editingAddress ? "Save Changes" : "Add Address"}</button>
+            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); window.location.reload();}} className="cursor-pointer flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
           </div>
         </form>
       )}
 
       {!showForm && !editingAddress && (
-        <button onClick={() => setShowForm(true)} className="w-full text-white bg-coffee-700 hover:bg-coffee-800 font-bold py-3 sm:py-3.5 rounded-lg transition-colors text-sm sm:text-base mt-4">
+        <button onClick={() => setShowForm(true)} className="cursor-pointer w-full text-white bg-coffee-700 hover:bg-coffee-800 font-bold py-3 sm:py-3.5 rounded-lg transition-colors text-sm sm:text-base mt-4">
           Add New Address
         </button>
       )}

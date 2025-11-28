@@ -49,7 +49,7 @@ export default function CategoryFilter({ selected = "All", onSelect = () => {} }
             <button
               key={c}
               onClick={() => onSelect(c)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ease-in-out
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200 ease-in-out
               ${
                 active
                   ? "bg-coffee-500 text-white border-coffee-500 shadow-md scale-105"
@@ -66,7 +66,7 @@ export default function CategoryFilter({ selected = "All", onSelect = () => {} }
       {/* Reset Button */}
       <button
         onClick={() => onSelect("All")}
-        className="ml-auto flex items-center gap-1 text-sm text-coffee-600 hover:text-coffee-800 transition-all"
+        className="cursor-pointer ml-auto flex items-center gap-1 text-sm text-coffee-600 hover:text-coffee-800 transition-all"
         title="Reset category"
       >
         <RotateCcw className="w-4 h-4" />

@@ -125,7 +125,7 @@ useEffect(() => {
                 <div className="relative">
                   <button
                     onClick={() => setMobileOpen((v) => !v)}
-                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold hover:bg-white/20 transition"
+                    className="cursor-pointer w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-sm font-semibold hover:bg-white/20 transition"
                     aria-expanded={mobileOpen}
                     aria-controls="staff-menu"
                   >
@@ -142,12 +142,12 @@ useEffect(() => {
                   >
                     <div className="py-1">
                       <button
-                        className="w-full text-left px-4 py-2 text-sm text-coffee-700 hover:bg-coffee-50"
+                        className="cursor-pointer w-full text-left px-4 py-2 text-sm text-coffee-700 hover:bg-coffee-50"
                         onClick={() => setShowPasswordModal(true)}
                       >
                         Change Password
                       </button>
-                      <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-coffee-50">
+                      <button className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-coffee-50">
                         Logout
                       </button>
                     </div>

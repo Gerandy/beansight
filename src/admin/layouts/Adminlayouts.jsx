@@ -62,9 +62,11 @@ export default function AdminLayout() {
               <Coffee size={32} className={isMobile ? "text-white" : "text-black"} />
             ) : (
               <h2
-                className={`text-2xl font-bold ${
-                  isMobile ? "text-white" : "text-black"
-                }`}
+                className={`text-2xl font-bold ${isMobile ? "text-white" : "text-black"} cursor-pointer`}
+                onClick={() => navigate("/admin")}
+                tabIndex={0}
+                role="button"
+                aria-label="Go to admin home"
               >
                 SOL-ACE ☕
               </h2>
@@ -96,6 +98,10 @@ export default function AdminLayout() {
                 }`}
                 onClick={() => {
                   setDashboardOpen((prev) => !prev);
+                  if (!dashboardOpen) {
+                    navigate("/admin/dashboard"); // Navigate to dashboard when clicking "Dashboard"
+                    setSidebarOpen(false);
+                  }
                 }}
               >
                 <div className="flex items-center gap-2 flex-1">
@@ -215,7 +221,7 @@ export default function AdminLayout() {
               onClick={() => {
                 setSettingsOpen((prev) => !prev);
                 if (!settingsOpen) {
-                  navigate("/admin/settings/general");
+                  navigate("/admin/settings/auditlog"); 
                   setSidebarOpen(false);
                 }
               }}
@@ -241,6 +247,13 @@ export default function AdminLayout() {
             </div>
             {settingsOpen && !collapsed && (
               <div className="ml-6 mt-1 space-y-1 animate-dropdown">
+                <NavLink
+                  to="/admin/settings/auditlog"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Audit Log"}
+                </NavLink>
                 <NavLink
                   to="/admin/settings/advertisement"
                   className={({ isActive }) => linkClasses(isActive)}

@@ -127,7 +127,7 @@ function MyProfile() {
             <div className="text-center mt-4">
               <button
                 type="button"
-                className="text-coffee-700 font-semibold underline text-sm sm:text-base hover:text-coffee-900 transition-colors"
+                className="cursor-pointer text-coffee-700 font-semibold underline text-sm sm:text-base hover:text-coffee-900 transition-colors"
                 onClick={() => setShowChangePassword(true)}
               >
                 Change password
@@ -150,7 +150,7 @@ function MyProfile() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
+                    className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
                     onClick={() => setShowCurrent((v) => !v)}
                   >
                     {showCurrent ? <Eye size={20} /> : <EyeOff size={20} />}
@@ -170,7 +170,7 @@ function MyProfile() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
+                    className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
                     onClick={() => setShowNew((v) => !v)}
                   >
                     {showNew ? <Eye size={20} /> : <EyeOff size={20} />}
@@ -190,7 +190,7 @@ function MyProfile() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
+                    className="cursor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-600 hover:text-coffee-800"
                     onClick={() => setShowConfirm((v) => !v)}
                   >
                     {showConfirm ? <Eye size={20} /> : <EyeOff size={20} />}
@@ -203,7 +203,7 @@ function MyProfile() {
                 disabled={!canChangePassword}
                 onClick={handleChangePassword}
                 className={`w-full py-3 sm:py-3.5 rounded-lg font-bold text-base sm:text-lg mb-3 text-white transition ${
-                  canChangePassword ? "bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-200 cursor-not-allowed"
+                  canChangePassword ? "cursor-pointer bg-coffee-600 hover:bg-coffee-700" : "bg-coffee-200 cursor-not-allowed"
                 }`}
               >
                 Change Password
@@ -212,7 +212,7 @@ function MyProfile() {
               <div className="text-center">
                 <button
                   type="button"
-                  className="text-coffee-700 font-semibold underline text-sm sm:text-base hover:text-coffee-900 transition-colors"
+                  className="cursor-pointer text-coffee-700 font-semibold underline text-sm sm:text-base hover:text-coffee-900 transition-colors"
                   onClick={() => setShowChangePassword(false)}
                 >
                   Cancel

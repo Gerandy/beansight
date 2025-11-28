@@ -36,6 +36,7 @@ import OrderManagement from "./admin/OrderManagement";
 import Advertisement from "./admin/settings/advertisement";
 import Maps from "./admin/settings/maps";
 import Preferences from "./admin/settings/storepreferences";
+import AuditLog from "./admin/settings/auditlog";
 
 // Staff
 import StaffLayout from "./staff/layouts/StaffLayout";
@@ -123,6 +124,7 @@ function App() {
           <Route path="settings/advertisement" element={<Advertisement />} />
           <Route path="settings/maps" element={<Maps />} />
           <Route path="settings/storepreferences" element={<Preferences />} />
+          <Route path="settings/auditlog" element={<AuditLog />} />
         </Route>
 
         {/* ---------- Staff Site ---------- */}

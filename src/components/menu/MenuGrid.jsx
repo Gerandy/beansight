@@ -119,7 +119,7 @@ function MenuGrid({ selectedCategory = "All" }) {
             {/* Heart Icon */}
             <button
               onClick={e => toggleFavorite(p.id, e)}
-              className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md z-15 hover:bg-white transition-all duration-200 active:scale-90"
+              className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-md z-15 hover:bg-white transition-all duration-200 active:scale-90 cursor-pointer"
               aria-label={favorites.has(p.id) ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
@@ -158,11 +158,11 @@ function MenuGrid({ selectedCategory = "All" }) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-8 pb-6">
+        <div className="flex items-center justify-center gap-2 mt-8 pb-6 ">
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className="p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
+            className="cursor-pointer p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
             aria-label="Previous page"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -175,7 +175,7 @@ function MenuGrid({ selectedCategory = "All" }) {
                 <button
                   key={pageNum}
                   onClick={() => goToPage(pageNum)}
-                  className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
+                  className={`w-10 h-10 rounded-lg font-semibold transition-colors cursor-pointer ${
                     currentPage === pageNum
                       ? "bg-coffee-700 text-white"
                       : "bg-coffee-100 text-coffee-700 hover:bg-coffee-200"
@@ -190,7 +190,7 @@ function MenuGrid({ selectedCategory = "All" }) {
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
+            className="cursor-pointer p-2 rounded-lg bg-coffee-700 text-white disabled:bg-coffee-300 disabled:cursor-not-allowed hover:bg-coffee-800 transition-colors"
             aria-label="Next page"
           >
             <ChevronRight className="w-5 h-5" />

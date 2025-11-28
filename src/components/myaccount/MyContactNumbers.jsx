@@ -65,13 +65,13 @@ function MyContactNumbers() {
               onChange={(e) => setInputValue(e.target.value)}
               className="flex-1 p-2 border border-coffee-200 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-coffee-500"
             />
-            <button onClick={handleSave} className="text-green-600 hover:text-green-800"><Check size={18} /></button>
-            <button onClick={handleCancel} className="text-red-600 hover:text-red-800"><X size={18} /></button>
+            <button onClick={handleSave} className="text-green-600 hover:text-green-800 cursor-pointer"><Check size={18} /></button>
+            <button onClick={handleCancel} className="text-red-600 hover:text-red-800 cursor-pointer"><X size={18} /></button>
           </div>
         ) : (
           <div className="flex items-center gap-3 border border-coffee-200 p-4 rounded-lg bg-coffee-50">
             <span className="flex-1 text-coffee-900">{contact || "No contact number added"}</span>
-            <button onClick={() => { setEditing(true); setInputValue(contact); }} className="text-coffee-600 hover:text-blue-600 transition-colors">
+            <button onClick={() => { setEditing(true); setInputValue(contact); }} className="cursor-pointer text-coffee-600 hover:text-blue-600 transition-colors">
               <Edit2 size={18} />
             </button>
           </div>
@@ -80,7 +80,7 @@ function MyContactNumbers() {
         {!contact && !editing && (
           <button
             onClick={() => setEditing(true)}
-            className="w-full bg-coffee-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-coffee-800 transition-colors text-sm sm:text-base mt-2"
+            className="cursor-pointer w-full bg-coffee-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm hover:bg-coffee-800 transition-colors text-sm sm:text-base mt-2"
           >
             Add Contact Number
           </button>

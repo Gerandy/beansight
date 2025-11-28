@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Package, Clock, CheckCircle, ShoppingCart, RefreshCw } from "lucide-react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useNavigate } from "react-router-dom";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -10,6 +11,7 @@ const Orders = () => {
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
+  const navigate = useNavigate();
 
   // Live fetch orders from the global "orders" collection
  useEffect(() => {
@@ -89,7 +91,10 @@ const Orders = () => {
             <ShoppingCart className="w-24 h-24 mx-auto mb-6 text-coffee-500" />
             <h2 className="text-3xl font-bold text-coffee-900 mb-3 logo-font">No Orders Yet</h2>
             <p className="text-coffee-700 text-lg mb-6">Start your coffee journey by placing your first order!</p>
-            <button className="bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-8 py-3 rounded-2xl transition-all transform hover:scale-105 shadow-soft-lg">
+            <button
+              className="bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-8 py-3 rounded-2xl transition-all transform hover:scale-105 shadow-soft-lg cursor-pointer"
+              onClick={() => navigate("/menu")}
+            >
               Browse Menu
             </button>
           </div>
@@ -106,7 +111,7 @@ const Orders = () => {
           <div className="flex justify-center mb-6 gap-4">
             <button
               onClick={() => setActiveTab("current")}
-              className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
+              className={`px-6 py-3 rounded-2xl font-semibold transition-all cursor-pointer ${
                 activeTab === "current" ? "bg-coffee-600 text-white shadow-soft-lg" : "bg-white text-coffee-700 hover:bg-coffee-50 shadow-soft-lg"
               }`}
             >
@@ -114,7 +119,7 @@ const Orders = () => {
             </button>
             <button
               onClick={() => setActiveTab("history")}
-              className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
+              className={`px-6 py-3 rounded-2xl font-semibold transition-all cursor-pointer ${
                 activeTab === "history" ? "bg-coffee-600 text-white shadow-soft-lg" : "bg-white text-coffee-700 hover:bg-coffee-50 shadow-soft-lg"
               }`}
             >
@@ -181,7 +186,7 @@ const Orders = () => {
                   <div className="flex gap-3 flex-wrap">
                     <button
                       onClick={() => handleOrderClick(order)}
-                      className="flex-1 bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
+                      className="cursor-pointer flex-1 bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
                     >
                       View Details
                     </button>
@@ -189,7 +194,7 @@ const Orders = () => {
                     {["Delivered", "Completed"].includes(order.status) && (
                       <button
                         onClick={() => reorder(order)}
-                        className="flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
+                        className="cursor-pointer flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
                       >
                         <RefreshCw className="w-4 h-4" />
                         Reorder
@@ -266,7 +271,7 @@ const Orders = () => {
                 {["Delivered", "Completed"].includes(selectedOrder.status) && (
                   <button
                     onClick={() => reorder(selectedOrder)}
-                    className="flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
+                    className="cursor-pointer flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
                   >
                     <RefreshCw className="w-5 h-5" />
                     Reorder
@@ -274,7 +279,7 @@ const Orders = () => {
                 )}
                 <button
                   onClick={closeModal}
-                  className="flex-1 bg-coffee-200 hover:bg-coffee-300 text-coffee-900 font-semibold px-6 py-3 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
+                  className="cursor-pointer flex-1 bg-coffee-200 hover:bg-coffee-300 text-coffee-900 font-semibold px-6 py-3 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
                 >
                   Close
                 </button>

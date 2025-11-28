@@ -164,7 +164,7 @@ export default function Checkout() {
             <SectionCard title="Shipping & pickup" icon={<Truck size={18} />}>
               <div className="flex gap-3">
                 <label
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
                     shipping.type === 'delivery' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
                   }`}
                 >
@@ -180,7 +180,7 @@ export default function Checkout() {
                 </label>
 
                 <label
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
                     shipping.type === 'pickup' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
                   }`}
                 >
@@ -200,7 +200,7 @@ export default function Checkout() {
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Delivery: Now or Schedule */}
                   <div className="col-span-1 md:col-span-2 flex gap-4">
-                    <label className="inline-flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="deliverySchedule"
@@ -211,7 +211,7 @@ export default function Checkout() {
                       />
                       Now
                     </label>
-                    <label className="inline-flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
                         name="deliverySchedule"
@@ -230,13 +230,13 @@ export default function Checkout() {
                         type="date"
                         value={shipping.scheduledDate}
                         onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2"
+                        className="border rounded px-2 py-1 w-1/2 cursor"
                       />
                       <input
                         type="time"
                         value={shipping.scheduledTime}
                         onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2"
+                        className="border rounded px-2 py-1 w-1/2 cursor"
                       />
                     </>
                   )}
@@ -349,7 +349,7 @@ export default function Checkout() {
             {/* Payment */}
             <SectionCard title="Payment" icon={<CreditCard size={18} />}>
               <div className="flex gap-3">
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border ${payment.method === 'cod' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
+                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'cod' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
                   <input type="radio" name="pay" checked={payment.method === 'cod'} onChange={() => setPayment({ method: 'cod' })} className="hidden" />
                   Cash on delivery
                 </label>
@@ -378,10 +378,10 @@ export default function Checkout() {
                             <div className="text-sm text-gray-500">₱{it.price.toFixed(2)}</div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => updateQty(it.id, -1)} className="p-1 border rounded"><Minus size={14} /></button>
+                            <button onClick={() => updateQty(it.id, -1)} className="p-1 border rounded cursor-pointer"><Minus size={14} /></button>
                             <div className="px-3">{it.quantity}</div>
-                            <button onClick={() => updateQty(it.id, 1)} className="p-1 border rounded"><Plus size={14} /></button>
-                            <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded"><Trash2 size={14} /></button>
+                            <button onClick={() => updateQty(it.id, 1)} className="p-1 border rounded cursor-pointer"><Plus size={14} /></button>
+                            <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded cursor-pointer"><Trash2 size={14} /></button>
                           </div>
                         </div>
                       </div>
