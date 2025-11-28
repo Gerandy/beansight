@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -31,7 +30,7 @@ function InventoryAnalytics() {
   const [statusFilter, setStatusFilter] = useState("");
   const [unitFilter, setUnitFilter] = useState("");
 
-  const initialForm = { item: "", stock: "", category: "", unit: "", reorderLevel: "" };
+  const initialForm = { item: "", stock: "", category: "", unit: "", reorderLevel: "", cost: "" };
   const [form, setForm] = useState(initialForm);
 
   // Fetch inventory from Firestore
@@ -70,6 +69,7 @@ function InventoryAnalytics() {
       ...form,
       stock: Number(form.stock),
       reorderLevel: Number(form.reorderLevel),
+      cost: Number(form.cost || 0),
     });
 
     setForm(initialForm);
@@ -85,7 +85,12 @@ function InventoryAnalytics() {
   const handleEditSave = async (e) => {
     e.preventDefault();
     const docRef = doc(db, "inventory", editItem.id);
-    await updateDoc(docRef, { ...form, stock: Number(form.stock), reorderLevel: Number(form.reorderLevel) });
+    await updateDoc(docRef, { 
+      ...form, 
+      stock: Number(form.stock), 
+      reorderLevel: Number(form.reorderLevel),
+      cost: Number(form.cost || 0),
+    });
     setShowEditModal(false);
     setEditItem(null);
     setForm(initialForm);
@@ -213,6 +218,23 @@ function InventoryAnalytics() {
           </div>
         </div>
 
+        <div>
+          <label className="block mb-1 text-coffee-700 font-medium">Unit Cost (₱)</label>
+          <div className="flex items-center border border-coffee-300 rounded-xl bg-coffee-50 px-3">
+            <Tag className="w-5 h-5 text-coffee-500 mr-2" />
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              name="cost"
+              placeholder="e.g., 5.00"
+              className="bg-transparent py-2.5 w-full outline-none"
+              value={form.cost}
+              onChange={handleInputChange}
+            />
+          </div>
+        </div>
+
         <div className="flex justify-end gap-3 pt-3">
           <button
             type="button"
@@ -233,6 +255,27 @@ function InventoryAnalytics() {
     );
   }
 
+  // Group inventory by category and compute total value (stock * cost)
+  // Uses item.cost (fallback to 0 if missing).
+  const groupCategories = ["Coffee", "Packaging", "Milks"];
+  const valueByCategory = groupCategories.map((cat) => {
+    const total = inventoryData
+      .filter((it) => it.category === cat)
+      .reduce((sum, it) => sum + (Number(it.stock || 0) * Number(it.cost || 0)), 0);
+    return { name: cat, value: total };
+  }).filter(d => d.value > 0);
+
+  const donutData = valueByCategory.length > 0 ? valueByCategory : [{ name: "No Data", value: 1 }];
+  const COLORS = ["#8E5A3A", "#D97706", "#4B5563", "#C084FC", "#34D399"];
+  // totalValue used by the Pie label to compute percentages
+  const totalValue = donutData.reduce((sum, d) => sum + d.value, 0);
+
+  // totalAssetValue: sum of stock * cost across all inventory items
+  const totalAssetValue = inventoryData.reduce(
+    (sum, i) => sum + Number(i.stock || 0) * Number(i.cost || 0),
+    0
+  );
+  
   return (
     <div className="p-8 space-y-8 min-h-screen text-coffee-800 font-sans">
       <header className="flex items-center mb-6">
@@ -250,7 +293,7 @@ function InventoryAnalytics() {
         {[
           { title: "Total Items", value: inventoryData.length },
           { title: "Low Stock Items", value: lowStock.length },
-          { title: "Total Stock", value: inventoryData.reduce((sum, i) => sum + i.stock, 0) },
+          { title: "Total Asset Value", value: `₱${totalAssetValue.toFixed(2)}` },
           { title: "Next Delivery", value: "Oct 8, 2025" },
         ].map((card, i) => (
           <div key={i} className="bg-coffee-50 p-6 rounded-2xl shadow-soft-lg border border-coffee-200 hover:shadow-soft-xl transition">
@@ -280,17 +323,29 @@ function InventoryAnalytics() {
         </select>
       </div>
 
-      {/* Chart */}
+      {/* Inventory Value by Category (Donut) */}
       <div className="bg-coffee-50 p-6 rounded-2xl shadow-soft-lg">
-        <h2 className="text-lg font-semibold mb-4 text-coffee-800">Current Stock Levels</h2>
+        <h2 className="text-lg font-semibold mb-4 text-coffee-800">Inventory Value by Category</h2>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={filteredInventory}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#F6E3CC" />
-            <XAxis dataKey="item" stroke="#8E5A3A" />
-            <YAxis stroke="#8E5A3A" />
-            <Tooltip />
-            <Bar dataKey="stock" fill="var(--color-coffee-500)" radius={[5, 5, 0, 0]} />
-          </BarChart>
+          <PieChart>
+            <Pie
+              data={donutData}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={70}
+              outerRadius={110}
+              paddingAngle={4}
+              label={(entry) =>
+                `${entry.name}: ${totalValue > 0 ? ((entry.value / totalValue) * 100).toFixed(0) : 0}%`
+              }
+            >
+              {donutData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Value"]} />
+            <Legend />
+          </PieChart>
         </ResponsiveContainer>
       </div>
 
@@ -305,6 +360,7 @@ function InventoryAnalytics() {
                 <th className="px-4 py-2">Stock</th>
                 <th className="px-4 py-2">Unit</th>
                 <th className="px-4 py-2">Reorder Level</th>
+                <th className="px-4 py-2">Total Value</th>
                 <th className="px-4 py-2">Status</th>
                 <th className="px-4 py-2">Actions</th>
               </tr>
@@ -312,13 +368,14 @@ function InventoryAnalytics() {
             <tbody>
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-6 text-coffee-400">
+                  <td colSpan={8} className="text-center py-6 text-coffee-400">
                     No items found.
                   </td>
                 </tr>
               ) : (
                 filteredInventory.map((item) => {
                   const status = item.stock < item.reorderLevel ? "Low" : "OK";
+                  const totalVal = Number(item.stock || 0) * Number(item.cost || 0);
                   return (
                     <tr key={item.id} className="border-b border-coffee-200 hover:bg-coffee-100/70 transition">
                       <td className="px-4 py-3 font-medium">{item.item}</td>
@@ -341,6 +398,7 @@ function InventoryAnalytics() {
                       </td>
                       <td className="px-4 py-3">{item.unit}</td>
                       <td className="px-4 py-3">{item.reorderLevel}</td>
+                      <td className="px-4 py-3">₱{totalVal.toFixed(2)}</td>
                       <td className="px-4 py-3 font-semibold text-red-500">{status === "Low" ? "Low" : "OK"}</td>
                       <td className="px-4 py-3 flex gap-2">
                         <button

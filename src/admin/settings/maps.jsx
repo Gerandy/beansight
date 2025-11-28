@@ -1,6 +1,39 @@
 import React, { useState, useCallback, useRef } from "react";
 import { GoogleMap, Marker, Circle, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
 
+// Tooltip modal for help
+function ModalTooltip({ open, text, onClose }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 backdrop-blur-sm bg-opacity-30">
+      <div className="bg-white rounded-xl shadow-lg p-6 max-w-sm w-full relative">
+        <button
+          className="absolute top-2 right-3 text-coffee-700 text-xl font-bold cursor-pointer"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          ×
+        </button>
+        <div className="text-coffee-900 text-base">{text}</div>
+      </div>
+    </div>
+  );
+}
+
+const help = {
+  address: "Enter your store's address. This helps customers find your location.",
+  landmark: "Add a nearby landmark to help with delivery or pickup.",
+  radius: "Set how far from your store you can deliver orders.",
+  unit: "Choose kilometers (km) or miles (mi) for your delivery radius.",
+  feeType: "Select how you want to charge for delivery: per kilometer/mile or a flat fee.",
+  feePerKm: "Set the delivery fee charged for each kilometer or mile.",
+  flatFee: "Set a single delivery fee for all orders, regardless of distance.",
+  freeThreshold: "Orders above this amount will get free delivery. Leave blank if not applicable.",
+  map: "Drag the pin to set your store's exact location on the map.",
+  save: "Save your changes.",
+  reset: "Reset all fields to their default values."
+};
+
 const containerStyle = {
   width: "100%",
   height: "min(320px,40vw)",
@@ -19,13 +52,16 @@ export default function MapsSettings() {
   const [unit, setUnit] = useState("km");
   const [errors, setErrors] = useState({});
   const [mapError, setMapError] = useState(false);
+  const [message, setMessage] = useState("");
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [tooltipText, setTooltipText] = useState("");
 
   const autocompleteRef = useRef(null);
 
   // Load Google Maps JS API
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY", 
-    libraries: ["places", "maps"], 
+    googleMapsApiKey: "",
+    libraries: ["places", "maps"],
   });
 
   // Handle marker drag
@@ -65,9 +101,11 @@ export default function MapsSettings() {
 
   // Save handler
   const handleSave = () => {
-    if (!validate()) return;
-    // Save logic here (API call, etc.)
-    alert("Settings saved!");
+    if (!validate()) {
+      setMessage("");
+      return;
+    }
+    setMessage("Settings saved!");
   };
 
   // Reset handler
@@ -82,16 +120,30 @@ export default function MapsSettings() {
     setFreeThreshold("");
     setUnit("km");
     setErrors({});
+    setMessage("Fields reset to default.");
   };
 
   // Convert radius to meters for Circle overlay
   const getRadiusMeters = () => unit === "km" ? radius * 1000 : radius * 1609.34;
 
+  // Tooltip trigger
+  const showTooltip = text => {
+    setTooltipText(text);
+    setTooltipOpen(true);
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto pt-8">
-      <h2 className="text-3xl font-bold mb-8 flex items-center gap-3 text-coffee-900">
+      <ModalTooltip open={tooltipOpen} text={tooltipText} onClose={() => setTooltipOpen(false)} />
+      <h2 className="text-3xl font-bold mb-4 flex items-center gap-3 text-coffee-900">
         <span role="img" aria-label="map">🗺️</span> Maps Settings
       </h2>
+      <p className="mb-8 text-coffee-700 text-base">
+        Set your store’s location and delivery area. These settings help customers find you and know where you deliver. click Fields with <span className="text-coffee-700 font-bold">ⓘ</span> to have more info.
+      </p>
+      {message && (
+        <div className="mb-4 text-coffee-700 font-medium" aria-live="polite">{message}</div>
+      )}
       <div className="flex flex-col md:flex-row gap-8 md:gap-10">
         {/* Store Location & Map */}
         <div className="flex-1 flex">
@@ -99,8 +151,14 @@ export default function MapsSettings() {
             <h3 className="text-xl font-semibold mb-6 flex items-center gap-2 text-coffee-800">
               <span role="img" aria-label="pin">📍</span> Store Location
             </h3>
-            <label className="block font-medium mb-2 text-coffee-700">
+            <label className="block font-medium mb-2 text-coffee-700 flex items-center">
               Exact Pin Location (Drag on Map)
+              <button
+                type="button"
+                className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                onClick={() => showTooltip(help.map)}
+                aria-label="Help"
+              >ⓘ</button>
             </label>
             <div className="border-2 border-coffee-200 rounded-xl p-2 bg-coffee-100 mb-5">
               {loadError || mapError ? (
@@ -145,6 +203,15 @@ export default function MapsSettings() {
               )}
             </div>
             <div className="flex flex-col gap-4 mt-2">
+              <label className="block font-medium text-coffee-700 flex items-center">
+                Store Address
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                  onClick={() => showTooltip(help.address)}
+                  aria-label="Help"
+                >ⓘ</button>
+              </label>
               <Autocomplete
                 onLoad={ref => (autocompleteRef.current = ref)}
                 onPlaceChanged={onPlaceChanged}
@@ -152,7 +219,7 @@ export default function MapsSettings() {
                 <input
                   type="text"
                   className={inputClass}
-                  placeholder="Address"
+                  placeholder="e.g. 123 Main St, Manila"
                   value={address}
                   aria-label="Store Address"
                   onChange={e => setAddress(e.target.value)}
@@ -161,10 +228,19 @@ export default function MapsSettings() {
               {errors.address && (
                 <span className="text-red-600 text-sm">{errors.address}</span>
               )}
+              <label className="block font-medium text-coffee-700 flex items-center">
+                Landmark
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                  onClick={() => showTooltip(help.landmark)}
+                  aria-label="Help"
+                >ⓘ</button>
+              </label>
               <input
                 type="text"
                 className={inputClass}
-                placeholder="Landmark"
+                placeholder="e.g. Near City Hall"
                 value={landmark}
                 aria-label="Landmark"
                 onChange={e => setLandmark(e.target.value)}
@@ -181,8 +257,14 @@ export default function MapsSettings() {
             </h3>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="block font-medium text-coffee-700">
-                  Set Delivery Radius
+                <label className="block font-medium text-coffee-700 flex items-center">
+                  How far do you deliver?
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                    onClick={() => showTooltip(help.radius)}
+                    aria-label="Help"
+                  >ⓘ</button>
                 </label>
                 <div className="flex gap-2 items-center">
                   <input
@@ -192,7 +274,17 @@ export default function MapsSettings() {
                     min={1}
                     aria-label="Delivery Radius"
                     onChange={e => setRadius(Number(e.target.value))}
+                    placeholder="e.g. 5"
                   />
+                  <label className="font-medium text-coffee-700 flex items-center">
+                    <span>Unit</span>
+                    <button
+                      type="button"
+                      className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                      onClick={() => showTooltip(help.unit)}
+                      aria-label="Help"
+                    >ⓘ</button>
+                  </label>
                   <select
                     className="p-2 rounded-xl border border-coffee-200 bg-coffee-50 text-coffee-900 font-medium"
                     value={unit}
@@ -208,8 +300,14 @@ export default function MapsSettings() {
                 <span className="text-red-600 text-sm">{errors.radius}</span>
               )}
               <div>
-                <label className="block font-medium mb-1 text-coffee-700">
+                <label className="block font-medium mb-1 text-coffee-700 flex items-center">
                   Delivery Fee Type
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                    onClick={() => showTooltip(help.feeType)}
+                    aria-label="Help"
+                  >ⓘ</button>
                 </label>
                 <select
                   className={inputClass}
@@ -223,8 +321,14 @@ export default function MapsSettings() {
               </div>
               {feeType === "per_km" ? (
                 <div>
-                  <label className="block font-medium mb-1 text-coffee-700">
+                  <label className="block font-medium mb-1 text-coffee-700 flex items-center">
                     Delivery Fee per {unit}
+                    <button
+                      type="button"
+                      className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                      onClick={() => showTooltip(help.feePerKm)}
+                      aria-label="Help"
+                    >ⓘ</button>
                   </label>
                   <input
                     type="number"
@@ -233,6 +337,7 @@ export default function MapsSettings() {
                     min={0}
                     aria-label="Fee Per Km"
                     onChange={e => setFeePerKm(Number(e.target.value))}
+                    placeholder={`e.g. 10 per ${unit}`}
                   />
                   {errors.feePerKm && (
                     <span className="text-red-600 text-sm">{errors.feePerKm}</span>
@@ -240,8 +345,14 @@ export default function MapsSettings() {
                 </div>
               ) : (
                 <div>
-                  <label className="block font-medium mb-1 text-coffee-700">
+                  <label className="block font-medium mb-1 text-coffee-700 flex items-center">
                     Flat Delivery Fee
+                    <button
+                      type="button"
+                      className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                      onClick={() => showTooltip(help.flatFee)}
+                      aria-label="Help"
+                    >ⓘ</button>
                   </label>
                   <input
                     type="number"
@@ -250,6 +361,7 @@ export default function MapsSettings() {
                     min={0}
                     aria-label="Flat Fee"
                     onChange={e => setFlatFee(Number(e.target.value))}
+                    placeholder="e.g. 50"
                   />
                   {errors.flatFee && (
                     <span className="text-red-600 text-sm">{errors.flatFee}</span>
@@ -257,8 +369,14 @@ export default function MapsSettings() {
                 </div>
               )}
               <div>
-                <label className="block font-medium mb-1 text-coffee-700">
+                <label className="block font-medium mb-1 text-coffee-700 flex items-center">
                   Free Delivery Threshold (optional)
+                  <button
+                    type="button"
+                    className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                    onClick={() => showTooltip(help.freeThreshold)}
+                    aria-label="Help"
+                  >ⓘ</button>
                 </label>
                 <input
                   type="number"
@@ -267,6 +385,7 @@ export default function MapsSettings() {
                   min={0}
                   aria-label="Free Delivery Threshold"
                   onChange={e => setFreeThreshold(e.target.value)}
+                  placeholder="e.g. 500"
                 />
               </div>
             </div>
@@ -277,6 +396,12 @@ export default function MapsSettings() {
                 aria-label="Save Settings"
               >
                 Save
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                  onClick={() => showTooltip(help.save)}
+                  aria-label="Help"
+                >ⓘ</button>
               </button>
               <button
                 className="bg-coffee-200 text-coffee-900 px-6 py-2 rounded-xl font-semibold shadow hover:bg-coffee-300 transition"
@@ -284,6 +409,12 @@ export default function MapsSettings() {
                 aria-label="Reset Settings"
               >
                 Reset
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                  onClick={() => showTooltip(help.reset)}
+                  aria-label="Help"
+                >ⓘ</button>
               </button>
             </div>
           </div>
