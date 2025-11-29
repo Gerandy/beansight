@@ -275,6 +275,13 @@ export default function AdminLayout() {
                 >
                   {!collapsed && "Maps Settings"}
                 </NavLink>
+                <NavLink
+                  to="/admin/settings/analytics"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Analytics"}
+                </NavLink>
               </div>
             )}
           </div>

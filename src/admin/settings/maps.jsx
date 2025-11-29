@@ -431,12 +431,6 @@ export default function MapsSettings() {
                 aria-label="Save Settings"
               >
                 Save
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.save)}
-                  aria-label="Help"
-                >ⓘ</button>
               </button>
               <button
                 className="bg-coffee-200 text-coffee-900 px-6 py-2 rounded-xl font-semibold shadow hover:bg-coffee-300 transition"
@@ -444,12 +438,6 @@ export default function MapsSettings() {
                 aria-label="Reset Settings"
               >
                 Reset
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.reset)}
-                  aria-label="Help"
-                >ⓘ</button>
               </button>
             </div>
           </div>

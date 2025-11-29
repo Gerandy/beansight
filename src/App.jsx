@@ -37,6 +37,7 @@ import Advertisement from "./admin/settings/advertisement";
 import Maps from "./admin/settings/maps";
 import Preferences from "./admin/settings/storepreferences";
 import AuditLog from "./admin/settings/auditlog";
+import AnalyticsSettings from "./admin/settings/analytics"; // Add this import
 
 // Staff
 import StaffLayout from "./staff/layouts/StaffLayout";
@@ -44,6 +45,7 @@ import PosPage from "./staff/POSPage";
 import OnlineOrders from "./staff/components/OnlineOrders";
 import History from "./staff/components/History";
 import StaffProduct from "./staff/components/StaffProduct";
+import StaffInventory from "./staff/components/StaffInventory"; // Add this import
 
 // ProtectedRoute
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -125,6 +127,7 @@ function App() {
           <Route path="settings/maps" element={<Maps />} />
           <Route path="settings/storepreferences" element={<Preferences />} />
           <Route path="settings/auditlog" element={<AuditLog />} />
+          <Route path="settings/analytics" element={<AnalyticsSettings />} /> {/* Add this route */}
         </Route>
 
         {/* ---------- Staff Site ---------- */}
@@ -141,6 +144,7 @@ function App() {
           <Route path="online-orders" element={<OnlineOrders />} />
           <Route path="history" element={<History />} />
           <Route path="products" element={<StaffProduct />} />
+          <Route path="inventory" element={<StaffInventory />} /> {/* Add this route */}
         </Route>
       </Routes>
     </Router>

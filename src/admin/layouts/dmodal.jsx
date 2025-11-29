@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Helper to export CSV
 function exportToCSV(data, columns, title) {
@@ -36,14 +36,12 @@ export default function DrillDownModal({
   title = "Details",
   data = [],
   columns = [],
+  viewOptions = null, // New: array of view options (e.g., ["gross", "net", "expenses"])
+  currentView = null, // New: current selected view
+  onViewChange = null, // New: callback for view change
+  onRowClick = null, // Prop for row click handler
 }) {
-  const [page, setPage] = useState(0);
-  const rowsPerPage = 10;
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-
   if (!isOpen) return null;
-
-  const pagedData = data.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   return (
     <div className="fixed inset-0 z-50 h-full flex items-center justify-center bg-black/10 backdrop-blur-sm bg-opacity-30">
@@ -51,13 +49,20 @@ export default function DrillDownModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#C28F5E] rounded-t-2xl bg-[#F9F6F2]">
           <h2 className="text-xl font-bold text-[#8E5A3A]">{title}</h2>
-          <div className="flex gap-2">
-            <button
-              className="bg-[#C28F5E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#8E5A3A] transition"
-              onClick={() => exportToCSV(data, columns, title)}
-            >
-              Export Report
-            </button>
+          <div className="flex items-center gap-2">
+            {viewOptions && onViewChange && (
+              <select
+                value={currentView}
+                onChange={(e) => onViewChange(e.target.value)}
+                className="px-3 py-1 rounded border border-[#C28F5E] bg-white text-[#8E5A3A]"
+              >
+                {viewOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "gross" ? "Gross Revenue" : option === "net" ? "Net Profit" : "Expenses"}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               className="text-[#8E5A3A] px-3 py-2 rounded-lg hover:bg-[#F5E9DA] font-bold"
               onClick={onClose}
@@ -68,80 +73,43 @@ export default function DrillDownModal({
           </div>
         </div>
         {/* Table */}
-        <div className="p-6 overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#C28F5E] text-white">
-                {columns.map((col) => (
-                  <th
-                    key={col}
-                    className="py-2 px-4 font-semibold text-left rounded-t-lg"
-                  >
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
+          <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
+            <thead className="bg-[#F9F6F2] text-[#8E5A3A] sticky top-0">
+              <tr>
+                {columns.map((col, idx) => (
+                  <th key={idx} className="py-3 px-4 text-left font-semibold border-b border-[#E1B788]">
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {pagedData.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="py-6 text-center text-[#8E5A3A]"
-                  >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-              {pagedData.map((row, idx) => (
+              {data.map((row, idx) => (
                 <tr
                   key={idx}
-                  className={
-                    idx % 2 === 0
-                      ? "bg-[#F9F6F2]"
-                      : "bg-[#F5E9DA]"
-                  }
+                  className={`hover:bg-[#F5E9DA] transition ${row.expandable ? 'cursor-pointer' : ''}`}
+                  onClick={() => row.expandable && onRowClick ? onRowClick(row.type) : null}
                 >
-                  {columns.map((col) => {
-                    const val = col.includes(".")
-                      ? col.split(".").reduce((acc, key) => acc && acc[key], row)
-                      : row[col];
-                    return (
-                      <td
-                        key={col}
-                        className="py-2 px-4 text-[#6A3D26] rounded-lg"
-                      >
-                        {val !== undefined ? val : ""}
-                      </td>
-                    );
-                  })}
+                  {columns.map((col, colIdx) => (
+                    <td key={colIdx} className="py-3 px-4 border-b border-[#F5E9DA] text-[#8E5A3A]">
+                      {row[col]}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 pb-6">
-            <button
-              className="bg-[#C28F5E] text-white px-3 py-1 rounded-lg font-semibold disabled:opacity-50"
-              onClick={() => setPage((p) => Math.max(p - 1, 0))}
-              disabled={page === 0}
-            >
-              Previous
-            </button>
-            <span className="text-[#8E5A3A] font-medium">
-              Page {page + 1} of {totalPages}
-            </span>
-            <button
-              className="bg-[#C28F5E] text-white px-3 py-1 rounded-lg font-semibold disabled:opacity-50"
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
-              disabled={page === totalPages - 1}
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {/* Bottom Actions */}
+        <div className="flex justify-end px-6 py-4 border-t border-[#C28F5E]">
+          <button
+            className="bg-[#C28F5E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#8E5A3A] transition"
+            onClick={() => exportToCSV(data, columns, title)}
+          >
+            Export Report
+          </button>
+        </div>
       </div>
     </div>
   );

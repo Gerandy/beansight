@@ -26,6 +26,8 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from "recharts";
 
 import { db } from "../firebase"; // adjust path
@@ -35,6 +37,17 @@ export default function Reports() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [orders, setOrders] = useState([]);
   const [inventory, setInventory] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [customReportOpen, setCustomReportOpen] = useState(false);
+  const [customSelections, setCustomSelections] = useState({
+    includeSales: true,
+    includeCustomers: false,
+    includeInventory: false,
+    includeExpenses: false,
+    chartType: "bar", // bar, line, pie
+    exportFormat: "pdf", // pdf, excel, csv
+  });
 
   const filterByDate = (items, dateField = "date") => {
     if (!dateRange.start || !dateRange.end) return items;
@@ -85,6 +98,15 @@ export default function Reports() {
     return () => unsub();
   }, []);
 
+  // Fetch expenses from Firestore
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "expenses"), (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ ...doc.data(), date: doc.data().date?.toDate() || new Date() }));
+      setExpenses(data);
+    });
+    return () => unsub();
+  }, []);
+
   // Filter orders by date range
   const filteredOrders = useMemo(() => {
     if (!dateRange.start && !dateRange.end) return orders;
@@ -98,10 +120,15 @@ export default function Reports() {
     });
   }, [orders, dateRange]);
 
+  // Filter expenses by date range
+  const filteredExpenses = useMemo(() => filterByDate(expenses), [expenses, dateRange]);
+
   // Stats
   const totalOrders = filteredOrders.length;
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0);
   const totalCustomers = new Set(filteredOrders.map((o) => o.customer)).size;
+  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const netProfit = totalRevenue - totalExpenses;
 
   // Sales per month
   const salesData = useMemo(() => {
@@ -126,6 +153,16 @@ export default function Reports() {
       .map(([name, orders]) => ({ name, orders }))
       .sort((a, b) => b.orders - a.orders)
       .slice(0, 10);
+  }, [filteredOrders]);
+
+  // Sales trend data (daily for selected period)
+  const salesTrendData = useMemo(() => {
+    const map = {};
+    filteredOrders.forEach(o => {
+      const day = o.date.toLocaleDateString();
+      map[day] = (map[day] || 0) + o.total;
+    });
+    return Object.entries(map).map(([day, sales]) => ({ day, sales }));
   }, [filteredOrders]);
 
   const COLORS = ["var(--color-coffee-400)","var(--color-coffee-500)","var(--color-coffee-700)","var(--color-coffee-300)"];
@@ -202,6 +239,97 @@ export default function Reports() {
     saveAs(blob, "Sales_Report.xlsx");
   };
   
+  const handleExportCSV = () => {
+    const csvData = filteredOrders.map(o => ({ Date: o.date.toISOString(), Total: o.total, Customer: o.customer }));
+    const ws = XLSX.utils.json_to_sheet(csvData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, "Orders.csv");
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    // Re-fetch data if needed
+    setTimeout(() => setLoading(false), 1000);
+  };
+
+  // Function to generate custom report
+  const generateCustomReport = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Custom Report", 14, 22);
+    let yPos = 32;
+
+    // Add selected sections
+    if (customSelections.includeSales) {
+      doc.setFontSize(14);
+      doc.text("Sales Data", 14, yPos);
+      yPos += 10;
+      const salesData = salesTrendData.map(d => [d.day, d.sales]);
+      autoTable(doc, { startY: yPos, head: [["Date", "Sales"]], body: salesData });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    if (customSelections.includeCustomers) {
+      doc.setFontSize(14);
+      doc.text("Customer Data", 14, yPos);
+      yPos += 10;
+      const customerData = topCustomers.map(c => [c.name, c.orders, c.totalSpent]);
+      autoTable(doc, { startY: yPos, head: [["Customer", "Orders", "Total Spent"]], body: customerData });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    if (customSelections.includeInventory) {
+      doc.setFontSize(14);
+      doc.text("Inventory Data", 14, yPos);
+      yPos += 10;
+      const inventoryData = inventory.map(i => [i.name, i.stock, i.stock < 3 ? "Critical" : i.stock < 6 ? "Low" : "OK"]);
+      autoTable(doc, { startY: yPos, head: [["Item", "Stock", "Status"]], body: inventoryData });
+      yPos = doc.lastAutoTable.finalY + 10;
+    }
+
+    if (customSelections.includeExpenses) {
+      doc.setFontSize(14);
+      doc.text("Expenses Data", 14, yPos);
+      yPos += 10;
+      const expensesData = filteredExpenses.map(e => [e.category || "Misc", e.amount, e.date.toLocaleDateString()]);
+      autoTable(doc, { startY: yPos, head: [["Category", "Amount", "Date"]], body: expensesData });
+    }
+
+    // Export based on format
+    if (customSelections.exportFormat === "pdf") {
+      doc.save("Custom_Report.pdf");
+    } else if (customSelections.exportFormat === "excel") {
+      const wb = XLSX.utils.book_new();
+      if (customSelections.includeSales) {
+        const wsSales = XLSX.utils.json_to_sheet(salesTrendData);
+        XLSX.utils.book_append_sheet(wb, wsSales, "Sales");
+      }
+      if (customSelections.includeCustomers) {
+        const wsCustomers = XLSX.utils.json_to_sheet(topCustomers);
+        XLSX.utils.book_append_sheet(wb, wsCustomers, "Customers");
+      }
+      if (customSelections.includeInventory) {
+        const wsInventory = XLSX.utils.json_to_sheet(inventory);
+        XLSX.utils.book_append_sheet(wb, wsInventory, "Inventory");
+      }
+      if (customSelections.includeExpenses) {
+        const wsExpenses = XLSX.utils.json_to_sheet(filteredExpenses);
+        XLSX.utils.book_append_sheet(wb, wsExpenses, "Expenses");
+      }
+      XLSX.writeFile(wb, "Custom_Report.xlsx");
+    } else if (customSelections.exportFormat === "csv") {
+      const csvData = [];
+      if (customSelections.includeSales) csvData.push(...salesTrendData);
+      if (customSelections.includeCustomers) csvData.push(...topCustomers);
+      const ws = XLSX.utils.json_to_sheet(csvData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Custom");
+      XLSX.writeFile(wb, "Custom_Report.csv");
+    }
+
+    setCustomReportOpen(false);
+  };
 
   return (
     <div className="p-6 space-y-8 text-[var(--color-coffee-900)] animate-fadeIn">
@@ -214,6 +342,15 @@ export default function Reports() {
           </button>
           <button onClick={handleExportExcel} className="flex items-center gap-2 bg-[var(--color-coffee-400)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-500)] shadow-md transition">
             <FileSpreadsheet className="w-4 h-4" /> Export Excel
+          </button>
+          <button onClick={handleExportCSV} className="flex items-center gap-2 bg-[var(--color-coffee-300)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-400)] shadow-md transition">
+            <FileSpreadsheet className="w-4 h-4" /> Export CSV
+          </button>
+          <button onClick={handleRefresh} disabled={loading} className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow-md transition ${loading ? "bg-gray-300 cursor-not-allowed" : "bg-[var(--color-coffee-700)] text-white hover:bg-[var(--color-coffee-800)]"}`}>
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+          <button onClick={() => setCustomReportOpen(true)} className="flex items-center gap-2 bg-[var(--color-coffee-500)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-600)] shadow-md transition">
+            <FileSpreadsheet className="w-4 h-4" /> Custom Report
           </button>
         </div>
       </div>
@@ -237,6 +374,7 @@ export default function Reports() {
           { label: "Total Revenue", value: `₱${totalRevenue.toLocaleString()}`, icon: <BarChart3 className="text-[var(--color-coffee-500)]" /> },
           { label: "Customers", value: totalCustomers, icon: <Users className="text-[var(--color-coffee-600)]" /> },
           { label: "Low Stock Items", value: inventory.filter(i => i.stock < 5).length, icon: <Package className="text-[var(--color-coffee-800)]" /> },
+          { label: "Net Profit", value: `₱${netProfit.toLocaleString()}`, icon: <BarChart3 className="text-green-600" /> },
         ].map((item, i) => (
           <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-[var(--color-coffee-200)] hover:shadow-md transition flex items-center gap-4">
             <div className="p-3 bg-[var(--color-coffee-200)] rounded-lg">{item.icon}</div>
@@ -279,6 +417,19 @@ export default function Reports() {
         </div>
       </div>
 
+      {/* Sales Trend */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
+        <h2 className="text-lg font-semibold mb-4">Sales Trend</h2>
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={salesTrendData}>
+            <XAxis dataKey="day" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="sales" stroke="var(--color-coffee-500)" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
       {/* Inventory & Customer Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-[var(--color-coffee-200)]">
@@ -313,6 +464,38 @@ export default function Reports() {
         <Calendar className="w-4 h-4" />
         <span>Last updated: {new Date().toLocaleDateString()}</span>
       </div>
+
+      {/* Custom Report Modal */}
+      {customReportOpen && (
+        <div className="fixed inset-0 bg-backdrop backdrop-blur bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-4">Generate Custom Report</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">Include Sections:</label>
+                <div className="space-y-2">
+                  <label><input type="checkbox" checked={customSelections.includeSales} onChange={(e) => setCustomSelections({...customSelections, includeSales: e.target.checked})} /> Sales</label>
+                  <label><input type="checkbox" checked={customSelections.includeCustomers} onChange={(e) => setCustomSelections({...customSelections, includeCustomers: e.target.checked})} /> Customers</label>
+                  <label><input type="checkbox" checked={customSelections.includeInventory} onChange={(e) => setCustomSelections({...customSelections, includeInventory: e.target.checked})} /> Inventory</label>
+                  <label><input type="checkbox" checked={customSelections.includeExpenses} onChange={(e) => setCustomSelections({...customSelections, includeExpenses: e.target.checked})} /> Expenses</label>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Export Format:</label>
+                <select value={customSelections.exportFormat} onChange={(e) => setCustomSelections({...customSelections, exportFormat: e.target.value})} className="w-full border rounded px-2 py-1">
+                  <option value="pdf">PDF</option>
+                  <option value="excel">Excel</option>
+                  <option value="csv">CSV</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <button onClick={generateCustomReport} className="bg-[var(--color-coffee-600)] text-white px-4 py-2 rounded">Generate</button>
+              <button onClick={() => setCustomReportOpen(false)} className="bg-gray-300 px-4 py-2 rounded">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { Calendar, ShoppingBag, Users } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
 import { collection, getDocs } from "firebase/firestore";
 import { Link, NavLink } from "react-router-dom";
+import DrillDownModal from "./layouts/dmodal"; // Adjust path
 
 // Helper to calculate % change
 function calcPercentageChange(current, previous) {
@@ -79,6 +80,13 @@ export default function Dashboard() {
 
   // New: products for inventory checks
   const [products, setProducts] = useState([]);
+  const [inventory, setInventory] = useState([]); // Add inventory state
+  const [expensesData, setExpensesData] = useState([]); // Add expenses state
+
+  // Modal states
+  const [financialModalOpen, setFinancialModalOpen] = useState(false);
+  const [financialView, setFinancialView] = useState("gross"); // 'gross', 'net', 'expenses'
+  const [expandedSections, setExpandedSections] = useState({ daily: false, category: false, gross: false, expenses: false }); // Update this
 
   // -------------------------------
   // Fetch Orders from Firestore
@@ -105,9 +113,77 @@ export default function Dashboard() {
       }
     };
 
+    // Fetch inventory for low stock alerts
+    const fetchInventory = async () => {
+      try {
+        const snap = await getDocs(collection(db, "inventory"));
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setInventory(data);
+      } catch (err) {
+        console.error("Error fetching inventory:", err);
+      }
+    };
+
+    // Fetch expenses for real expenses
+    const fetchExpenses = async () => {
+      try {
+        const snap = await getDocs(collection(db, "expenses"));
+        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setExpensesData(data);
+      } catch (err) {
+        console.error("Error fetching expenses:", err);
+      }
+    };
+
     fetchOrders();
     fetchProducts();
+    fetchInventory();
+    fetchExpenses(); // Add this call
   }, []);
+
+  // -------------------------------
+  // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
+  // -------------------------------
+  const { todaySales, yesterdaySales, trendPercent, peakHourSuggestion } = useMemo(() => {
+    const now = new Date();
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+
+    let todaySales = 0;
+    let yesterdaySales = 0;
+    const hourMap = {};
+
+    orders.forEach(order => {
+      const d = new Date(order.completedAt || order.createdAt);
+      const h = d.getHours();
+      hourMap[h] = (hourMap[h] || 0) + 1;
+
+      if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
+        todaySales += order.total || 0;
+      }
+      if (d.getFullYear() === yesterday.getFullYear() && d.getMonth() === yesterday.getMonth() && d.getDate() === yesterday.getDate()) {
+        yesterdaySales += order.total || 0;
+      }
+    });
+
+    const trendPercent = yesterdaySales === 0 ? (todaySales > 0 ? 100 : 0) : ((todaySales - yesterdaySales) / Math.max(yesterdaySales,1)) * 100;
+
+    // Peak hour suggestion using known peak hours and proximity check
+    const knownPeakHours = [11, 12, 13, 18, 19]; // adjust to your business
+    const currentHour = new Date().getHours();
+    let peakHourSuggestion = null;
+    for (const ph of knownPeakHours) {
+      if (Math.abs(currentHour - ph) <= 1) {
+        const display = new Date();
+        display.setHours(ph, 0, 0, 0);
+        peakHourSuggestion = display.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        break;
+      }
+    }
+
+    return { todaySales, yesterdaySales, trendPercent, peakHourSuggestion };
+  }, [orders]);
 
   // -------------------------------
   // Compute Dashboard Analytics
@@ -124,16 +200,16 @@ export default function Dashboard() {
     staffData,
     recentOrders,
     kpiChanges,
-    todaySales,
-    yesterdaySales,
-    trendPercent,
-    peakHourSuggestion,
+    totalExpenses,
+    categorySalesData,
+    periodTitle, // Add this for dynamic title
+    periodUnit, // Add this for insights (e.g., "hour", "day")
   } = useMemo(() => {
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
     // Separate orders by current and previous period
-    const now = new Date();
     const getPreviousPeriod = (period) => {
+      const now = new Date();
       if (period === "Today") {
         const start = new Date(now); start.setHours(0,0,0,0);
         const end = new Date(now); end.setHours(23,59,59,999);
@@ -198,6 +274,7 @@ export default function Dashboard() {
     const customerSet = new Set();
     const salesMap = {};
     const categoryMap = {};
+    const categorySalesMap = {}; // Add this for sales amounts
     const topItemsMap = {};
     const staffMap = {};
 
@@ -210,6 +287,7 @@ export default function Dashboard() {
 
         (order.items || []).forEach(item => {
           categoryMap[item.category] = (categoryMap[item.category] || 0) + item.quantity;
+          categorySalesMap[item.category] = (categorySalesMap[item.category] || 0) + (item.quantity * (item.price || 0)); // Add sales by category
           if (!topItemsMap[item.name]) topItemsMap[item.name] = { id: item.id, name: item.name, sales: 0 };
           topItemsMap[item.name].sales += item.quantity;
           menuItemsSold += item.quantity;
@@ -221,6 +299,15 @@ export default function Dashboard() {
         // Sales trend
         const day = dayNames[completedDate.getDay()];
         salesMap[day] = (salesMap[day] || 0) + (order.total || 0);
+      }
+    });
+
+    // Calculate total expenses for the period
+    let totalExpenses = 0;
+    expensesData.forEach(exp => {
+      const d = new Date(exp.date); // Assume exp.date is a Firestore timestamp or date
+      if (filterByPeriod(d, dateRange)) {
+        totalExpenses += exp.amount || 0;
       }
     });
 
@@ -243,9 +330,71 @@ export default function Dashboard() {
       newCustomers: calcPercentageChange(customerSet.size, prevNewCustomers),
     };
 
+    // Dynamic sales data based on period
+    let salesData = [];
+    let periodTitle = "Daily Sales Report";
+    let periodUnit = "day";
+
+    if (dateRange === "Today" || dateRange === "Yesterday") {
+      // By hour (0-23)
+      const hourMap = {};
+      orders.forEach(order => {
+        const d = new Date(order.completedAt || order.createdAt);
+        if (filterByPeriod(d, dateRange)) {
+          const hour = d.getHours();
+          hourMap[hour] = (hourMap[hour] || 0) + (order.total || 0);
+        }
+      });
+      salesData = Array.from({ length: 24 }, (_, i) => ({ unit: i, sales: hourMap[i] || 0 }));
+      periodTitle = dateRange === "Today" ? "Today's Sales Report" : "Yesterday's Sales Report";
+      periodUnit = "hour";
+    } else if (dateRange === "This Week") {
+      // By day of week (Mon-Sun)
+      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const dayMap = {};
+      orders.forEach(order => {
+        const d = new Date(order.completedAt || order.createdAt);
+        if (filterByPeriod(d, dateRange)) {
+          const dayIndex = (d.getDay() + 6) % 7; // Mon=0 to Sun=6
+          dayMap[dayIndex] = (dayMap[dayIndex] || 0) + (order.total || 0);
+        }
+      });
+      salesData = dayNames.map((day, i) => ({ unit: day, sales: dayMap[i] || 0 }));
+      periodTitle = "Weekly Sales Report";
+      periodUnit = "day";
+    } else if (dateRange === "This Month") {
+      // By day of month (1-31)
+      const dayMap = {};
+      orders.forEach(order => {
+        const d = new Date(order.completedAt || order.createdAt);
+        if (filterByPeriod(d, dateRange)) {
+          const day = d.getDate();
+          dayMap[day] = (dayMap[day] || 0) + (order.total || 0);
+        }
+      });
+      salesData = Array.from({ length: 31 }, (_, i) => ({ unit: i + 1, sales: dayMap[i + 1] || 0 }));
+      periodTitle = "Monthly Sales Report";
+      periodUnit = "day";
+    } else if (dateRange === "This Year") {
+      // By month (Jan-Dec)
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthMap = {};
+      orders.forEach(order => {
+        const d = new Date(order.completedAt || order.createdAt);
+        if (filterByPeriod(d, dateRange)) {
+          const month = d.getMonth();
+          monthMap[month] = (monthMap[month] || 0) + (order.total || 0);
+        }
+      });
+      salesData = monthNames.map((month, i) => ({ unit: month, sales: monthMap[i] || 0 }));
+      periodTitle = "Yearly Sales Report";
+      periodUnit = "month";
+    }
+
     // Chart & Table Data
-    const salesData = dayNames.map(day => ({ day, sales: salesMap[day] || 0 }));
+    const salesDataChart = dayNames.map(day => ({ day, sales: salesMap[day] || 0 }));
     const categoryData = Object.entries(categoryMap).map(([category, value]) => ({ category, value }));
+    const categorySalesData = Object.entries(categorySalesMap).map(([category, sales]) => ({ category, sales })); // Add this
     const topItems = Object.values(topItemsMap).sort((a, b) => b.sales - a.sales).slice(0, 5);
     const customerData = [
       { name: "Returning", value: orders.length - customerSet.size },
@@ -254,69 +403,78 @@ export default function Dashboard() {
     const staffData = Object.entries(staffMap).map(([name, value]) => ({ name, value }));
     const recentOrders = [...orders].sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt)).slice(0, 10);
 
-    // Compute today's sales (for Daily Goal bar)
-    const today = new Date();
-    let todaySales = 0;
-    orders.forEach(order => {
-      const d = new Date(order.completedAt || order.createdAt);
-      if (d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()) {
-        todaySales += order.total || 0;
-      }
-    });
-
-    // Compute yesterday's sales for trend check
-    const yesterday = new Date();
-    yesterday.setDate(now.getDate() - 1);
-    let yesterdaySales = 0;
-    // Also compute hour map to detect peak hours
-    const hourMap = {};
-    orders.forEach(order => {
-      const d = new Date(order.completedAt || order.createdAt);
-      const h = d.getHours();
-      hourMap[h] = (hourMap[h] || 0) + 1;
-      if (d.getFullYear() === yesterday.getFullYear() && d.getMonth() === yesterday.getMonth() && d.getDate() === yesterday.getDate()) {
-        yesterdaySales += order.total || 0;
-      }
-    });
-
-    const trendPercent = yesterdaySales === 0 ? (todaySales > 0 ? 100 : 0) : ((todaySales - yesterdaySales) / Math.max(yesterdaySales,1)) * 100;
-
-    // Peak hour suggestion using known peak hours (example hours) and proximity check
-    const knownPeakHours = [11, 12, 13, 18, 19]; // adjust to your business
-    const currentHour = new Date().getHours();
-    let peakHourSuggestion = null;
-    for (const ph of knownPeakHours) {
-      if (Math.abs(currentHour - ph) <= 1) {
-        // format e.g. "11:00 AM"
-        const display = new Date();
-        display.setHours(ph, 0, 0, 0);
-        peakHourSuggestion = display.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-        break;
-      }
-    }
-
     return {
       totalSales,
       totalOrders,
       newCustomersCount: customerSet.size,
       menuItemsSold,
       salesData,
+      periodTitle,
+      periodUnit,
       categoryData,
       topItems,
       customerData,
       staffData,
       recentOrders,
       kpiChanges,
-      todaySales,
-      yesterdaySales,
-      trendPercent,
-      peakHourSuggestion,
+      totalExpenses,
+      categorySalesData, // Add this
     };
-  }, [orders, dateRange]);
+  }, [orders, dateRange, expensesData]);
 
-  // Financial calculations derived from marginPercent and totalSales
-  const expenses = +(totalSales * (1 - marginPercent / 100));
-  const netProfit = +(totalSales - expenses);
+  // Financial calculations: use real expenses
+  const expenses = totalExpenses;
+  const netProfit = totalSales - expenses;
+
+  // Functions to get data and columns for financial modal
+  const getFinancialData = (view) => {
+    if (view === "gross") {
+      const dailyTotal = salesData.reduce((s, d) => s + d.sales, 0);
+      const categoryTotal = categorySalesData.reduce((s, c) => s + c.sales, 0);
+      let data = [
+        { Detail: "Daily Sales", Value: `₱${dailyTotal.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "daily" },
+      ];
+      if (expandedSections.daily) {
+        data.push(...salesData.map(d => ({ Detail: `  ${d.day}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
+      }
+      data.push({ Detail: "Category Sales", Value: `₱${categoryTotal.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "category" });
+      if (expandedSections.category) {
+        data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
+      }
+      data.push({ Detail: "Total Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
+      return data;
+    }
+    if (view === "net") {
+      let data = [
+        { Detail: "Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
+      ];
+      if (expandedSections.gross) {
+        data.push(...salesData.map(d => ({ Detail: `  ${d.day}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
+        data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
+      }
+      data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
+      if (expandedSections.expenses) {
+        const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+        data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
+      }
+      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses = Net` });
+      return data;
+    }
+    if (view === "expenses") {
+      const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+      if (periodExpenses.length === 0) {
+        return [{ Detail: "No expenses data available", Value: "", Breakdown: "" }];
+      }
+      return periodExpenses.map(exp => ({
+        Detail: exp.category || "Uncategorized",
+        Value: `₱${exp.amount.toLocaleString()}`,
+        Breakdown: new Date(exp.date).toLocaleDateString()
+      }));
+    }
+    return [];
+  };
+
+  const getFinancialColumns = (view) => ["Detail", "Value", "Breakdown"];
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
@@ -367,19 +525,14 @@ export default function Dashboard() {
         {/* Financial Health - Hero layout (spans two columns on md and up) */}
         <div className="relative rounded-2xl shadow-sm md:col-span-2 p-6 overflow-hidden"
              style={{ background: "linear-gradient(135deg,#FBF6EE 0%,#F3E8D8 50%,#EFE1C8 100%)", borderLeft: "4px solid #8E5A3A" }}>
-          {/* Subtle margin dropdown top-right */}
+          {/* View Details button to open modal */}
           <div className="absolute top-4 right-4">
-            <label className="sr-only">Margin</label>
-            <select
-              value={marginPercent}
-              onChange={(e) => setMarginPercent(Number(e.target.value))}
-              className="text-xs bg-white border border-transparent rounded px-2 py-1 shadow-sm"
-              aria-label="Select margin percent"
+            <button
+              onClick={() => { setFinancialModalOpen(true); setFinancialView("gross"); }}
+              className="text-coffee-600 text-sm hover:underline cursor-pointer bg-transparent border-none"
             >
-              <option value={30}>30%</option>
-              <option value={40}>40%</option>
-              <option value={50}>50%</option>
-            </select>
+              View Details →
+            </button>
           </div>
 
           {/* Hero center: Net Profit */}
@@ -389,14 +542,14 @@ export default function Dashboard() {
             <p className="text-xs text-coffee-600 mt-2">Based on selected period</p>
           </div>
 
-          {/* Bottom smaller secondary data: Gross Revenue & Est. Expenses */}
+          {/* Bottom smaller secondary data: Gross Revenue & Expenses */}
           <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between text-sm text-gray-600">
             <div className="flex flex-col">
               <span className="text-xs">Gross Revenue</span>
               <span className="font-semibold">₱{totalSales.toLocaleString()}</span>
             </div>
             <div className="flex flex-col text-right">
-              <span className="text-xs">Est. Expenses</span>
+              <span className="text-xs">Expenses</span>
               <span className="font-semibold text-red-600">₱{expenses.toLocaleString()}</span>
             </div>
           </div>
@@ -438,41 +591,112 @@ export default function Dashboard() {
         {/* Sales Trend */}
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-coffee-800">📊 Daily Sales Report (₱)</h2>
+            <h2 className="text-lg font-semibold text-coffee-800">📊 {periodTitle} (₱)</h2>
             <NavLink to="/admin/sales" className="text-coffee-600 text-sm hover:cursor-pointer">View Details →</NavLink>
           </div>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F6E3CC" />
-              <XAxis dataKey="day" stroke="#8E5A3A" />
+              <XAxis dataKey="unit" stroke="#8E5A3A" />
               <YAxis stroke="#8E5A3A" />
               <Tooltip />
               <Line type="monotone" dataKey="sales" stroke="#C28F5E" strokeWidth={3} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
+
+          {/* Insights Section */}
+          <div className="mt-4 pt-4 border-t border-coffee-100">
+            <h4 className="text-sm font-semibold text-coffee-800 mb-3">💡 Key Insights</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">💰</span>
+                <div>
+                  <p className="text-sm font-medium text-coffee-800">Total Sales</p>
+                  <p className="text-lg font-bold text-green-600">₱{totalSales.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-blue-600">🏆</span>
+                <div>
+                  <p className="text-sm font-medium text-coffee-800">Highest {periodUnit.charAt(0).toUpperCase() + periodUnit.slice(1)}</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {salesData.reduce((max, d) => d.sales > max.sales ? d : max, salesData[0])?.unit || "N/A"} (₱{Math.max(...salesData.map(d => d.sales)).toLocaleString()})
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-purple-600">📈</span>
+                <div>
+                  <p className="text-sm font-medium text-coffee-800">Average {periodUnit.charAt(0).toUpperCase() + periodUnit.slice(1)}ly</p>
+                  <p className="text-lg font-bold text-purple-600">₱{salesData.length ? (totalSales / salesData.length).toFixed(2) : 0}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {kpiChanges.totalSales > 0 ? <span className="text-green-600">📊</span> : kpiChanges.totalSales < 0 ? <span className="text-red-600">📉</span> : <span className="text-gray-600">➡️</span>}
+                <div>
+                  <p className="text-sm font-medium text-coffee-800">vs Last Period</p>
+                  <p className={`text-lg font-bold ${kpiChanges.totalSales > 0 ? 'text-green-600' : kpiChanges.totalSales < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                    {kpiChanges.totalSales > 0 ? `▲ ${kpiChanges.totalSales.toFixed(1)}%` : kpiChanges.totalSales < 0 ? `▼ ${Math.abs(kpiChanges.totalSales).toFixed(1)}%` : "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 p-3 bg-coffee-50 rounded-lg">
+              <p className="text-xs text-coffee-700">
+                <strong>Tip:</strong> Focus efforts on the highest-performing {periodUnit} to maximize revenue.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Manager's Insight - Notification Center */}
         <div className="bg-white rounded-2xl shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-coffee-800">🧭 Manager's Insight</h2>
-            <a href="#" className="text-coffee-600 text-sm hover:underline">View Details →</a>
           </div>
           {(() => {
-            // Determine single high-priority message
-            const lowProduct = products.find(p => typeof p.stock === 'number' && p.stock < 5);
-            let msg = "✅ No critical alerts. All systems normal.";
+            // Collect up to 3 messages
+            const messages = [];
+            const lowProduct = inventory.find(p => typeof p.stock === 'number' && p.stock < (p.reorderLevel || 0));
             if (lowProduct) {
-              msg = `⚠️ Restock Alert: ${lowProduct.name} is running low.`;
-            } else if (trendPercent > 0) {
-              msg = `🚀 Great Job: Sales are up ${Math.round(trendPercent)}% today.`;
-            } else if (peakHourSuggestion) {
-              msg = `⚡ Heads Up: Expect a rush around ${peakHourSuggestion}.`;
+              messages.push(`⚠️ Restock Alert: ${lowProduct.item} is running low.`);
+            }
+            if (trendPercent > 0) {
+              messages.push(`🚀 Great Job: Sales are up ${Math.round(trendPercent)}% today.`);
+            }
+            if (peakHourSuggestion) {
+              messages.push(`⚡ Heads Up: Expect a rush around ${peakHourSuggestion}.`);
+            }
+            const pendingOrders = orders.filter(o => o.status === "Pending").length;
+            if (pendingOrders > 0) {
+              messages.push(`⏳ Pending Orders: ${pendingOrders} orders awaiting completion.`);
+            }
+            // Always add profit/loss status
+            if (netProfit > 0) {
+              messages.push(`💰 Business profited: Net profit ₱${netProfit.toLocaleString()}.`);
+            } else if (netProfit < 0) {
+              messages.push(`💸 Business did not profit: Net loss ₱${Math.abs(netProfit).toLocaleString()}.`);
+            } else {
+              messages.push(`😐 Business broke even: No net profit or loss.`);
             }
 
+            // Function to get color style based on message type
+            const getMessageStyle = (msg) => {
+              if (msg.startsWith('⚠️')) return 'bg-red-50 border-red-200 text-red-800'; // Bad: Alert
+              if (msg.startsWith('🚀') || msg.startsWith('💰')) return 'bg-green-50 border-green-200 text-green-800'; // Good: Positive
+              if (msg.startsWith('⚡')) return 'bg-blue-50 border-blue-200 text-blue-800'; // Neutral: Info
+              if (msg.startsWith('💸')) return 'bg-red-50 border-red-200 text-red-800'; // Bad: Loss
+              if (msg.startsWith('⏳')) return 'bg-yellow-50 border-yellow-200 text-yellow-800'; // Warning: Pending
+              return 'bg-gray-50 border-gray-200 text-gray-800'; // Neutral: Break even
+            };
+
             return (
-              <div className="p-4 border rounded-lg bg-coffee-50">
-                <p className="text-sm text-coffee-800">{msg}</p>
+              <div className="p-4 border rounded-lg bg-coffee-50 space-y-2">
+                {messages.map((msg, idx) => (
+                  <div key={idx} className={`p-3 rounded-md border shadow-sm text-sm ${getMessageStyle(msg)}`}>
+                    {msg}
+                  </div>
+                ))}
               </div>
             );
           })()}
@@ -566,9 +790,23 @@ export default function Dashboard() {
         </div>
       </div>
     
+      {/* Add the modal */}
+      <DrillDownModal
+        isOpen={financialModalOpen}
+        onClose={() => setFinancialModalOpen(false)}
+        title="Financial Details"
+        data={getFinancialData(financialView)}
+        columns={getFinancialColumns(financialView)}
+        viewOptions={["gross", "net", "expenses"]}
+        currentView={financialView}
+        onViewChange={(view) => {
+          setFinancialView(view);
+          setExpandedSections({ daily: false, category: false, gross: false, expenses: false });
+        }}
+        onRowClick={(type) => setExpandedSections(prev => ({ ...prev, [type]: !prev[type] }))}
+      />
 
-      {/* Charts Section */}
-      {/* ...rest of charts, tables, and layout remain the same, using salesData, categoryData, topItems, customerData, staffData, recentOrders */}
+      {/* ...rest of the component... */}
     </div>
     
   );

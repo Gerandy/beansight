@@ -65,7 +65,7 @@ export default function MenuPerformance() {
     return () => (mounted = false);
   }, []);
 
-  const { categoryData, itemsList, totalItemsSold, avgSales, topPair } = useMemo(() => {
+  const { categoryData, itemsList, totalItemsSold, avgSales } = useMemo(() => {
     const categoryMap = {};
     const itemMap = {};
 
@@ -99,83 +99,7 @@ export default function MenuPerformance() {
 
     const avgSales = totalItems && itemsList.length ? Math.round(totalItems / itemsList.length) : 0;
 
-    // --- co-purchase pair logic (unchanged) ---
-    const pairCounts = {};
-    orders.forEach((order) => {
-      if (!Array.isArray(order.items)) return;
-      const names = Array.from(new Set(order.items.map((i) => i.name || "Unknown")));
-      for (let i = 0; i < names.length; i++) {
-        for (let j = i + 1; j < names.length; j++) {
-          const a = names[i];
-          const b = names[j];
-          const key = a < b ? `${a}|||${b}` : `${b}|||${a}`;
-          pairCounts[key] = (pairCounts[key] || 0) + 1;
-        }
-      }
-    });
-    let topPair = null;
-    const pairEntries = Object.entries(pairCounts);
-    if (pairEntries.length) {
-      pairEntries.sort(([, cA], [, cB]) => cB - cA);
-      const [key, count] = pairEntries[0];
-      const [a, b] = key.split("|||");
-      topPair = { a, b, count };
-    }
-
-    // --- NEW: compute Rising Star (This Week vs Last Week) ---
-    const toDate = (ts) => {
-      if (!ts) return null;
-      if (typeof ts === "string" || typeof ts === "number") return new Date(ts);
-      if (typeof ts.toDate === "function") return ts.toDate();
-      return ts instanceof Date ? ts : new Date(ts);
-    };
-
-    const getMonday = (d) => {
-      const copy = new Date(d);
-      const day = copy.getDay(); // 0 (Sun) - 6
-      const diff = (day + 6) % 7; // shift so Monday is 0
-      copy.setHours(0,0,0,0);
-      copy.setDate(copy.getDate() - diff);
-      return copy;
-    };
-
-    const now = new Date();
-    const thisWeekStart = getMonday(now);
-    const lastWeekStart = new Date(thisWeekStart);
-    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
-
-    const weekCounts = {}; // name -> { thisWeek, lastWeek }
-    orders.forEach(order => {
-      const ts = toDate(order.createdAt ?? order.created_at ?? order.timestamp ?? order.created_at_timestamp);
-      if (!ts) return;
-      const isThisWeek = ts >= thisWeekStart;
-      const isLastWeek = ts >= lastWeekStart && ts < thisWeekStart;
-      if (!Array.isArray(order.items)) return;
-      order.items.forEach(item => {
-        const name = item?.name || "Unknown";
-        const qty = Number(item?.quantity ?? 0) || 0;
-        if (!weekCounts[name]) weekCounts[name] = { thisWeek: 0, lastWeek: 0 };
-        if (isThisWeek) weekCounts[name].thisWeek += qty;
-        else if (isLastWeek) weekCounts[name].lastWeek += qty;
-      });
-    });
-
-    // compute growth percentage and pick highest positive growth
-    const growthEntries = Object.entries(weekCounts).map(([name, vals]) => {
-      const { thisWeek = 0, lastWeek = 0 } = vals;
-      let growthPercent = 0;
-      if (lastWeek === 0) {
-        growthPercent = thisWeek > 0 ? 100 : 0; // treat new activity as 100% growth
-      } else {
-        growthPercent = Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
-      }
-      return { name, thisWeek, lastWeek, growthPercent };
-    });
-    growthEntries.sort((a, b) => b.growthPercent - a.growthPercent);
-    const risingStar = (growthEntries.length && growthEntries[0].growthPercent > 0) ? growthEntries[0] : null;
-    // --- end Rising Star logic ---
-
-    return { categoryData, itemsList, totalItemsSold: totalItems, avgSales, topPair, risingStar };
+    return { categoryData, itemsList, totalItemsSold: totalItems, avgSales };
   }, [orders]);
 
   // --- NEW: derive top 5 based on sortBy ---
@@ -227,57 +151,6 @@ export default function MenuPerformance() {
     return low;
   }, [products, itemsList]);
 
-  // NEW: Best Time to Sell per category (Beverage, Burger, Dessert)
-  const bestTimesByCategory = useMemo(() => {
-    const targetCategories = ["Beverage", "Burger", "Dessert"];
-    // initialize map of category -> hour buckets
-    const hoursByCat = {};
-    targetCategories.forEach(c => { hoursByCat[c] = new Array(24).fill(0); });
-
-    const toDate = (ts) => {
-      if (!ts) return null;
-      if (typeof ts === "string" || typeof ts === "number") return new Date(ts);
-      if (typeof ts.toDate === "function") return ts.toDate();
-      return ts instanceof Date ? ts : new Date(ts);
-    };
-
-    orders.forEach(order => {
-      const ts = toDate(order.createdAt ?? order.created_at ?? order.timestamp ?? order.created_at_timestamp);
-      if (!ts) return;
-      const hour = ts.getHours();
-      if (!Array.isArray(order.items)) return;
-      order.items.forEach(item => {
-        const cat = item?.category || "Uncategorized";
-        const qty = Number(item?.quantity ?? 0) || 0;
-        if (targetCategories.includes(cat)) {
-          hoursByCat[cat][hour] += qty;
-        }
-      });
-    });
-
-    const formatHour = (h) => {
-      const suffix = h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
-      return suffix;
-    };
-
-    const bucketLabel = (h) => {
-      if (h >= 6 && h <= 10) return "Morning Rush";
-      if (h >= 11 && h <= 14) return "Lunch Crowd";
-      if (h >= 15 && h <= 18) return "Merienda";
-      return null;
-    };
-
-    return targetCategories.map(cat => {
-      const arr = hoursByCat[cat] ?? new Array(24).fill(0);
-      const max = Math.max(...arr);
-      if (max === 0) return { category: cat, peakHour: null, peakCount: 0, label: null, icon: "🕒" };
-      const peakHour = arr.findIndex(v => v === max);
-      const label = bucketLabel(peakHour);
-      const icon = (peakHour >= 6 && peakHour <= 18) ? "🌞" : "🌙";
-      return { category: cat, peakHour, peakCount: max, timeText: formatHour(peakHour), label, icon };
-    });
-  }, [orders]);
-
   if (loading) return <div className="p-6 text-coffee-600">Loading menu performance...</div>;
 
   const pieColors = ["var(--color-coffee-400)", "var(--color-coffee-500)", "var(--color-coffee-600)", "var(--color-coffee-700)", "var(--color-coffee-800)"];
@@ -303,48 +176,6 @@ export default function MenuPerformance() {
           <p className="text-2xl font-bold text-[var(--color-coffee-800)]">₱{avgSales}</p>
         </div>
       </div>
-
-      {/* --- MOVED: Smart Recommendation card placed directly below KPI cards --- */}
-      <div className="mt-2">
-        <div className="bg-white p-4 rounded-[var(--radius-2xl)] border-l-4 border-yellow-400 flex items-start gap-4">
-          <div className="text-2xl">💡</div>
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--color-coffee-800)]">Smart Recommendation</h3>
-            <p className="text-[var(--color-coffee-700)] mt-1">
-              {topPair ? `People who buy ${topPair.a} often buy ${topPair.b}.` : "No co-purchase data available."}
-            </p>
-            {topPair ? (
-              <p className="text-xs text-[var(--color-coffee-600)] mt-1">Seen together in {topPair.count} orders</p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-      {/* --- end moved Smart Recommendation --- */}
-
-      {/* --- NEW: Best Time to Sell widget --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <h3 className="sr-only">Peak Order Times</h3>
-        {bestTimesByCategory.map(bt => (
-          <div key={bt.category} className="bg-white p-4 rounded-[var(--radius-2xl)] flex items-start gap-4 border">
-            <div className="text-2xl">{bt.icon}</div>
-            <div>
-              <div className="text-sm font-semibold text-[var(--color-coffee-800)]">{bt.category}</div>
-              {bt.peakHour === null ? (
-                <div className="text-[var(--color-coffee-700)] text-sm">No peak data</div>
-              ) : (
-                <div className="text-[var(--color-coffee-700)] text-sm">
-                  {bt.category} sells best at <span className="font-medium">{bt.timeText}</span>.
-                  {bt.label ? <span className="ml-2 inline-block px-2 py-0.5 text-xs rounded bg-[var(--color-coffee-50)] text-[var(--color-coffee-700)]">{bt.label}</span> : null}
-                </div>
-              )}
-              {bt.peakHour !== null ? (
-                <div className="text-xs text-[var(--color-coffee-600)] mt-1">{bt.peakCount} items sold during this hour</div>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* --- end Best Time to Sell widget --- */}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -407,7 +238,7 @@ export default function MenuPerformance() {
                   <li key={it.name} className="flex justify-between items-center">
                     <div>
                       <span className="font-medium mr-2">{idx + 1}. {it.name}</span>
-                      <span className="text-[var(--color-coffee-600)]">
+                      <span className="text-[var(--color-coffee-600]">
                         {sortBy === "revenue" ? `₱${(it.value||0).toFixed(2)}` : `${it.value} sold`}
                       </span>
                     </div>
