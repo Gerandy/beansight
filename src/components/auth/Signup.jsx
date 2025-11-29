@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, ShieldCheck, ScrollText } from "lucide-react";
 import { createUserWithEmailAndPassword, sendEmailVerification  } from "firebase/auth";
-import { doc, setDoc, collection, addDoc } from "firebase/firestore";
+import { doc, setDoc, collection, addDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 
 export default function Signup() {
@@ -13,7 +13,9 @@ export default function Signup() {
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [error, setError] = useState("");
-
+  const [radius, setRadius] = useState(null);
+  const [longitude, setlongitude] = useState(null);
+  const [latitude, setlatitude] = useState(null);
   const [showPwd, setShowPwd] = useState(false);
   const [showPwd2, setShowPwd2] = useState(false);
 
@@ -40,6 +42,23 @@ export default function Signup() {
 
   const navigate = useNavigate();
 
+  useEffect(() =>{
+    const load = async () => {
+      const docSnap = await getDoc(doc(db, "settings", "mapRadius"));  
+      if (docSnap.exists()){
+        const radiusValue = docSnap.data().value
+        const long = docSnap.data().long
+        const lat = docSnap.data().lat
+        setRadius(radiusValue)
+        setlongitude(long)
+        setlatitude(lat)
+        console.log(radius)
+      }
+    }
+    load();
+  },[])
+
+
   useEffect(() => {
     if (localStorage.getItem("authToken")) navigate("/Myaccount", { replace: true });
   }, [navigate]);
@@ -48,8 +67,9 @@ export default function Signup() {
  useEffect(() => {
   if (!mapRef.current || !window.google || !inputRef.current) return;
 
-  const storeCenter = { lat: 14.442729456654444, lng: 120.91027924183216 };
-  const deliveryRadius = 3000; // 5 km
+
+  const storeCenter = { lat: latitude, lng: longitude };
+  const deliveryRadius = radius
 
   // Initialize map
   mapInstance.current = new window.google.maps.Map(mapRef.current, {
@@ -174,7 +194,7 @@ export default function Signup() {
     fillAddressFromPlace(place);
   });
 
-}, []);
+}, [radius,longitude,latitude]);
 
 
 

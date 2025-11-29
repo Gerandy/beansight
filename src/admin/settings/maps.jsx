@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { GoogleMap, Marker, Circle, useJsApiLoader, Autocomplete } from "@react-google-maps/api";
+import {getDoc, setDoc, doc} from "firebase/firestore"
+import { db } from "../../firebase";
 
 // Tooltip modal for help
 function ModalTooltip({ open, text, onClose }) {
@@ -41,28 +43,54 @@ const containerStyle = {
 };
 
 export default function MapsSettings() {
-  const [location, setLocation] = useState({ lat: 14.5995, lng: 120.9842 }); // Default to Manila
+  const [location, setLocation] = useState({ lat: 0, lng: 0 }); // Default to Manila
   const [address, setAddress] = useState("");
   const [landmark, setLandmark] = useState("");
-  const [radius, setRadius] = useState(5);
+  const [radius, setRadius] = useState(null);
   const [feeType, setFeeType] = useState("per_km");
   const [feePerKm, setFeePerKm] = useState(10);
   const [flatFee, setFlatFee] = useState(0);
-  const [freeThreshold, setFreeThreshold] = useState("");
+  const [freeThreshold, setFreeThreshold] = useState(0);
   const [unit, setUnit] = useState("km");
   const [errors, setErrors] = useState({});
   const [mapError, setMapError] = useState(false);
   const [message, setMessage] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
-
+  const [longitude, setlongitude] = useState(null);
+  const [latitude, setlatitude] = useState(null);
   const autocompleteRef = useRef(null);
+
+
+  useEffect(() => {
+  const loadSettings = async () => {
+    const docSnap = await getDoc(doc(db, "settings", "mapRadius"));
+    if (!docSnap.exists()) return;
+
+    const data = docSnap.data(); // store the data once
+
+    setFeeType(data.feeType);
+    setFreeThreshold(data.freeDelivery);
+    setFeePerKm(data.deliveryFeeKm);
+    setlatitude(data.lat);
+    setlongitude(data.long);
+    setRadius(data.value);
+    setLocation({ lat: data.lat, lng: data.long });
+    setFlatFee(data.flatFee);
+    
+    console.log("Settings loaded:", data);
+  };
+
+  loadSettings();
+}, []);
 
   // Load Google Maps JS API
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: "",
-    libraries: ["places", "maps"],
+   
   });
+
+  
+  
 
   // Handle marker drag
   const onMarkerDragEnd = useCallback((e) => {
@@ -70,7 +98,9 @@ export default function MapsSettings() {
       lat: e.latLng.lat(),
       lng: e.latLng.lng(),
     });
+    
   }, []);
+  
 
   // Handle address autocomplete
   const onPlaceChanged = () => {
@@ -91,40 +121,53 @@ export default function MapsSettings() {
   // Validation
   const validate = () => {
     const newErrors = {};
-    if (!address) newErrors.address = "Address is required.";
+    
     if (radius <= 0) newErrors.radius = "Radius must be greater than 0.";
     if (feeType === "per_km" && feePerKm < 0) newErrors.feePerKm = "Fee per km must be 0 or greater.";
     if (feeType === "flat" && flatFee < 0) newErrors.flatFee = "Flat fee must be 0 or greater.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
+  
   // Save handler
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) {
       setMessage("");
       return;
     }
+    const docRef = doc(db, "settings","mapRadius" )
+    await setDoc(docRef,{
+      lat: location.lat,
+      long: location.lng,
+      deliveryFeeKm: feePerKm,
+      flatDelivery: flatFee || 0,
+      feeType: feeType,
+      value: radius,
+      freeDelivery: freeThreshold || 0
+      
+    }
+
+    )
     setMessage("Settings saved!");
   };
 
   // Reset handler
   const handleReset = () => {
-    setLocation({ lat: 14.5995, lng: 120.9842 });
+    setLocation({ lat: latitude, lng: longitude });
     setAddress("");
     setLandmark("");
-    setRadius(5);
+    setRadius(radius);
     setFeeType("per_km");
     setFeePerKm(10);
     setFlatFee(0);
-    setFreeThreshold("");
+    setFreeThreshold(0);
     setUnit("km");
     setErrors({});
     setMessage("Fields reset to default.");
   };
 
   // Convert radius to meters for Circle overlay
-  const getRadiusMeters = () => unit === "km" ? radius * 1000 : radius * 1609.34;
+  
 
   // Tooltip trigger
   const showTooltip = text => {
@@ -184,7 +227,7 @@ export default function MapsSettings() {
                   />
                   <Circle
                     center={location}
-                    radius={getRadiusMeters()}
+                    radius={radius}
                     options={{
                       fillColor: "#ffe4c4",
                       fillOpacity: 0.2,
@@ -270,14 +313,14 @@ export default function MapsSettings() {
                   <input
                     type="number"
                     className={inputClass + " w-24"}
-                    value={radius}
+                    value={radius || ""}
                     min={1}
                     aria-label="Delivery Radius"
                     onChange={e => setRadius(Number(e.target.value))}
                     placeholder="e.g. 5"
                   />
                   <label className="font-medium text-coffee-700 flex items-center">
-                    <span>Unit</span>
+                    <span>KM</span>
                     <button
                       type="button"
                       className="ml-2 text-xs text-coffee-700 cursor-pointer"
@@ -285,15 +328,7 @@ export default function MapsSettings() {
                       aria-label="Help"
                     >ⓘ</button>
                   </label>
-                  <select
-                    className="p-2 rounded-xl border border-coffee-200 bg-coffee-50 text-coffee-900 font-medium"
-                    value={unit}
-                    aria-label="Unit"
-                    onChange={e => setUnit(e.target.value)}
-                  >
-                    <option value="km">km</option>
-                    <option value="mi">mi</option>
-                  </select>
+                  
                 </div>
               </div>
               {errors.radius && (
@@ -315,7 +350,7 @@ export default function MapsSettings() {
                   aria-label="Fee Type"
                   onChange={e => setFeeType(e.target.value)}
                 >
-                  <option value="per_km">Per km/mi</option>
+                  <option value="per_km">Per km</option>
                   <option value="flat">Flat Fee</option>
                 </select>
               </div>
@@ -384,7 +419,7 @@ export default function MapsSettings() {
                   value={freeThreshold}
                   min={0}
                   aria-label="Free Delivery Threshold"
-                  onChange={e => setFreeThreshold(e.target.value)}
+                  onChange={e => setFreeThreshold(Number(e.target.value))}
                   placeholder="e.g. 500"
                 />
               </div>
