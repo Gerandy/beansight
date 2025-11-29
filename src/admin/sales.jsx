@@ -167,7 +167,7 @@ export default function Sales() {
   }
 
   // ---------------------------
-  // Fetch orders from Firestore
+  // Fetch orders from Firestor
   // ---------------------------
   useEffect(() => {
     let mounted = true;
