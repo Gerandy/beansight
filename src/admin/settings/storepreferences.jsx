@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {getDoc, setDoc, doc} from "firebase/firestore"
 import { db } from "../../firebase";
-import { exists } from "xendit-node";
 
 const help = {
   onlineOrdering: "Allow customers to place orders online through your website or app.",
@@ -43,14 +42,7 @@ function ModalTooltip({ open, text, onClose }) {
 }
 
 export default function StorePreferences() {
-  
-
-
-
-
-
-
-    // Day order for proper sequence
+  // Day order for proper sequence
   const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   const dayLabels = {
     mon: 'Monday',
@@ -127,15 +119,7 @@ export default function StorePreferences() {
 
   const labelClass = "block font-medium mb-2 text-coffee-700";
 
-  // Handle time change for open/cutoff times
-  const handleOpenTimeChange = (day, time) => {
-    setopenTimes({ ...openTimes, [day]: { ...openTimes[day], time } });
-  };
-
-  const handleOpenDayToggle = (day, enabled) => {
-    setopenTimes({ ...openTimes, [day]: { ...openTimes[day], enabled } });
-  };
-
+  // Handle time change for cutoff times
   const handleCutoffTimeChange = (day, time) => {
     setCutoffTimes({ ...cutoffTimes, [day]: { ...cutoffTimes[day], time } });
   };
@@ -222,6 +206,33 @@ export default function StorePreferences() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Helper function to convert cutoff times format
+  const convertToNewFormat = (oldData) => {
+    if (!oldData) return {
+      mon: { time: "00:00", enabled: true },
+      tue: { time: "00:00", enabled: true },
+      wed: { time: "00:00", enabled: true },
+      thu: { time: "00:00", enabled: true },
+      fri: { time: "00:00", enabled: true },
+      sat: { time: "00:00", enabled: true },
+      sun: { time: "00:00", enabled: true },
+    };
+    
+    const newFormat = {};
+    dayOrder.forEach(day => {
+      if (oldData[day]) {
+        if (typeof oldData[day] === 'object' && oldData[day].time !== undefined) {
+          newFormat[day] = oldData[day];
+        } else {
+          newFormat[day] = { time: oldData[day] || "00:00", enabled: true };
+        }
+      } else {
+        newFormat[day] = { time: "00:00", enabled: true };
+      }
+    });
+    return newFormat;
+  };
+
   // Save/Reset/Preview handlers
   const handleSave = () => {
     if (!validate()) {
@@ -233,32 +244,6 @@ export default function StorePreferences() {
   const handleReset = async () => {
     const docSnap = await getDoc(doc(db, "settings", "storePref"));
     const data = docSnap.data();
-    
-    const convertToNewFormat = (oldData) => {
-      if (!oldData) return {
-        mon: { time: "00:00", enabled: true },
-        tue: { time: "00:00", enabled: true },
-        wed: { time: "00:00", enabled: true },
-        thu: { time: "00:00", enabled: true },
-        fri: { time: "00:00", enabled: true },
-        sat: { time: "00:00", enabled: true },
-        sun: { time: "00:00", enabled: true },
-      };
-      
-      const newFormat = {};
-      dayOrder.forEach(day => {
-        if (oldData[day]) {
-          if (typeof oldData[day] === 'object' && oldData[day].time !== undefined) {
-            newFormat[day] = oldData[day];
-          } else {
-            newFormat[day] = { time: oldData[day] || "00:00", enabled: true };
-          }
-        } else {
-          newFormat[day] = { time: "00:00", enabled: true };
-        }
-      });
-      return newFormat;
-    };
     
     setTaxRate(data?.taxRate || "");
     setMinOrder(data?.minOrder || 0);
@@ -307,35 +292,6 @@ export default function StorePreferences() {
     const data = docSnap.data();
     setTaxRate(data.taxRate || "");
     setMinOrder(data.minOrder || 0);
-    
-    // Convert old format to new format if needed
-    const convertToNewFormat = (oldData) => {
-      if (!oldData) return {
-        mon: { time: "00:00", enabled: true },
-        tue: { time: "00:00", enabled: true },
-        wed: { time: "00:00", enabled: true },
-        thu: { time: "00:00", enabled: true },
-        fri: { time: "00:00", enabled: true },
-        sat: { time: "00:00", enabled: true },
-        sun: { time: "00:00", enabled: true },
-      };
-      
-      const newFormat = {};
-      dayOrder.forEach(day => {
-        if (oldData[day]) {
-          // If already in new format
-          if (typeof oldData[day] === 'object' && oldData[day].time !== undefined) {
-            newFormat[day] = oldData[day];
-          } else {
-            // Convert from old format (just time string)
-            newFormat[day] = { time: oldData[day] || "00:00", enabled: true };
-          }
-        } else {
-          newFormat[day] = { time: "00:00", enabled: true };
-        }
-      });
-      return newFormat;
-    };
     
     setCutoffTimes(convertToNewFormat(data.storeTime));
     setStoreOpenTime(data.storeOpenTime || "00:00");
@@ -488,7 +444,7 @@ export default function StorePreferences() {
                   className="ml-2 text-xs text-coffee-700 cursor-pointer"
                   onClick={() => showTooltip(help.orderType)}
                   aria-label="Help"
-                >ⓘ</button>--------------
+                >ⓘ</button>
               </label>
               <div className="flex gap-6 mt-2">
                 {["pickup", "delivery"].map(type => (
@@ -503,7 +459,6 @@ export default function StorePreferences() {
                   </label>
                 ))}
               </div>
-              -----------------------------
             </div>
           </div>
         </div>
