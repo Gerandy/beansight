@@ -55,10 +55,13 @@ function filterByPeriod(date, period, customStart, customEnd) {
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState("Today");
+  const [dateRange, setDateRange] = useState("This Month");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [orders, setOrders] = useState([]);
+  const [tax, setTax] = useState(12);
+  const vat = tax /100;
+  
 
   // New states for Financial Health & Daily Goal
   const [marginPercent, setMarginPercent] = useState(40); // shows "Margin: 40%"
@@ -83,6 +86,7 @@ export default function Dashboard() {
         const snapshot = await getDocs(collection(db, "orders"));
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setOrders(data);
+        
       } catch (err) {
         console.error("Error fetching orders:", err);
       }
@@ -91,7 +95,7 @@ export default function Dashboard() {
     // Fetch products for inventory alerts
     const fetchProducts = async () => {
       try {
-        const snap = await getDocs(collection(db, "products"));
+        const snap = await getDocs(collection(db, "inventory"));
         const pdata = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setProducts(pdata);
       } catch (err) {
@@ -247,6 +251,7 @@ export default function Dashboard() {
       const completedDate = new Date(order.completedAt || order.createdAt);
       if (filterByPeriod(completedDate, dateRange, customStartDate, customEndDate)) {
         totalSales += order.total || 0;
+        console.log(order.total)
         totalOrders += 1;
         if (order.customerName && !customerSet.has(order.customerName)) customerSet.add(order.customerName);
 
@@ -381,7 +386,14 @@ export default function Dashboard() {
 
   // Financial calculations: use real expenses
   const expenses = totalExpenses;
-  const netProfit = totalSales - expenses;
+  
+  
+
+  const grossSales = totalSales;
+  const vatAmount = grossSales * vat;
+  const netProfit = totalSales - expenses - vatAmount;
+  
+
 
   // Functions to get data and columns for financial modal
   const getFinancialData = (view) => {
@@ -398,23 +410,24 @@ export default function Dashboard() {
       if (expandedSections.category) {
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
-      data.push({ Detail: "Total Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
+      data.push({ Detail: "Total Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
       return data;
     }
     if (view === "net") {
       let data = [
-        { Detail: "Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
+        { Detail: "Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
       ];
       if (expandedSections.gross) {
         data.push(...salesData.map(d => ({ Detail: `  ${d.unit}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
       data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
+      data.push({ Detail: "VAT", Value: `₱${vatAmount.toLocaleString()}`, Breakdown: "perecentage for all the Sales", expandable: true, type: "expenses" });
       if (expandedSections.expenses) {
         const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
         data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
       }
-      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses = Net` });
+      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses - VAT = Net` });
       return data;
     }
     if (view === "expenses") {
@@ -525,7 +538,7 @@ export default function Dashboard() {
           <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between text-sm text-gray-600">
             <div className="flex flex-col">
               <span className="text-xs">Gross Revenue</span>
-              <span className="font-semibold">₱{totalSales.toLocaleString()}</span>
+              <span className="font-semibold">₱{grossSales.toLocaleString()}</span>
             </div>
             <div className="flex flex-col text-right">
               <span className="text-xs">Expenses</span>

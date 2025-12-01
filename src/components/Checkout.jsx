@@ -11,8 +11,11 @@ export default function Checkout() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+ 
 
   const uid = localStorage.getItem("authToken");
+
+  
 
   // Fetch user document and addresses subcollection in real-time
   useEffect(() => {
@@ -117,7 +120,8 @@ export default function Checkout() {
       createdAt: serverTimestamp(),
       paymentMethod: payment.method,
       orderType: shipping.type,
-      schedule: shipping.schedule === "later" ? { date: shipping.scheduledDate, time: shipping.scheduledTime } : { now: true }
+      schedule: shipping.schedule === "later" ? { date: shipping.scheduledDate, time: shipping.scheduledTime } : { now: true },
+      completedAt: new Date().toISOString(),
     };
 
     try {
