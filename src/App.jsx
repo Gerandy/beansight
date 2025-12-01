@@ -14,6 +14,7 @@ import Orders from "./components/sections/Orders";
 import Checkout from "./components/Checkout";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
+import Faq from "./components/sections/Faq";
 
 // MyAccount (Client)
 import Myaccount from "./components/sections/Myaccount";
@@ -80,6 +81,7 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/faq" element={<Faq />} />
 
                   {/* Client Account */}
                   <Route
