@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {getDoc, setDoc, doc} from "firebase/firestore"
+import { db } from "../../firebase";
+import { exists } from "xendit-node";
 
 const help = {
   onlineOrdering: "Allow customers to place orders online through your website or app.",
@@ -39,21 +42,33 @@ function ModalTooltip({ open, text, onClose }) {
 }
 
 export default function StorePreferences() {
+  
+
+
+
+
+
+
+
+
+
+
   // Ordering Preferences
   const [onlineOrdering, setOnlineOrdering] = useState(true);
   const [cutoffTimes, setCutoffTimes] = useState({
-    mon: "21:00",
-    tue: "21:00",
-    wed: "21:00",
-    thu: "21:00",
-    fri: "22:00",
-    sat: "22:00",
-    sun: "20:00",
+    mon: "00:00",
+    tue: "00:00",
+    wed: "00:00",
+    thu: "00:00",
+    fri: "00:00",
+    sat: "00:00",
+    sun: "00:00",
+  });
+  const [openTimes, setopenTimes] = useState({
+   open: "00:00"
   });
   const [minOrder, setMinOrder] = useState(0);
   const [maxOrder, setMaxOrder] = useState(0);
-  const [autoAccept, setAutoAccept] = useState(false);
-  const [prepTime, setPrepTime] = useState(15);
   const [orderType, setOrderType] = useState({
     pickup: true,
     delivery: true,
@@ -68,14 +83,12 @@ export default function StorePreferences() {
   // System-wide Transaction Preferences
   const [paymentMethods, setPaymentMethods] = useState({
     cash: true,
-    card: true,
-    ewallet: false,
-    custom: "",
+    gcash: true,
   });
   const [autoPrint, setAutoPrint] = useState(false);
   const [discountRules, setDiscountRules] = useState([{ rule: "" }]);
   const [taxOn, setTaxOn] = useState(true);
-  const [taxRate, setTaxRate] = useState(12);
+  const [taxRate, setTaxRate] = useState("");
   const [receiptHeader, setReceiptHeader] = useState("");
   const [receiptFooter, setReceiptFooter] = useState("");
 
@@ -124,29 +137,29 @@ export default function StorePreferences() {
     }
     setMessage("Preferences saved!");
   };
-  const handleReset = () => {
-    setOnlineOrdering(true);
-    setCutoffTimes({
-      mon: "21:00",
-      tue: "21:00",
-      wed: "21:00",
-      thu: "21:00",
-      fri: "22:00",
-      sat: "22:00",
-      sun: "20:00",
-    });
-    setMinOrder(0);
-    setMaxOrder(0);
-    setAutoAccept(false);
-    setPrepTime(15);
-    setOrderType({ pickup: true, delivery: true });
-    setOrderNotification({ email: true, sms: false, app: true });
+  const handleReset = async () => {
+    const docSnap = await getDoc(doc(db, "settings", "storePref"));
+   
+    
+
+    const data = docSnap.data();
+    setTaxRate(data.taxRate);
+    setMinOrder(data.minOrder);
+    setCutoffTimes(data.storeTime);
+    setopenTimes(data.storeOpen);
+    setOrderType(data.orderType);
+    setOnlineOrdering(data.onlineOrder);
+    setPaymentMethods(data.paymentMet);
+    
+
+    
+
     setOrderScheduling(false);
-    setPaymentMethods({ cash: true, card: true, ewallet: false, custom: "" });
+    
     setAutoPrint(false);
     setDiscountRules([{ rule: "" }]);
     setTaxOn(true);
-    setTaxRate(12);
+    
     setReceiptHeader("");
     setReceiptFooter("");
     setErrors({});
@@ -161,6 +174,26 @@ export default function StorePreferences() {
     setTooltipText(text);
     setTooltipOpen(true);
   };
+
+ useEffect(() => {
+  const loadSettings = async () => {
+    const docSnap = await getDoc(doc(db, "settings", "storePref"));
+    if (!docSnap.exists()) {
+      console.log("data does not exists");
+      return;
+    };
+
+    const data = docSnap.data();
+    setTaxRate(data.taxRate);
+    setMinOrder(data.minOrder);
+    setCutoffTimes(data.storeTime);
+    setopenTimes(data.storeOpen);
+    setOrderType(data.orderType);
+  };
+  
+  loadSettings();
+}, []);
+
 
   return (
     <div className="w-full max-w-6xl mx-auto pt-8">
@@ -181,6 +214,7 @@ export default function StorePreferences() {
           <p className="mb-4 text-coffee-700 text-base">
             Set how customers can order from your store. These options help you control when and how orders are accepted.
           </p>
+          ----------------------------------------
           <div className="flex flex-col gap-4">
             <div className="flex items-center">
               <input
@@ -199,6 +233,31 @@ export default function StorePreferences() {
                   aria-label="Help"
                 >ⓘ</button>
               </label>
+            </div>
+            ----------------------------------------
+            <div>
+              <label className={labelClass}>
+                Store Open Hours (per day)
+                <button
+                  type="button"
+                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
+                  onClick={() => showTooltip(help.cutoffTimes)}
+                  aria-label="Help"
+                >ⓘ</button>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(openTimes).map(([day, value]) => (
+                  <div key={day} className="flex items-center gap-2">
+                    <span className="capitalize w-12">{day}</span>
+                    <input
+                      type="time"
+                      value={value}
+                      onChange={e => setopenTimes({ ...openTimes, [day]: e.target.value })}
+                      className={inputClass + " max-w-xs bg-coffee-50 border border-coffee-200 rounded-xl text-coffee-900 font-bold text-lg text-center cursor-text"} // <-- added cursor-text
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
             <div>
               <label className={labelClass}>
@@ -247,68 +306,7 @@ export default function StorePreferences() {
                 <span className="text-red-600 text-sm">{errors.minOrder}</span>
               )}
             </div>
-            <div>
-              <label className={labelClass} htmlFor="maxOrder">
-                Largest order allowed
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.maxOrder)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
-              <input
-                type="number"
-                value={maxOrder}
-                min={0}
-                onChange={e => setMaxOrder(e.target.value)}
-                className={inputClass + " max-w-xs cursor-text"} // <-- added cursor-text
-                id="maxOrder"
-                placeholder="e.g. 5000"
-              />
-              {errors.maxOrder && (
-                <span className="text-red-600 text-sm">{errors.maxOrder}</span>
-              )}
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={autoAccept}
-                onChange={e => setAutoAccept(e.target.checked)}
-                className="accent-coffee-700 w-5 h-5 cursor-pointer"
-                id="autoAccept"
-              />
-              <label htmlFor="autoAccept" className="ml-3 text-coffee-900 font-medium cursor-pointer">
-                Auto-accept orders
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.autoAccept)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="prepTime">
-                Preparation time (minutes)
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.prepTime)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
-              <select
-                value={prepTime}
-                onChange={e => setPrepTime(Number(e.target.value))}
-                className={inputClass + " max-w-xs cursor-pointer"}
-                id="prepTime"
-              >
-                <option value={10}>10</option>
-                <option value={15}>15</option>
-                <option value={20}>20</option>
-              </select>
-            </div>
+            
             <div>
               <label className={labelClass}>
                 Order types
@@ -317,7 +315,7 @@ export default function StorePreferences() {
                   className="ml-2 text-xs text-coffee-700 cursor-pointer"
                   onClick={() => showTooltip(help.orderType)}
                   aria-label="Help"
-                >ⓘ</button>
+                >ⓘ</button>--------------
               </label>
               <div className="flex gap-6 mt-2">
                 {["pickup", "delivery"].map(type => (
@@ -332,48 +330,7 @@ export default function StorePreferences() {
                   </label>
                 ))}
               </div>
-            </div>
-            <div>
-              <label className={labelClass}>
-                Order notification
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.orderNotification)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
-              <div className="flex gap-6 mt-2">
-                {["email", "sms", "app"].map(method => (
-                  <label key={method} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={orderNotification[method]}
-                      onChange={e => setOrderNotification(n => ({ ...n, [method]: e.target.checked }))}
-                      className="accent-coffee-700 w-5 h-5 cursor-pointer"
-                    />
-                    <span className="capitalize">{method}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={orderScheduling}
-                onChange={e => setOrderScheduling(e.target.checked)}
-                className="accent-coffee-700 w-5 h-5 cursor-pointer"
-                id="orderScheduling"
-              />
-              <label htmlFor="orderScheduling" className="ml-3 text-coffee-900 font-medium cursor-pointer">
-                Allow order scheduling
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.orderScheduling)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
+              -----------------------------
             </div>
           </div>
         </div>
@@ -396,7 +353,7 @@ export default function StorePreferences() {
                 >ⓘ</button>
               </label>
               <div className="flex gap-6 mt-2">
-                {["cash", "card", "ewallet"].map(method => (
+                {["cash", "gcash"].map(method => (
                   <label key={method} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -407,32 +364,8 @@ export default function StorePreferences() {
                     <span className="capitalize">{method}</span>
                   </label>
                 ))}
-                <input
-                  type="text"
-                  value={paymentMethods.custom}
-                  onChange={e => setPaymentMethods(pm => ({ ...pm, custom: e.target.value }))}
-                  className={inputClass + " max-w-xs"}
-                  placeholder="Custom method"
-                />
+                
               </div>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={autoPrint}
-                onChange={e => setAutoPrint(e.target.checked)}
-                className="accent-coffee-700 w-5 h-5 cursor-pointer"
-                id="autoPrint"
-              />
-              <label htmlFor="autoPrint" className="ml-3 text-coffee-900 font-medium cursor-pointer">
-                Auto-print receipt
-                <button
-                  type="button"
-                  className="ml-2 text-xs text-coffee-700 cursor-pointer"
-                  onClick={() => showTooltip(help.autoPrint)}
-                  aria-label="Help"
-                >ⓘ</button>
-              </label>
             </div>
             <div>
               <label className={labelClass}>

@@ -16,7 +16,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { Link, NavLink } from "react-router-dom";
 import DrillDownModal from "./layouts/dmodal"; // Adjust path
 
@@ -140,6 +140,29 @@ export default function Dashboard() {
     fetchInventory();
     fetchExpenses(); // Add this call
   }, []);
+
+
+  // const q = query(
+  //   collection(db, "orders"),
+  //   where("category", "==", "total"),
+  //   where(""),
+  //   where("")
+
+  // )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // -------------------------------
   // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
