@@ -80,7 +80,7 @@ export default function AnalyticsSettings() {
                 <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
                   <div>
                     <label className="block text-sm font-medium text-coffee-700">Default Time Period</label>
-                    <p className="text-xs text-coffee-600">Choose the time range that shows first on reports.</p>
+                    <p className="text-xs text-coffee-600">Choose the time range that shows first on Dashboard.</p>
                   </div>
                   <select
                     value={settings.defaultPeriod}

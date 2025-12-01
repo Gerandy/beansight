@@ -292,7 +292,7 @@ export default function MapsSettings() {
           </div>
         </div>
 
-        {/* Delivery & Radius */}
+        {/* Delivery & RadiuS */}
         <div className="flex-1 flex">
           <div className="bg-coffee-50 rounded-2xl shadow-soft-xl p-8 border border-coffee-100 flex flex-col w-full h-full">
             <h3 className="text-xl font-semibold mb-6 flex items-center gap-2 text-coffee-800">
