@@ -16,8 +16,8 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { Link, NavLink } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
+import { NavLink } from "react-router-dom";
 import DrillDownModal from "./layouts/dmodal"; // Adjust path
 
 // Helper to calculate % change
@@ -26,8 +26,8 @@ function calcPercentageChange(current, previous) {
   return ((current - previous) / previous) * 100;
 }
 
-// Helper to check if a date is in this week/month/year
-function filterByPeriod(date, period) {
+// Helper to check if a date is in the selected period
+function filterByPeriod(date, period, customStart, customEnd) {
   const d = new Date(date);
   const now = new Date();
 
@@ -39,39 +39,25 @@ function filterByPeriod(date, period) {
     return d >= start && d <= end;
   }
 
-  if (period === "Yesterday") {
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const start = new Date(yesterday);
-    start.setHours(0,0,0,0);
-    const end = new Date(yesterday);
-    end.setHours(23,59,59,999);
-    return d >= start && d <= end;
-  }
-
-  if (period === "This Week") {
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
-    startOfWeek.setHours(0,0,0,0);
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23,59,59,999);
-    return d >= startOfWeek && d <= endOfWeek;
-  }
-
   if (period === "This Month") {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   }
 
-  if (period === "This Year") {
-    return d.getFullYear() === now.getFullYear();
+  if (period === "Custom Range" && customStart && customEnd) {
+    const start = new Date(customStart);
+    start.setHours(0,0,0,0);
+    const end = new Date(customEnd);
+    end.setHours(23,59,59,999);
+    return d >= start && d <= end;
   }
 
   return false;
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState("This Week");
+  const [dateRange, setDateRange] = useState("Today");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [orders, setOrders] = useState([]);
 
   // New states for Financial Health & Daily Goal
@@ -86,7 +72,7 @@ export default function Dashboard() {
   // Modal states
   const [financialModalOpen, setFinancialModalOpen] = useState(false);
   const [financialView, setFinancialView] = useState("gross"); // 'gross', 'net', 'expenses'
-  const [expandedSections, setExpandedSections] = useState({ daily: false, category: false, gross: false, expenses: false }); // Update this
+  const [expandedSections, setExpandedSections] = useState({ daily: false, category: false, gross: false, expenses: false });
 
   // -------------------------------
   // Fetch Orders from Firestore
@@ -138,31 +124,8 @@ export default function Dashboard() {
     fetchOrders();
     fetchProducts();
     fetchInventory();
-    fetchExpenses(); // Add this call
+    fetchExpenses();
   }, []);
-
-
-  // const q = query(
-  //   collection(db, "orders"),
-  //   where("category", "==", "total"),
-  //   where(""),
-  //   where("")
-
-  // )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // -------------------------------
   // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
@@ -225,48 +188,21 @@ export default function Dashboard() {
     kpiChanges,
     totalExpenses,
     categorySalesData,
-    periodTitle, // Add this for dynamic title
-    periodUnit, // Add this for insights (e.g., "hour", "day")
+    periodTitle,
+    periodUnit,
   } = useMemo(() => {
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-    // Separate orders by current and previous period
-    const getPreviousPeriod = (period) => {
+    // Get previous period for comparison
+    const getPreviousPeriod = (period, customStart, customEnd) => {
       const now = new Date();
       if (period === "Today") {
         const start = new Date(now); start.setHours(0,0,0,0);
-        const end = new Date(now); end.setHours(23,59,59,999);
         const prevStart = new Date(start); prevStart.setDate(start.getDate() - 1);
         const prevEnd = new Date(prevStart); prevEnd.setHours(23,59,59,999);
         return orders.filter(o => {
           const d = new Date(o.completedAt || o.createdAt);
           return d >= prevStart && d <= prevEnd;
-        });
-      }
-      if (period === "Yesterday") {
-        const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-        const start = new Date(yesterday); start.setHours(0,0,0,0);
-        const end = new Date(yesterday); end.setHours(23,59,59,999);
-        const prevDay = new Date(yesterday); prevDay.setDate(yesterday.getDate() - 1);
-        const prevStart = new Date(prevDay); prevStart.setHours(0,0,0,0);
-        const prevEnd = new Date(prevDay); prevEnd.setHours(23,59,59,999);
-        return orders.filter(o => {
-          const d = new Date(o.completedAt || o.createdAt);
-          return d >= prevStart && d <= prevEnd;
-        });
-      }
-      if (period === "This Week") {
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0,0,0,0);
-        const startPrevWeek = new Date(startOfWeek);
-        startPrevWeek.setDate(startPrevWeek.getDate() - 7);
-        const endPrevWeek = new Date(startOfWeek);
-        endPrevWeek.setDate(endPrevWeek.getDate() - 1);
-        endPrevWeek.setHours(23,59,59,999);
-        return orders.filter(o => {
-          const d = new Date(o.completedAt || o.createdAt);
-          return d >= startPrevWeek && d <= endPrevWeek;
         });
       }
       if (period === "This Month") {
@@ -277,18 +213,24 @@ export default function Dashboard() {
           return d >= prevMonthStart && d <= prevMonthEnd;
         });
       }
-      if (period === "This Year") {
-        const prevYear = new Date(now.getFullYear() - 1, 0, 1);
-        const endPrevYear = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999);
+      if (period === "Custom Range" && customStart && customEnd) {
+        const start = new Date(customStart);
+        const end = new Date(customEnd);
+        const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        const prevStart = new Date(start);
+        prevStart.setDate(start.getDate() - daysDiff);
+        const prevEnd = new Date(start);
+        prevEnd.setDate(start.getDate() - 1);
+        prevEnd.setHours(23,59,59,999);
         return orders.filter(o => {
           const d = new Date(o.completedAt || o.createdAt);
-          return d >= prevYear && d <= endPrevYear;
+          return d >= prevStart && d <= prevEnd;
         });
       }
       return [];
     };
 
-    const previousOrders = getPreviousPeriod(dateRange);
+    const previousOrders = getPreviousPeriod(dateRange, customStartDate, customEndDate);
 
     // KPI calculations
     let totalSales = 0;
@@ -297,20 +239,20 @@ export default function Dashboard() {
     const customerSet = new Set();
     const salesMap = {};
     const categoryMap = {};
-    const categorySalesMap = {}; // Add this for sales amounts
+    const categorySalesMap = {};
     const topItemsMap = {};
     const staffMap = {};
 
     orders.forEach(order => {
       const completedDate = new Date(order.completedAt || order.createdAt);
-      if (filterByPeriod(completedDate, dateRange)) {
+      if (filterByPeriod(completedDate, dateRange, customStartDate, customEndDate)) {
         totalSales += order.total || 0;
         totalOrders += 1;
         if (order.customerName && !customerSet.has(order.customerName)) customerSet.add(order.customerName);
 
         (order.items || []).forEach(item => {
           categoryMap[item.category] = (categoryMap[item.category] || 0) + item.quantity;
-          categorySalesMap[item.category] = (categorySalesMap[item.category] || 0) + (item.quantity * (item.price || 0)); // Add sales by category
+          categorySalesMap[item.category] = (categorySalesMap[item.category] || 0) + (item.quantity * (item.price || 0));
           if (!topItemsMap[item.name]) topItemsMap[item.name] = { id: item.id, name: item.name, sales: 0 };
           topItemsMap[item.name].sales += item.quantity;
           menuItemsSold += item.quantity;
@@ -328,8 +270,8 @@ export default function Dashboard() {
     // Calculate total expenses for the period
     let totalExpenses = 0;
     expensesData.forEach(exp => {
-      const d = new Date(exp.date); // Assume exp.date is a Firestore timestamp or date
-      if (filterByPeriod(d, dateRange)) {
+      const d = new Date(exp.date);
+      if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
         totalExpenses += exp.amount || 0;
       }
     });
@@ -355,42 +297,28 @@ export default function Dashboard() {
 
     // Dynamic sales data based on period
     let salesData = [];
-    let periodTitle = "Daily Sales Report";
+    let periodTitle = "Sales Report";
     let periodUnit = "day";
 
-    if (dateRange === "Today" || dateRange === "Yesterday") {
+    if (dateRange === "Today") {
       // By hour (0-23)
       const hourMap = {};
       orders.forEach(order => {
         const d = new Date(order.completedAt || order.createdAt);
-        if (filterByPeriod(d, dateRange)) {
+        if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const hour = d.getHours();
           hourMap[hour] = (hourMap[hour] || 0) + (order.total || 0);
         }
       });
       salesData = Array.from({ length: 24 }, (_, i) => ({ unit: i, sales: hourMap[i] || 0 }));
-      periodTitle = dateRange === "Today" ? "Today's Sales Report" : "Yesterday's Sales Report";
+      periodTitle = "Today's Sales Report";
       periodUnit = "hour";
-    } else if (dateRange === "This Week") {
-      // By day of week (Mon-Sun)
-      const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const dayMap = {};
-      orders.forEach(order => {
-        const d = new Date(order.completedAt || order.createdAt);
-        if (filterByPeriod(d, dateRange)) {
-          const dayIndex = (d.getDay() + 6) % 7; // Mon=0 to Sun=6
-          dayMap[dayIndex] = (dayMap[dayIndex] || 0) + (order.total || 0);
-        }
-      });
-      salesData = dayNames.map((day, i) => ({ unit: day, sales: dayMap[i] || 0 }));
-      periodTitle = "Weekly Sales Report";
-      periodUnit = "day";
     } else if (dateRange === "This Month") {
       // By day of month (1-31)
       const dayMap = {};
       orders.forEach(order => {
         const d = new Date(order.completedAt || order.createdAt);
-        if (filterByPeriod(d, dateRange)) {
+        if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const day = d.getDate();
           dayMap[day] = (dayMap[day] || 0) + (order.total || 0);
         }
@@ -398,26 +326,32 @@ export default function Dashboard() {
       salesData = Array.from({ length: 31 }, (_, i) => ({ unit: i + 1, sales: dayMap[i + 1] || 0 }));
       periodTitle = "Monthly Sales Report";
       periodUnit = "day";
-    } else if (dateRange === "This Year") {
-      // By month (Jan-Dec)
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const monthMap = {};
+    } else if (dateRange === "Custom Range" && customStartDate && customEndDate) {
+      // By day in custom range
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
+      const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      const dayMap = {};
       orders.forEach(order => {
         const d = new Date(order.completedAt || order.createdAt);
-        if (filterByPeriod(d, dateRange)) {
-          const month = d.getMonth();
-          monthMap[month] = (monthMap[month] || 0) + (order.total || 0);
+        if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
+          const dateKey = d.toLocaleDateString();
+          dayMap[dateKey] = (dayMap[dateKey] || 0) + (order.total || 0);
         }
       });
-      salesData = monthNames.map((month, i) => ({ unit: month, sales: monthMap[i] || 0 }));
-      periodTitle = "Yearly Sales Report";
-      periodUnit = "month";
+      salesData = Array.from({ length: daysDiff }, (_, i) => {
+        const currentDate = new Date(start);
+        currentDate.setDate(start.getDate() + i);
+        const dateKey = currentDate.toLocaleDateString();
+        return { unit: dateKey, sales: dayMap[dateKey] || 0 };
+      });
+      periodTitle = "Custom Range Sales Report";
+      periodUnit = "day";
     }
 
     // Chart & Table Data
-    const salesDataChart = dayNames.map(day => ({ day, sales: salesMap[day] || 0 }));
     const categoryData = Object.entries(categoryMap).map(([category, value]) => ({ category, value }));
-    const categorySalesData = Object.entries(categorySalesMap).map(([category, sales]) => ({ category, sales })); // Add this
+    const categorySalesData = Object.entries(categorySalesMap).map(([category, sales]) => ({ category, sales }));
     const topItems = Object.values(topItemsMap).sort((a, b) => b.sales - a.sales).slice(0, 5);
     const customerData = [
       { name: "Returning", value: orders.length - customerSet.size },
@@ -441,9 +375,9 @@ export default function Dashboard() {
       recentOrders,
       kpiChanges,
       totalExpenses,
-      categorySalesData, // Add this
+      categorySalesData,
     };
-  }, [orders, dateRange, expensesData]);
+  }, [orders, dateRange, customStartDate, customEndDate, expensesData]);
 
   // Financial calculations: use real expenses
   const expenses = totalExpenses;
@@ -458,7 +392,7 @@ export default function Dashboard() {
         { Detail: "Daily Sales", Value: `₱${dailyTotal.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "daily" },
       ];
       if (expandedSections.daily) {
-        data.push(...salesData.map(d => ({ Detail: `  ${d.day}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
+        data.push(...salesData.map(d => ({ Detail: `  ${d.unit}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
       }
       data.push({ Detail: "Category Sales", Value: `₱${categoryTotal.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "category" });
       if (expandedSections.category) {
@@ -472,19 +406,19 @@ export default function Dashboard() {
         { Detail: "Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
       ];
       if (expandedSections.gross) {
-        data.push(...salesData.map(d => ({ Detail: `  ${d.day}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
+        data.push(...salesData.map(d => ({ Detail: `  ${d.unit}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
       data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
       if (expandedSections.expenses) {
-        const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+        const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
         data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
       }
       data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses = Net` });
       return data;
     }
     if (view === "expenses") {
-      const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
+      const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
       if (periodExpenses.length === 0) {
         return [{ Detail: "No expenses data available", Value: "", Breakdown: "" }];
       }
@@ -507,22 +441,40 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold text-coffee-900">☕ Dashboard Overview</h1>
           <p className="text-coffee-600 text-sm">Welcome back! Here's your latest business summary.</p>
         </div>
-        <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
-          <Calendar className="text-coffee-600 w-4 h-4" />
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="text-coffee-700 bg-transparent outline-none text-sm"
-          >
-            <option>Today</option>
-            <option>Yesterday</option>
-            <option>This Week</option>
-            <option>This Month</option>
-          </select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+            <Calendar className="text-coffee-600 w-4 h-4" />
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="text-coffee-700 bg-transparent outline-none text-sm"
+            >
+              <option>Today</option>
+              <option>This Month</option>
+              <option>Custom Range</option>
+            </select>
+          </div>
+          {dateRange === "Custom Range" && (
+            <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="text-coffee-700 bg-transparent outline-none text-sm"
+              />
+              <span className="text-coffee-600">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="text-coffee-700 bg-transparent outline-none text-sm"
+              />
+            </div>
+          )}
         </div>
       </div>
 
-            {/* Daily Goal Bar - full width at top (only show for Today) */}
+      {/* Daily Goal Bar - full width at top (only show for Today) */}
       {dateRange === "Today" && (
         <div className="w-full bg-white rounded-2xl shadow-md p-4">
           <div className="flex items-center justify-between mb-2">
@@ -558,10 +510,14 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Hero center: Net Profit */}
+          {/* Hero center: Net Profit/Loss */}
           <div className="flex flex-col items-center justify-center text-center h-40">
-            <p className="text-sm font-medium text-coffee-600 mb-1">Net Profit</p>
-            <p className="text-5xl font-extrabold text-green-600">₱{netProfit.toLocaleString()}</p>
+            <p className="text-sm font-medium text-coffee-600 mb-1">
+              {netProfit < 0 ? "Net Loss" : "Net Profit"}
+            </p>
+            <p className={`text-5xl font-extrabold ${netProfit < 0 ? "text-red-600" : "text-green-600"}`}>
+              ₱{Math.abs(netProfit).toLocaleString()}
+            </p>
             <p className="text-xs text-coffee-600 mt-2">Based on selected period</p>
           </div>
 
@@ -705,12 +661,12 @@ export default function Dashboard() {
 
             // Function to get color style based on message type
             const getMessageStyle = (msg) => {
-              if (msg.startsWith('⚠️')) return 'bg-red-50 border-red-200 text-red-800'; // Bad: Alert
-              if (msg.startsWith('🚀') || msg.startsWith('💰')) return 'bg-green-50 border-green-200 text-green-800'; // Good: Positive
-              if (msg.startsWith('⚡')) return 'bg-blue-50 border-blue-200 text-blue-800'; // Neutral: Info
-              if (msg.startsWith('💸')) return 'bg-red-50 border-red-200 text-red-800'; // Bad: Loss
-              if (msg.startsWith('⏳')) return 'bg-yellow-50 border-yellow-200 text-yellow-800'; // Warning: Pending
-              return 'bg-gray-50 border-gray-200 text-gray-800'; // Neutral: Break even
+              if (msg.startsWith('⚠️')) return 'bg-red-50 border-red-200 text-red-800';
+              if (msg.startsWith('🚀') || msg.startsWith('💰')) return 'bg-green-50 border-green-200 text-green-800';
+              if (msg.startsWith('⚡')) return 'bg-blue-50 border-blue-200 text-blue-800';
+              if (msg.startsWith('💸')) return 'bg-red-50 border-red-200 text-red-800';
+              if (msg.startsWith('⏳')) return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+              return 'bg-gray-50 border-gray-200 text-gray-800';
             };
 
             return (
@@ -828,9 +784,6 @@ export default function Dashboard() {
         }}
         onRowClick={(type) => setExpandedSections(prev => ({ ...prev, [type]: !prev[type] }))}
       />
-
-      {/* ...rest of the component... */}
     </div>
-    
   );
 }

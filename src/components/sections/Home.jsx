@@ -35,6 +35,10 @@ function Home() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div>
       <div className="reveal">
@@ -57,6 +61,28 @@ function Home() {
       <div className="reveal">
         <HomeFeatured />
       </div>
+      <button
+        onClick={scrollToTop}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '40px',
+          height: '40px',
+          backgroundColor: 'var(--color-coffee-600)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontSize: '20px',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        ↑
+      </button>
     </div>
   );
 }
