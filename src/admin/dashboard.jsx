@@ -16,9 +16,17 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { NavLink } from "react-router-dom";
 import DrillDownModal from "./layouts/dmodal"; // Adjust path
+
+function parseDate(value) {
+  // Firestore Timestamps have toDate(), others might be ISO strings
+  if (!value) return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
 
 // Helper to calculate % change
 function calcPercentageChange(current, previous) {
@@ -130,6 +138,19 @@ export default function Dashboard() {
     fetchInventory();
     fetchExpenses();
   }, []);
+
+
+  useEffect(()=>{
+    const loadSettings = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      if(!docRef.exists()){console.log("data doesnt exist");return;}
+      const data = docRef.data();
+      setTax(data.taxRate);
+
+
+    }
+    loadSettings();
+  },[])
 
   // -------------------------------
   // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
@@ -248,7 +269,7 @@ export default function Dashboard() {
     const staffMap = {};
 
     orders.forEach(order => {
-      const completedDate = new Date(order.completedAt || order.createdAt);
+      const completedDate = new parseDate(order.completedAt || order.createdAt);
       if (filterByPeriod(completedDate, dateRange, customStartDate, customEndDate)) {
         totalSales += order.total || 0;
         console.log(order.total)
@@ -276,7 +297,7 @@ export default function Dashboard() {
     let totalExpenses = 0;
     expensesData.forEach(exp => {
       const d = new Date(exp.date);
-      if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
+      if (filterByPeriod(d, dateRange, parseDate(customStartDate), parseDate(customEndDate))) {
         totalExpenses += exp.amount || 0;
       }
     });
@@ -322,7 +343,7 @@ export default function Dashboard() {
       // By day of month (1-31)
       const dayMap = {};
       orders.forEach(order => {
-        const d = new Date(order.completedAt || order.createdAt);
+        const d = new parseDate(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const day = d.getDate();
           dayMap[day] = (dayMap[day] || 0) + (order.total || 0);
@@ -333,12 +354,12 @@ export default function Dashboard() {
       periodUnit = "day";
     } else if (dateRange === "Custom Range" && customStartDate && customEndDate) {
       // By day in custom range
-      const start = new Date(customStartDate);
-      const end = new Date(customEndDate);
+      const start = new parseDate(customStartDate);
+      const end = new parseDate(customEndDate);
       const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       const dayMap = {};
       orders.forEach(order => {
-        const d = new Date(order.completedAt || order.createdAt);
+        const d = new parseDate(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const dateKey = d.toLocaleDateString();
           dayMap[dateKey] = (dayMap[dateKey] || 0) + (order.total || 0);
@@ -422,11 +443,12 @@ export default function Dashboard() {
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
       data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
-      data.push({ Detail: "VAT", Value: `₱${vatAmount.toLocaleString()}`, Breakdown: "perecentage for all the Sales", expandable: true, type: "expenses" });
+      
       if (expandedSections.expenses) {
         const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
         data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
       }
+      data.push({ Detail: "VAT", Value: `₱${vatAmount.toLocaleString()}`, Breakdown: "Perecentage for all the Sales", expandable: false, type: "expenses" });
       data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses - VAT = Net` });
       return data;
     }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Save, Info, CheckCircle, Plus, Trash2, Calendar, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { db } from "../../firebase";
-import { collection, addDoc, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function AnalyticsSettings() {
   // State for settings
@@ -41,6 +41,20 @@ export default function AnalyticsSettings() {
     }
   }, []);
 
+
+  useEffect(()=>{
+    const loadSettigs = async () =>{
+      
+      const docRef = await getDoc(doc(db, "settings", "analytics"));
+      const data = docRef.data();
+
+      setSettings(data.settings);
+
+    }
+
+    loadSettigs();
+  },[])
+
   // Load expenses from Firestore
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -65,8 +79,11 @@ export default function AnalyticsSettings() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    localStorage.setItem("analyticsSettings", JSON.stringify(settings));
+  const handleSave = async () => {
+    await setDoc(doc(db, "settings", "analytics"),{
+      settings: settings,
+      
+      })
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -202,24 +219,7 @@ export default function AnalyticsSettings() {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-coffee-700">Profit Margin (%)</label>
-                    <p className="text-xs text-coffee-600">How much profit you make on sales.</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={settings.profitMargin}
-                      onChange={(e) => handleChange("profitMargin", parseInt(e.target.value))}
-                      className="w-24"
-                    />
-                    <span className="text-coffee-800 font-medium">{settings.profitMargin}%</span>
-                  </div>
-                </div>
-
+                
                 <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
                   <div>
                     <label className="block text-sm font-medium text-coffee-700">Sales Goal Type</label>
@@ -256,44 +256,8 @@ export default function AnalyticsSettings() {
 
             {/* Notifications */}
             <section>
-              <h2 className="text-lg font-semibold text-coffee-800 mb-4">Notifications</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-coffee-700">Enable Alerts</label>
-                    <p className="text-xs text-coffee-600">Get notified about low stock or big sales changes.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.enableAlerts}
-                      onChange={(e) => handleChange("enableAlerts", e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-coffee-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-coffee-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-coffee-600"></div>
-                  </label>
-                </div>
-
-                {settings.enableAlerts && (
-                  <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg ml-4 border-l-4 border-coffee-300">
-                    <div>
-                      <label className="block text-sm font-medium text-coffee-700">Alert Threshold (%)</label>
-                      <p className="text-xs text-coffee-600">Warn me if sales drop below this level.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="range"
-                        min="0"
-                        max="50"
-                        value={settings.alertThreshold}
-                        onChange={(e) => handleChange("alertThreshold", parseInt(e.target.value))}
-                        className="w-24"
-                      />
-                      <span className="text-coffee-800 font-medium">{settings.alertThreshold}%</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              
+              
             </section>
           </div>
         </div>
@@ -353,21 +317,7 @@ export default function AnalyticsSettings() {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
-                  <div>
-                    <label className="block text-sm font-medium text-coffee-700">Pending Orders Alerts</label>
-                    <p className="text-xs text-coffee-600">Show notifications for orders awaiting completion.</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settings.enablePendingOrders}
-                      onChange={(e) => handleChange("enablePendingOrders", e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-coffee-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-coffee-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-coffee-600"></div>
-                  </label>
-                </div>
+                
 
                 <div className="flex items-center justify-between p-4 bg-coffee-50 rounded-lg">
                   <div>

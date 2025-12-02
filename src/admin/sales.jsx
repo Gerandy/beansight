@@ -17,7 +17,7 @@ import {
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../firebase"; // adjust path if needed
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs,getDoc, doc } from "firebase/firestore";
 import DrillDownModal from "./layouts/dmodal"; // adjust path if needed
 
 function parseDate(value) {
@@ -194,6 +194,23 @@ export default function Sales() {
       mounted = false;
     };
   }, []);
+
+
+  useEffect(()=> {
+    const loadSettings = async () => {
+      const docRef = await getDoc(doc(db, "settings", "analytics"));
+      if(!docRef.exists()) {
+        console.log("data not exists")
+      }
+
+      const data = docRef.data();
+
+      setManualGoal(data.settings.goalAmount);
+
+    }
+
+    loadSettings()
+  },[])
 
   // ---------------------------
   // Derived analytics
@@ -910,6 +927,25 @@ export default function Sales() {
           <p className="text-green-600 text-xs mt-1">{revenuePlainEnglish}</p>
         </div>
 
+        <div
+          className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600 cursor-pointer"
+          onClick={() => handleSummaryClick("revenue")}
+        >
+          <h2 className="text-sm text-coffee-500">Todays Sale</h2>
+          <p className="text-3xl font-bold text-coffee-700">₱{Number(ordersToday).toLocaleString()}</p>
+          <div className="flex items-center text-sm mt-1">
+            {kpiComparisons.revenue.change > 0 ? (
+              <span className="text-green-600 font-bold mr-1">▲ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
+            ) : kpiComparisons.revenue.change < 0 ? (
+              <span className="text-red-600 font-bold mr-1">▼ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
+            ) : (
+              <span className="text-coffee-500 font-bold mr-1">—</span>
+            )}
+            <span className="text-coffee-500">vs last week</span>
+          </div>
+          <p className="text-green-600 text-xs mt-1">{revenuePlainEnglish}</p>
+        </div>
+
         {/* Average Order Value Card */}
         <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600">
           <h2 className="text-sm text-coffee-500">Average Order Value</h2>
@@ -949,7 +985,7 @@ export default function Sales() {
       <div className="bg-white rounded-2xl shadow-md p-6 mb-5 my-2">
         <div className="flex items-center justify-between mb-2">
           <div className="text-coffee-800 font-semibold text-base">
-            Daily Goal: ₱{finalGoal.toLocaleString()} <span className="text-xs text-coffee-500"> (Based on your {weekdayNames[new Date().getDay()]} average)</span>
+            Daily Goal: ₱{finalGoal.toLocaleString()} <span className="text-xs text-coffee-500"> (Based on your Inputed on average)</span>
           </div>
           <div className="flex items-center space-x-2">
             {!isEditingGoal ? (
@@ -1290,33 +1326,8 @@ export default function Sales() {
           <div className="mt-4 text-coffee-700 text-sm text-center">{channelInsight}</div>
         </div>
 
-        {/* Card 2: Payment Method Analysis */}
-        <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center">
-          <h2 className="text-lg font-semibold mb-4 text-coffee-800">Payment Method Analysis</h2>
-          <PieChart width={220} height={220}>
-            <Pie
-              data={paymentData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={90}
-              onClick={(data, idx) => handlePaymentClick(paymentData[idx].name)}
-            >
-              {paymentData.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={solAceColors[idx % solAceColors.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value, name, props) => [
-                `₱${Number(value).toLocaleString()} (${((value / totalPayment) * 100).toFixed(1)}%)`,
-                name,
-              ]}
-            />
-            <Legend verticalAlign="bottom" height={36} />
-          </PieChart>
-          <div className="mt-4 text-coffee-700 text-sm text-center">{paymentInsight}</div>
-        </div>
+       
+        
       </div>
     </div>
   );
