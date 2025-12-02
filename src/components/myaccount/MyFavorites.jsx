@@ -127,7 +127,7 @@ function MyFavorites() {
       </div>
       
       <div className="flex-1 p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
           {favoriteProducts.map((product) => (
             <div key={product.id} className="relative">
               <Link to={`/menu/product-details/${product.id}`}>
@@ -139,10 +139,10 @@ function MyFavorites() {
               </Link>
               <button
                 onClick={(e) => removeFavorite(product.id, e)}
-                className="absolute top-2 left-2 z-30 bg-white/90 hover:bg-red-500 text-coffee-800 hover:text-white rounded-full p-2 shadow-lg transition-all duration-200 group"
+                className="cursor-pointer absolute top-2 left-2 z-30 bg-white/90 hover:bg-red-500 text-coffee-800 hover:text-white rounded-full p-2 shadow-lg transition-all duration-200 group"
                 title="Remove from favorites"
               >
-                <X size={16} className="group-hover:rotate-90 transition-transform duration-200" />
+                <X size={16} className="hover:rotate-90 transition-transform duration-200" />
               </button>
             </div>
           ))}

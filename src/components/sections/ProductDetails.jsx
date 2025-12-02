@@ -1,11 +1,25 @@
 import { useParams, useNavigate } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useCart } from "../CartContext";
-import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart } from "lucide-react";
+import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart, PlusCircle, Plus, Minus } from "lucide-react";
 import logo from "../../assets/ahjinlogo.png";
 import HomeCard from "../home/HomeCard";
+
+// Define add-ons catalogs
+const beverageAddOns = [
+  { id: "pearls", name: "Pearls", price: 15 },
+  { id: "coffee_jelly", name: "Coffee Jelly", price: 15 },
+  { id: "coco_jelly", name: "Coco Jelly", price: 15 },
+  { id: "creamcheese", name: "Creamcheese", price: 15 },
+  { id: "oreo", name: "Oreo", price: 20 },
+  { id: "espresso_shot", name: "Espresso", price: 20 },
+];
+
+const foodAddOns = [
+  { id: "extra_rice", name: "Extra Rice", price: 20, allowMultiple: true },
+];
 
 const suggestedBeverages = [
   { id: "latte", name: "Latte", price: 120, img: logo },
@@ -23,6 +37,7 @@ function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState("Dusk");
   const [isFavorite, setIsFavorite] = useState(false);
   const [flyImage, setFlyImage] = useState(null);
+  const [selectedAddOns, setSelectedAddOns] = useState({}); // { addonId: qty }
 
   // Fetch product and favorites
   useEffect(() => {
@@ -57,12 +72,74 @@ function ProductDetails() {
     setIsFavorite(!isFavorite);
   };
 
+  const fmt = (n) => Number(n).toFixed(2);
+
+  // Determine product type flags (safe with optional chaining)
+  const isBeverage = product?.category === "Beverage"; // Remove && product?.sizes === true
+  const isBeverages = product?.category === "Beverage";
+  const isFood = product?.category === "Food" || product?.allowExtraRice === true;
+
+  // Build current add-ons catalog based on product type - BEFORE early return
+  const addOnsCatalog = useMemo(() => {
+    let list = [];
+    if (isBeverages) list = beverageAddOns;
+    if (isFood) list = [...list, ...foodAddOns];
+    return list;
+  }, [isBeverages, isFood]);
+
+  // Calculate add-ons total and prices - BEFORE early return
+  const perItemAddOnsTotal = addOnsCatalog.reduce(
+    (sum, a) => sum + (selectedAddOns[a.id] || 0) * a.price,
+    0
+  );
+  const unitPrice = product ? Number(product.price) + perItemAddOnsTotal : 0;
+  const totalPrice = unitPrice * Number(quantity);
+
+  // Early return AFTER all hooks
+  if (!product)
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#FCDEC0] to-[#E5B299] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D5A50] mx-auto mb-4"></div>
+          <p className="text-[#7D5A50] font-medium">Loading product...</p>
+        </div>
+      </div>
+    );
+
+  // Helpers
+  const toggleAddOn = (id) => {
+    setSelectedAddOns(prev => {
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = 1; // default qty 1
+      return next;
+    });
+  };
+
+  const setAddOnQty = (id, qty) => {
+    setSelectedAddOns(prev => {
+      const n = Math.max(0, qty | 0);
+      const next = { ...prev };
+      if (n === 0) delete next[id];
+      else next[id] = n;
+      return next;
+    });
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
+
+    const addons = addOnsCatalog
+      .filter(a => selectedAddOns[a.id])
+      .map(a => ({ id: a.id, name: a.name, price: a.price, qty: selectedAddOns[a.id] }));
+
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      // price per unit including addons
+      price: unitPrice,
+      basePrice: Number(product.price),
+      addons,
       quantity,
       img: product.img || logo,
       size: selectedSize,
@@ -105,19 +182,6 @@ function ProductDetails() {
     }, 900);
   };
 
-  if (!product)
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FCDEC0] to-[#E5B299] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7D5A50] mx-auto mb-4"></div>
-          <p className="text-[#7D5A50] font-medium">Loading product...</p>
-        </div>
-      </div>
-    );
-
-  const isBeverage = product.category === "Beverage" && product.sizes === true;
-  const isBeverages = product.category === "Beverage";
-
   return (
     <div className="min-h-screen bg-gradient-to-br mt-15 text-[#7D5A50]">
       <div className="max-w-6xl mx-auto py-12 px-6">
@@ -150,7 +214,7 @@ function ProductDetails() {
                 <img src={product.img || logo} alt={product.name} className="w-full h-full object-cover" />
               </div>
               <h2 className="text-3xl font-extrabold mt-6">{product.name}</h2>
-              <p className="text-2xl font-semibold mt-2">₱ {Number(product.price).toFixed(2)}</p>
+              <p className="text-2xl font-semibold mt-2">₱ {fmt(product.price)}</p>
               {product.description && <p className="text-sm text-[#B4846C] italic mt-1">{product.description}</p>}
 
               {/* Quantity Selector */}
@@ -163,8 +227,10 @@ function ProductDetails() {
               <button
                 className="mt-8 flex items-center gap-2 bg-[#7D5A50] hover:bg-[#5C4036] transition-all duration-200 text-white font-bold px-10 py-3 rounded-full text-lg shadow-md hover:scale-105 active:scale-95 cursor-pointer"
                 onClick={() => {handleAddToCart(); setQuantity(1);}}
+                aria-label="Add to cart"
               >
-                <ShoppingBag size={20} /> Add to My Bag
+                <ShoppingBag size={20} />
+                Add to My Bag — ₱ {fmt(totalPrice)}
               </button>
             </div>
           </div>
@@ -202,12 +268,81 @@ function ProductDetails() {
                           key={size.name}
                           type="button"
                           onClick={() => setSelectedSize(size.name)}
-                          className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
+                          className={`cursor-pointer px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
                         >
                           {size.name} ({size.oz} oz)
                         </button>
                       ))}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Add-ons */}
+              {(isBeverages || isFood) && (
+                <div className="bg-[#FCDEC0]/50 p-4 rounded-xl shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <PlusCircle className="w-5 h-5" />
+                    <span className="font-semibold">Add-ons</span>
+                    <span className="ml-auto text-sm text-[#7D5A50]">
+                      Per item add-ons
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {addOnsCatalog.map(a => {
+                      const qty = selectedAddOns[a.id] || 0;
+                      const checked = qty > 0;
+                      const multiple = a.allowMultiple === true;
+                      return (
+                        <div
+                          key={a.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${checked ? "border-[#7D5A50] bg-white" : "border-[#E5B299] bg-[#FFF8EF]"}`}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{a.name}</span>
+                            <span className="text-sm text-[#B4846C]">+₱ {fmt(a.price)}</span>
+                          </div>
+
+                          {multiple ? (
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setAddOnQty(a.id, qty - 1)}
+                                className="p-2 rounded-full bg-[#F5E3D2] hover:bg-[#EED7C3]"
+                                aria-label={`Decrease ${a.name}`}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </button>
+                              <span className="w-8 text-center font-semibold">{qty}</span>
+                              <button
+                                type="button"
+                                onClick={() => setAddOnQty(a.id, qty + 1)}
+                                className="p-2 rounded-full bg-[#F5E3D2] hover:bg-[#EED7C3]"
+                                aria-label={`Increase ${a.name}`}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className=" inline-flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="cursor-pointer accent-[#7D5A50] w-5 h-5"
+                                checked={checked}
+                                onChange={() => toggleAddOn(a.id)}
+                                aria-label={`Toggle ${a.name}`}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 text-sm text-[#7D5A50]">
+                    <span className="font-semibold">Subtotal per item with add-ons:</span>{" "}
+                    ₱ {fmt(unitPrice)}
                   </div>
                 </div>
               )}
