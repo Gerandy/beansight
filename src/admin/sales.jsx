@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
 import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import DrillDownModal from "./layouts/dmodal";
 import {
   SkeletonCard,
@@ -975,7 +975,7 @@ export default function Sales() {
             <SkeletonPieChart />
           </div>
         </div>
-        <style jsx>{skeletonStyles}</style>
+        <style>{skeletonStyles}</style>
       </>
     );
   }
@@ -1011,24 +1011,7 @@ export default function Sales() {
           <p className="text-green-600 text-l mt-1">Click to see what Category </p>
         </div>
 
-        <div
-          className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600 cursor-pointer"
-          onClick={() => handleSummaryClick("today")}
-        >
-          <h2 className="text-sm text-coffee-500">Todays Sale</h2>
-          <p className="text-3xl font-bold text-coffee-700">₱{Number(todaySales).toLocaleString()}</p>
-          <div className="flex items-center text-sm mt-1">
-            {kpiComparisons.revenue.change > 0 ? (
-              <span className="text-green-600 font-bold mr-1">▲ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
-            ) : kpiComparisons.revenue.change < 0 ? (
-              <span className="text-red-600 font-bold mr-1">▼ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
-            ) : (
-              <span className="text-coffee-500 font-bold mr-1">—</span>
-            )}
-            <span className="text-coffee-500">vs last week</span>
-          </div>
-          <p className="text-green-600 text-xs mt-1">{revenuePlainEnglish}</p>
-        </div>
+        
 
         {/* Average Order Value Card */}
         <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600">
@@ -1064,6 +1047,24 @@ export default function Sales() {
           <p className="text-green-600 text-sm">updated from orders</p>
         </div>
       </div>
+      <div
+          className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600 cursor-pointer"
+          onClick={() => handleSummaryClick("today")}
+        >
+          <h2 className="text-sm text-coffee-500">Todays Sale</h2>
+          <p className="text-3xl font-bold text-coffee-700">₱{Number(todaySales).toLocaleString()}</p>
+          <div className="flex items-center text-sm mt-1">
+            {kpiComparisons.revenue.change > 0 ? (
+              <span className="text-green-600 font-bold mr-1">▲ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
+            ) : kpiComparisons.revenue.change < 0 ? (
+              <span className="text-red-600 font-bold mr-1">▼ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
+            ) : (
+              <span className="text-coffee-500 font-bold mr-1">—</span>
+            )}
+            <span className="text-coffee-500">vs last week</span>
+          </div>
+          <p className="text-green-600 text-xs mt-1">{revenuePlainEnglish}</p>
+        </div>
 
       {/* Daily Sales Goal Widget */}
       <div className="bg-white rounded-2xl shadow-md p-6 mb-5 my-2">
