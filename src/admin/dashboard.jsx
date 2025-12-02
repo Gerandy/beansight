@@ -15,10 +15,69 @@ import {
 } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
-import { db } from "../firebase"; // Adjust path
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { NavLink } from "react-router-dom";
-import DrillDownModal from "./layouts/dmodal"; // Adjust path
+import DrillDownModal from "./layouts/dmodal";
+
+// Skeleton Loading Components
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm p-6 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div className="h-12 bg-gray-300 rounded w-2/3 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  );
+}
+
+function SkeletonChart() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
+      <div className="h-5 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div className="h-64 bg-gray-100 rounded"></div>
+    </div>
+  );
+}
+
+function SkeletonTable() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
+      <div className="h-5 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex justify-between items-center">
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonFinancialCard() {
+  return (
+    <div className="relative rounded-2xl shadow-sm md:col-span-2 p-6 overflow-hidden animate-pulse"
+         style={{ background: "linear-gradient(135deg,#FBF6EE 0%,#F3E8D8 50%,#EFE1C8 100%)" }}>
+      <div className="flex flex-col items-center justify-center text-center h-40">
+        <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
+        <div className="h-16 bg-gray-400 rounded w-48 mb-2"></div>
+        <div className="h-3 bg-gray-200 rounded w-32"></div>
+      </div>
+      <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between">
+        <div className="flex flex-col">
+          <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
+          <div className="h-4 bg-gray-300 rounded w-24"></div>
+        </div>
+        <div className="flex flex-col text-right">
+          <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
+          <div className="h-4 bg-gray-300 rounded w-24"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Helper to calculate % change
 function calcPercentageChange(current, previous) {
@@ -59,72 +118,43 @@ export default function Dashboard() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // New states for Financial Health & Daily Goal
-  const [marginPercent, setMarginPercent] = useState(40); // shows "Margin: 40%"
-  const [dailyGoal, setDailyGoal] = useState(5000); // default daily goal (₱)
+  const [marginPercent, setMarginPercent] = useState(40);
+  const [dailyGoal, setDailyGoal] = useState(5000);
 
-  // New: products for inventory checks
   const [products, setProducts] = useState([]);
-  const [inventory, setInventory] = useState([]); // Add inventory state
-  const [expensesData, setExpensesData] = useState([]); // Add expenses state
+  const [inventory, setInventory] = useState([]);
+  const [expensesData, setExpensesData] = useState([]);
 
-  // Modal states
   const [financialModalOpen, setFinancialModalOpen] = useState(false);
-  const [financialView, setFinancialView] = useState("gross"); // 'gross', 'net', 'expenses'
+  const [financialView, setFinancialView] = useState("gross");
   const [expandedSections, setExpandedSections] = useState({ daily: false, category: false, gross: false, expenses: false });
 
-  // -------------------------------
-  // Fetch Orders from Firestore
-  // -------------------------------
+  // Fetch all data
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchAllData = async () => {
+      setLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, "orders"));
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setOrders(data);
+        const [ordersSnap, productsSnap, inventorySnap, expensesSnap] = await Promise.all([
+          getDocs(collection(db, "orders")),
+          getDocs(collection(db, "products")),
+          getDocs(collection(db, "inventory")),
+          getDocs(collection(db, "expenses")),
+        ]);
+
+        setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setProducts(productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setInventory(inventorySnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setExpensesData(expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
-        console.error("Error fetching orders:", err);
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Fetch products for inventory alerts
-    const fetchProducts = async () => {
-      try {
-        const snap = await getDocs(collection(db, "products"));
-        const pdata = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProducts(pdata);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      }
-    };
-
-    // Fetch inventory for low stock alerts
-    const fetchInventory = async () => {
-      try {
-        const snap = await getDocs(collection(db, "inventory"));
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setInventory(data);
-      } catch (err) {
-        console.error("Error fetching inventory:", err);
-      }
-    };
-
-    // Fetch expenses for real expenses
-    const fetchExpenses = async () => {
-      try {
-        const snap = await getDocs(collection(db, "expenses"));
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setExpensesData(data);
-      } catch (err) {
-        console.error("Error fetching expenses:", err);
-      }
-    };
-
-    fetchOrders();
-    fetchProducts();
-    fetchInventory();
-    fetchExpenses();
+    fetchAllData();
   }, []);
 
   // -------------------------------
@@ -433,6 +463,47 @@ export default function Dashboard() {
 
   const getFinancialColumns = (view) => ["Detail", "Value", "Breakdown"];
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+          </div>
+          <div className="h-10 bg-gray-200 rounded w-48 animate-pulse"></div>
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <SkeletonFinancialCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+
+        {/* More Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonTable />
+        </div>
+
+        {/* Bottom Section Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonTable />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
       {/* Header */}
@@ -489,7 +560,7 @@ export default function Dashboard() {
           <div className="w-full h-3 bg-coffee-100 rounded-full overflow-hidden">
             <div
               style={{ width: `${Math.min((todaySales / Math.max(dailyGoal,1)) * 100, 100)}%` }}
-              className="h-3 bg-gradient-to-r from-coffee-600 to-coffee-400"
+              className="h-3 bg-gradient-to-r from-coffee-600 to-coffee-400 transition-all duration-500"
             />
           </div>
         </div>

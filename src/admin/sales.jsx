@@ -12,13 +12,76 @@ import {
   PieChart,
   Pie,
   Legend,
-  Area, // <-- Added Area import
-  
+  Area,
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
-import { db } from "../firebase"; // adjust path if needed
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
-import DrillDownModal from "./layouts/dmodal"; // adjust path if needed
+import DrillDownModal from "./layouts/dmodal";
+
+// Skeleton Loading Components
+function SkeletonCard() {
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-gray-300 animate-pulse">
+      <div className="h-3 bg-gray-200 rounded w-1/3 mb-3"></div>
+      <div className="h-8 bg-gray-300 rounded w-2/3 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+    </div>
+  );
+}
+
+function SkeletonChart() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
+      <div className="flex justify-between items-center mb-4">
+        <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 rounded w-32"></div>
+      </div>
+      <div className="h-64 bg-gray-100 rounded"></div>
+    </div>
+  );
+}
+
+function SkeletonTable() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
+      <div className="h-5 bg-gray-200 rounded w-1/3 mb-4"></div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex justify-between items-center">
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SkeletonPieChart() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center animate-pulse">
+      <div className="h-5 bg-gray-200 rounded w-1/2 mb-4"></div>
+      <div className="w-56 h-56 bg-gray-200 rounded-full mb-4"></div>
+      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+    </div>
+  );
+}
+
+function SkeletonGoalWidget() {
+  return (
+    <div className="bg-white rounded-2xl shadow-md p-6 mb-5 my-2 animate-pulse">
+      <div className="flex items-center justify-between mb-2">
+        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+        <div className="h-6 bg-gray-200 rounded w-20"></div>
+      </div>
+      <div className="w-full h-6 bg-gray-200 rounded-full mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+    </div>
+  );
+}
 
 function parseDate(value) {
   // Firestore Timestamps have toDate(), others might be ISO strings
@@ -129,7 +192,6 @@ export default function Sales() {
   function handleChannelClick(channel) {
     setModalTitle(`Sales Channel: ${channel}`);
     setModalColumns(["Order ID", "Total"]);
-    // Dummy: show all orders (replace with real channel filter if available)
     setModalData(orders.map(o => ({
       "Order ID": o.id,
       "Total": `₱${Number(o.total || 0).toLocaleString()}`
@@ -140,7 +202,6 @@ export default function Sales() {
   function handlePaymentClick(method) {
     setModalTitle(`Payment Method: ${method}`);
     setModalColumns(["Order ID", "Total"]);
-    // Dummy: show all orders (replace with real payment filter if available)
     setModalData(orders.map(o => ({
       "Order ID": o.id,
       "Total": `₱${Number(o.total || 0).toLocaleString()}`
@@ -869,6 +930,40 @@ export default function Sales() {
     );
   }
 
+  // Show loading skeleton
+  if (loading) {
+    return (
+      <div className="p-6 space-y-8 font-sans">
+        <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Report</h1>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Goal Widget Skeleton */}
+        <SkeletonGoalWidget />
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 gap-6">
+          <SkeletonChart />
+          <SkeletonTable />
+        </div>
+
+        {/* Peak Hours Skeleton */}
+        <SkeletonChart />
+
+        {/* Transaction Insights Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          <SkeletonPieChart />
+          <SkeletonPieChart />
+        </div>
+      </div>
+    );
+  }
+
   // ---------------------------
   // UI
   // ---------------------------
@@ -885,7 +980,6 @@ export default function Sales() {
 
       <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Report</h1>
 
-      {loading && <div className="text-sm text-coffee-600">Loading...</div>}
       {error && <div className="text-sm text-red-600">Error: {error}</div>}
 
       {/* KPI Summary */}
@@ -1318,6 +1412,16 @@ export default function Sales() {
           <div className="mt-4 text-coffee-700 text-sm text-center">{paymentInsight}</div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
     </div>
   );
 }
