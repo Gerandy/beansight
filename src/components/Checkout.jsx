@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { collection, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
-import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus } from "lucide-react";
+import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Checkout() {
   const [userData, setUserData] = useState({});
@@ -11,6 +11,7 @@ export default function Checkout() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [expandedItems, setExpandedItems] = useState({}); // Track which items show add-ons
  
 
   const uid = localStorage.getItem("authToken");
@@ -91,6 +92,13 @@ export default function Checkout() {
     const updated = items.filter(item => item.id !== id);
     setItems(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
+  };
+
+  const toggleItemDetails = (itemId) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
   };
 
   const handleCheckout = async () => {
@@ -277,7 +285,7 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Pickup Section (unchanged) */}
+              {/* Pickup Section */}
               {shipping.type === 'pickup' && (
                 <div className="mt-4 flex flex-col gap-3">
                   <p className="text-sm">Pickup location: <span className="font-medium">{shipping.pickupLocation}</span></p>
@@ -348,8 +356,6 @@ export default function Checkout() {
               )}
             </SectionCard>
 
-
-
             {/* Payment */}
             <SectionCard title="Payment" icon={<CreditCard size={18} />}>
               <div className="flex gap-3">
@@ -370,37 +376,114 @@ export default function Checkout() {
           <aside className="lg:col-span-4 text-black">
             <div className="lg:sticky lg:top-20 space-y-4">
               <div className="bg-white rounded-2xl p-5 shadow">
-                <h3 className="text-lg font-semibold">Order Summary</h3>
-                <div className="mt-3 space-y-3">
-                  {items.map(it => (
-                    <div key={it.id} className="flex items-center gap-3">
-                      <img src={it.img} alt={it.name} className="w-16 h-16 rounded-lg object-cover" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium">{it.name}</div>
-                            <div className="text-sm text-gray-500">₱{it.price.toFixed(2)}</div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateQty(it.id, -1)} className="p-1 border rounded cursor-pointer"><Minus size={14} /></button>
-                            <div className="px-3">{it.quantity}</div>
-                            <button onClick={() => updateQty(it.id, 1)} className="p-1 border rounded cursor-pointer"><Plus size={14} /></button>
-                            <button onClick={() => removeItem(it.id)} className="ml-2 text-red-500 p-1 rounded cursor-pointer"><Trash2 size={14} /></button>
+                <h3 className="text-lg font-semibold mb-3">Order Summary</h3>
+                <div className="mt-3 space-y-4">
+                  {items.map(it => {
+                    const isExpanded = expandedItems[it.id];
+                    const hasAddons = it.addons && it.addons.length > 0;
+                    
+                    return (
+                      <div key={it.id} className="border-b border-gray-100 pb-3 last:border-0">
+                        <div className="flex items-start gap-3">
+                          <img src={it.img} alt={it.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{it.name}</div>
+                                {it.size && (
+                                  <div className="text-xs text-gray-500 mt-0.5">Size: {it.size}</div>
+                                )}
+                                
+                                {/* View Details Button */}
+                                {hasAddons && (
+                                  <button
+                                    onClick={() => toggleItemDetails(it.id)}
+                                    className="text-xs text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1 mt-1 transition"
+                                  >
+                                    {isExpanded ? (
+                                      <>
+                                        Hide Details <ChevronUp className="w-3 h-3" />
+                                      </>
+                                    ) : (
+                                      <>
+                                        View Details <ChevronDown className="w-3 h-3" />
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+
+                                {/* Display Add-ons - Collapsible */}
+                                {hasAddons && isExpanded && (
+                                  <div className="mt-2 bg-orange-50 rounded-lg p-2 animate-slideDown">
+                                    <div className="flex items-center gap-1 text-xs font-medium text-orange-700 mb-1">
+                                      <Package size={12} />
+                                      Add-ons:
+                                    </div>
+                                    {it.addons.map((addon, idx) => (
+                                      <div key={idx} className="flex justify-between text-xs text-gray-600 ml-4 py-0.5">
+                                        <span>
+                                          • {addon.name} {addon.qty > 1 && <span className="text-gray-400">(×{addon.qty})</span>}
+                                        </span>
+                                        <span className="font-medium text-orange-600">
+                                          +₱{(addon.price * addon.qty).toFixed(2)}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="text-sm text-gray-600">
+                                    ₱{it.price.toFixed(2)} × {it.quantity}
+                                  </div>
+                                  <div className="font-semibold text-sm">
+                                    ₱{(it.price * it.quantity).toFixed(2)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-2">
+                              <div className="flex items-center gap-1 bg-gray-100 rounded-md">
+                                <button 
+                                  onClick={() => updateQty(it.id, -1)} 
+                                  className="p-1.5 hover:bg-gray-200 rounded-l-md cursor-pointer transition"
+                                >
+                                  <Minus size={14} />
+                                </button>
+                                <div className="px-3 text-sm font-medium">{it.quantity}</div>
+                                <button 
+                                  onClick={() => updateQty(it.id, 1)} 
+                                  className="p-1.5 hover:bg-gray-200 rounded-r-md cursor-pointer transition"
+                                >
+                                  <Plus size={14} />
+                                </button>
+                              </div>
+                              <button 
+                                onClick={() => removeItem(it.id)} 
+                                className="ml-auto text-red-500 p-1.5 rounded hover:bg-red-50 cursor-pointer transition"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
-                <hr className="my-3" />
+                <hr className="my-4" />
                 <div className="text-sm text-gray-600 space-y-2">
                   <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal.toFixed(2)}</span></div>
                   <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee.toFixed(2)}</span></div>
-                  <div className="flex justify-between font-semibold text-lg mt-2"><span>Total</span><span>₱{grandTotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t border-gray-200">
+                    <span>Total</span>
+                    <span>₱{grandTotal.toFixed(2)}</span>
+                  </div>
                 </div>
 
-                <button onClick={handleCheckout} disabled={loading} className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50">
+                <button onClick={handleCheckout} disabled={loading} className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 hover:bg-yellow-800 transition">
                   {loading ? "Processing..." : "Place Order"}
                 </button>
               </div>
@@ -443,6 +526,22 @@ export default function Checkout() {
           )}
         </AnimatePresence>
       </div>
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 200px;
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
