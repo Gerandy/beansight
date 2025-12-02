@@ -73,7 +73,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
               <span className="text-sm font-normal text-coffee-500">({cart.length})</span>
             </h2>
             <button
-              className="text-coffee-600 hover:text-coffee-700 font-medium text-sm flex items-center gap-1 transition"
+              className="cursor-pointer text-coffee-600 hover:text-coffee-700 font-medium text-sm flex items-center gap-1 transition"
               onClick={() => navigate("/menu")}
             >
               Add More <ChevronRight className="w-4 h-4" />
@@ -92,7 +92,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                   navigate("/menu");
                   setCartOpen(false);
                 }}
-                className="bg-coffee-600 text-white px-6 py-2 rounded-full font-medium hover:bg-coffee-700 transition"
+                className="cursor-pointer bg-coffee-600 text-white px-6 py-2 rounded-full font-medium hover:bg-coffee-700 transition"
               >
                 Browse Menu
               </button>
@@ -172,7 +172,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                         <div className="flex justify-between items-center mt-2">
                           <div className="flex items-center gap-2 bg-coffee-100 rounded-lg p-1">
                             <button
-                              className="p-1 hover:bg-white rounded transition"
+                              className="cursor-pointer p-1 hover:bg-white rounded transition"
                               onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                               aria-label="Decrease quantity"
                             >
@@ -182,7 +182,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                               {item.quantity}
                             </span>
                             <button
-                              className="p-1 hover:bg-white rounded transition"
+                              className="cursor-pointer p-1 hover:bg-white rounded transition"
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               aria-label="Increase quantity"
                             >
@@ -230,7 +230,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
             </div>
             <Link to="/checkout">
               <button
-                className={`w-full py-3 rounded-xl font-bold text-base transition shadow-lg ${
+                className={`cursor-pointer w-full py-3 rounded-xl font-bold text-base transition shadow-lg ${
                   cart.length === 0
                     ? "bg-coffee-200 text-coffee-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-coffee-600 to-coffee-700 text-white hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
