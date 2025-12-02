@@ -60,6 +60,7 @@ export default function Sales() {
   const [manualGoal, setManualGoal] = useState(null); // number or null
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState("");
+  const [todaySales, setTodaySales] = useState(0);
 
   // helper: weekday name (Sunday..Saturday)
   const weekdayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
@@ -72,29 +73,71 @@ export default function Sales() {
 
   // --- Handlers for chart/table clicks ---
   function handleSummaryClick(type) {
-    let title = "";
-    let columns = [];
-    let data = [];
-    switch (type) {
-      case "revenue":
-        title = "Revenue Details";
-        columns = ["Order ID", "Date", "Total"];
-        data = orders.map(o => ({
+  let title = "";
+  let columns = [];
+  let data = [];
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // reset time
+
+  switch (type) {
+
+    // ================= ALL CATEGORIES (ALL-TIME) =================
+    case "allCategories":
+    title = "All-Time Sales Summary";
+    columns = ["Category", "Total"];
+
+    // Flatten all items from all orders
+    const allItems = orders.flatMap(order => order.items || []);
+
+    // Compute totals per category
+    const categoryTotals = {};
+    allItems.forEach(item => {
+      const cat = item.category || "Unknown";
+      const price = Number(item.price) || 0;
+      const quantity = Number(item.quantity) || 1; // default to 1 if missing
+
+      if (!categoryTotals[cat]) categoryTotals[cat] = 0;
+      categoryTotals[cat] += price * quantity; // sum with quantity
+    });
+
+    // Convert totals object to table data
+    data = Object.keys(categoryTotals).map(cat => ({
+      Category: cat,
+      Total: `₱${categoryTotals[cat].toLocaleString()}`
+    }));
+    break;
+
+
+    // ================= TODAY'S ORDERS =================
+    case "today":
+      title = "Today's Orders";
+      columns = ["Order ID", "Date", "Total"];
+
+      data = orders
+        .filter(o => {
+          const d = parseDate(o.completedAt || o.createdAt);
+          if (!d) return false;
+          return d >= today;
+        })
+        .map(o => ({
           "Order ID": o.id,
           "Date": parseDate(o.completedAt || o.createdAt)?.toLocaleString() || "—",
           "Total": `₱${Number(o.total || 0).toLocaleString()}`
         }));
-        break;
-      default:
-        title = "Details";
-        columns = [];
-        data = [];
-    }
-    setModalTitle(title);
-    setModalColumns(columns);
-    setModalData(data);
-    setIsModalOpen(true);
+      break;
+
+    default:
+      title = "Details";
+      columns = [];
+      data = [];
   }
+
+  setModalTitle(title);
+  setModalColumns(columns);
+  setModalData(data);
+  setIsModalOpen(true);
+}
 
   function handleTrendClick(dateStr) {
     const filtered = orders.filter(o => {
@@ -217,6 +260,7 @@ export default function Sales() {
   // ---------------------------
   const analytics = useMemo(() => {
     let totalRevenue = 0, totalDiscounts = 0, ordersToday = 0, totalOrdersCount = 0;
+    let todaySaless = 0;
     const now = new Date();
     const weekStart = startOfWeek(now);
     const dailyMap = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
@@ -228,10 +272,17 @@ export default function Sales() {
       if (!completed) return;
       const orderTotal = Number(order.total || 0);
       const orderDiscount = Number(order.discountAmount || 0);
+     
 
       totalRevenue += orderTotal;
       totalDiscounts += orderDiscount;
       totalOrdersCount += 1;
+
+      if (completed.getFullYear() === now.getFullYear() && completed.getMonth() === now.getMonth() && completed.getDate() === now.getDate()) {
+        todaySaless += order.total || 0;
+        setTodaySales(todaySaless)
+      }
+      
 
       if (
         completed.getFullYear() === now.getFullYear() &&
@@ -672,6 +723,7 @@ export default function Sales() {
       categorySales,
       recentOrders,
       totalOrdersCount,
+      
     };
   }, [orders]);
 
@@ -910,29 +962,20 @@ export default function Sales() {
         {/* Revenue Card */}
         <div
           className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600 cursor-pointer"
-          onClick={() => handleSummaryClick("revenue")}
+          onClick={() => handleSummaryClick("allCategories")}
         >
           <h2 className="text-sm text-coffee-500">Total Revenue</h2>
           <p className="text-3xl font-bold text-coffee-700">₱{Number(totalRevenue).toLocaleString()}</p>
-          <div className="flex items-center text-sm mt-1">
-            {kpiComparisons.revenue.change > 0 ? (
-              <span className="text-green-600 font-bold mr-1">▲ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
-            ) : kpiComparisons.revenue.change < 0 ? (
-              <span className="text-red-600 font-bold mr-1">▼ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
-            ) : (
-              <span className="text-coffee-500 font-bold mr-1">—</span>
-            )}
-            <span className="text-coffee-500">vs last week</span>
-          </div>
-          <p className="text-green-600 text-xs mt-1">{revenuePlainEnglish}</p>
+          
+          <p className="text-green-600 text-l mt-1">Click to see what Category </p>
         </div>
 
         <div
           className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-coffee-600 cursor-pointer"
-          onClick={() => handleSummaryClick("revenue")}
+          onClick={() => handleSummaryClick("today")}
         >
           <h2 className="text-sm text-coffee-500">Todays Sale</h2>
-          <p className="text-3xl font-bold text-coffee-700">₱{Number(ordersToday).toLocaleString()}</p>
+          <p className="text-3xl font-bold text-coffee-700">₱{Number(todaySales).toLocaleString()}</p>
           <div className="flex items-center text-sm mt-1">
             {kpiComparisons.revenue.change > 0 ? (
               <span className="text-green-600 font-bold mr-1">▲ {Math.abs(kpiComparisons.revenue.change).toFixed(1)}%</span>
