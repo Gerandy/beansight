@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { X, Package, Clock, CheckCircle, ShoppingCart, RefreshCw } from "lucide-react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../firebase";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
+import { useCart } from "../CartContext";
 
 const Orders = () => {
+  const { addToCart } = useCart();
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ const Orders = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
   const navigate = useNavigate();
-
+  
   // Live fetch orders from the global "orders" collection
  useEffect(() => {
   const uid = localStorage.getItem("authToken");
@@ -61,6 +63,7 @@ const Orders = () => {
   const hasOrders = orders.length > 0;
   const currentOrders = orders.filter(order => !["Delivered", "Completed"].includes(order.status));
   const pastOrders = orders.filter(order => ["Delivered", "Completed"].includes(order.status));
+  
 
   let filteredOrders = activeTab === "current" ? currentOrders : pastOrders;
   if (filter !== "All") filteredOrders = filteredOrders.filter(order => order.status === filter);
@@ -68,7 +71,67 @@ const Orders = () => {
 
   const handleOrderClick = order => setSelectedOrder(order);
   const closeModal = () => setSelectedOrder(null);
-  const reorder = order => alert(`Reordering ${order.item}!`);
+  const reorder = (order) => {
+  if (!order || !order.items || order.items.length === 0) return;
+
+  // Add each item from the order to the cart, preserving quantity
+  order.items.forEach((item) => {
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity || 1,
+      img: item.img || null,
+      size: item.size,
+      category: item.category,
+    });
+  });
+
+  // Trigger fly-to-cart animation for the first item (optional: animate each with small delays)
+  if (order.items[0]?.img) {
+    triggerFlyToCart(order.items[0].img);
+  }
+
+};
+
+const triggerFlyToCart = (imgSrc) => {
+  const cartIcon = document.getElementById("navbar-cart-icon");
+  if (!cartIcon) return;
+
+  const cartRect = cartIcon.getBoundingClientRect();
+  // Start from center of the viewport (no product image element in Orders view)
+  const startX = window.innerWidth / 2;
+  const startY = window.innerHeight / 2;
+
+  const flyImg = document.createElement("img");
+  flyImg.src = imgSrc;
+  flyImg.style.position = "fixed";
+  flyImg.style.left = `${startX}px`;
+  flyImg.style.top = `${startY}px`;
+  flyImg.style.width = "120px";
+  flyImg.style.height = "120px";
+  flyImg.style.objectFit = "cover";
+  flyImg.style.borderRadius = "12px";
+  flyImg.style.zIndex = 9999;
+  flyImg.style.transition = "all 0.8s cubic-bezier(.42,.01,.56,1.02)";
+  flyImg.style.transform = "translate(-50%,-50%)";
+  document.body.appendChild(flyImg);
+
+  // animate to cart
+  requestAnimationFrame(() => {
+    flyImg.style.left = `${cartRect.left + cartRect.width / 2}px`;
+    flyImg.style.top = `${cartRect.top + cartRect.height / 2}px`;
+    flyImg.style.width = "40px";
+    flyImg.style.height = "40px";
+    flyImg.style.opacity = "0.25";
+    flyImg.style.transform = "translate(-50%,-50%) scale(0.35)";
+  });
+
+  setTimeout(() => {
+    if (flyImg.parentNode) document.body.removeChild(flyImg);
+  }, 900);
+};
+  
 
   const getStatusIcon = status => {
     if (["Delivered", "Completed"].includes(status)) return <CheckCircle className="w-5 h-5" />;

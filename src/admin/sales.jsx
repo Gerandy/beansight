@@ -231,9 +231,7 @@ export default function Sales() {
         console.error("Failed to load orders:", err);
         if (!mounted) return;
         setError(err.message || String(err));
-      } finally {
-        if (mounted) setLoading(false);
-      }
+      } 
     };
 
     fetchOrders();
@@ -246,6 +244,7 @@ export default function Sales() {
 
   useEffect(()=> {
     const loadSettings = async () => {
+      setLoading(true);
       const docRef = await getDoc(doc(db, "settings", "analytics"));
       if(!docRef.exists()) {
         console.log("data not exists")
@@ -254,7 +253,7 @@ export default function Sales() {
       const data = docRef.data();
 
       setManualGoal(data.settings.goalAmount);
-
+      setLoading(false);
     }
 
     loadSettings()
