@@ -15,18 +15,18 @@ import {
 } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
-import { db } from "../firebase"; // Adjust path
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { NavLink } from "react-router-dom";
-import DrillDownModal from "./layouts/dmodal"; // Adjust path
-
-function parseDate(value) {
-  // Firestore Timestamps have toDate(), others might be ISO strings
-  if (!value) return null;
-  if (typeof value.toDate === "function") return value.toDate();
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? null : d;
-}
+import DrillDownModal from "./layouts/dmodal";
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+  SkeletonPieChart,
+  SkeletonFinancialCard,
+  SkeletonGoalWidget,
+} from "../components/SkeletonLoader";
 
 // Helper to calculate % change
 function calcPercentageChange(current, previous) {
@@ -63,15 +63,12 @@ function filterByPeriod(date, period, customStart, customEnd) {
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState("This Month");
+  const [dateRange, setDateRange] = useState("Today");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [orders, setOrders] = useState([]);
-  const [tax, setTax] = useState(12);
-  const vat = tax /100;
-  
+  const [loading, setLoading] = useState(true);
 
-  // New states for Financial Health & Daily Goal
   const [marginPercent, setMarginPercent] = useState(40); // shows "Margin: 40%"
   const [dailyGoal, setDailyGoal] = useState(5000); // default daily goal (₱)
 
@@ -89,68 +86,29 @@ export default function Dashboard() {
   // Fetch Orders from Firestore
   // -------------------------------
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const snapshot = await getDocs(collection(db, "orders"));
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setOrders(data);
-        
+        const [ordersSnap, productsSnap, inventorySnap, expensesSnap] = await Promise.all([
+          getDocs(collection(db, "orders")),
+          getDocs(collection(db, "products")),
+          getDocs(collection(db, "inventory")),
+          getDocs(collection(db, "expenses")),
+        ]);
+
+        setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setProducts(productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setInventory(inventorySnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        setExpensesData(expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
-        console.error("Error fetching orders:", err);
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Fetch products for inventory alerts
-    const fetchProducts = async () => {
-      try {
-        const snap = await getDocs(collection(db, "inventory"));
-        const pdata = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setProducts(pdata);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      }
-    };
-
-    // Fetch inventory for low stock alerts
-    const fetchInventory = async () => {
-      try {
-        const snap = await getDocs(collection(db, "inventory"));
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setInventory(data);
-      } catch (err) {
-        console.error("Error fetching inventory:", err);
-      }
-    };
-
-    // Fetch expenses for real expenses
-    const fetchExpenses = async () => {
-      try {
-        const snap = await getDocs(collection(db, "expenses"));
-        const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setExpensesData(data);
-      } catch (err) {
-        console.error("Error fetching expenses:", err);
-      }
-    };
-
-    fetchOrders();
-    fetchProducts();
-    fetchInventory();
-    fetchExpenses();
+    fetchData();
   }, []);
-
-
-  useEffect(()=>{
-    const loadSettings = async () =>{
-      const docRef = await getDoc(doc(db, "settings", "storePref"));
-      if(!docRef.exists()){console.log("data doesnt exist");return;}
-      const data = docRef.data();
-      setTax(data.taxRate);
-
-
-    }
-    loadSettings();
-  },[])
 
   // -------------------------------
   // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
@@ -269,10 +227,9 @@ export default function Dashboard() {
     const staffMap = {};
 
     orders.forEach(order => {
-      const completedDate = new parseDate(order.completedAt || order.createdAt);
+      const completedDate = new Date(order.completedAt || order.createdAt);
       if (filterByPeriod(completedDate, dateRange, customStartDate, customEndDate)) {
         totalSales += order.total || 0;
-        console.log(order.total)
         totalOrders += 1;
         if (order.customerName && !customerSet.has(order.customerName)) customerSet.add(order.customerName);
 
@@ -297,7 +254,7 @@ export default function Dashboard() {
     let totalExpenses = 0;
     expensesData.forEach(exp => {
       const d = new Date(exp.date);
-      if (filterByPeriod(d, dateRange, parseDate(customStartDate), parseDate(customEndDate))) {
+      if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
         totalExpenses += exp.amount || 0;
       }
     });
@@ -343,7 +300,7 @@ export default function Dashboard() {
       // By day of month (1-31)
       const dayMap = {};
       orders.forEach(order => {
-        const d = new parseDate(order.completedAt || order.createdAt);
+        const d = new Date(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const day = d.getDate();
           dayMap[day] = (dayMap[day] || 0) + (order.total || 0);
@@ -354,12 +311,12 @@ export default function Dashboard() {
       periodUnit = "day";
     } else if (dateRange === "Custom Range" && customStartDate && customEndDate) {
       // By day in custom range
-      const start = new parseDate(customStartDate);
-      const end = new parseDate(customEndDate);
+      const start = new Date(customStartDate);
+      const end = new Date(customEndDate);
       const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       const dayMap = {};
       orders.forEach(order => {
-        const d = new parseDate(order.completedAt || order.createdAt);
+        const d = new Date(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const dateKey = d.toLocaleDateString();
           dayMap[dateKey] = (dayMap[dateKey] || 0) + (order.total || 0);
@@ -407,14 +364,7 @@ export default function Dashboard() {
 
   // Financial calculations: use real expenses
   const expenses = totalExpenses;
-  
-  
-
-  const grossSales = totalSales;
-  const vatAmount = grossSales * vat;
-  const netProfit = totalSales - expenses - vatAmount;
-  
-
+  const netProfit = totalSales - expenses;
 
   // Functions to get data and columns for financial modal
   const getFinancialData = (view) => {
@@ -431,25 +381,23 @@ export default function Dashboard() {
       if (expandedSections.category) {
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
-      data.push({ Detail: "Total Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
+      data.push({ Detail: "Total Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
       return data;
     }
     if (view === "net") {
       let data = [
-        { Detail: "Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
+        { Detail: "Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
       ];
       if (expandedSections.gross) {
         data.push(...salesData.map(d => ({ Detail: `  ${d.unit}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
       data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
-      
       if (expandedSections.expenses) {
         const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
         data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
       }
-      data.push({ Detail: "VAT", Value: `₱${vatAmount.toLocaleString()}`, Breakdown: "Perecentage for all the Sales", expandable: false, type: "expenses" });
-      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses - VAT = Net` });
+      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses = Net` });
       return data;
     }
     if (view === "expenses") {
@@ -467,6 +415,49 @@ export default function Dashboard() {
   };
 
   const getFinancialColumns = (view) => ["Detail", "Value", "Breakdown"];
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-48"></div>
+          </div>
+          <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+        </div>
+
+        {/* Daily Goal Skeleton */}
+        {dateRange === "Today" && <SkeletonGoalWidget />}
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <SkeletonFinancialCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+
+        {/* Customer Analytics + Top Selling Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonPieChart />
+          <SkeletonTable rows={5} />
+        </div>
+
+        {/* Staff Performance + Recent Orders Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonTable rows={10} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 md:p-8 space-y-8 min-h-screen">
@@ -560,7 +551,7 @@ export default function Dashboard() {
           <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between text-sm text-gray-600">
             <div className="flex flex-col">
               <span className="text-xs">Gross Revenue</span>
-              <span className="font-semibold">₱{grossSales.toLocaleString()}</span>
+              <span className="font-semibold">₱{totalSales.toLocaleString()}</span>
             </div>
             <div className="flex flex-col text-right">
               <span className="text-xs">Expenses</span>
@@ -804,7 +795,7 @@ export default function Dashboard() {
         </div>
       </div>
     
-      {/* Add the modal */}
+      {/* Financial Modal */}
       <DrillDownModal
         isOpen={financialModalOpen}
         onClose={() => setFinancialModalOpen(false)}

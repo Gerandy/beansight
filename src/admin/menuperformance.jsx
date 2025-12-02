@@ -11,57 +11,53 @@ import {
   Cell,
 } from "recharts";
 import { useEffect, useState, useMemo } from "react";
-import { db } from "../firebase"; // adjust path if needed
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+  SkeletonPieChart,
+} from "../components/SkeletonLoader";
 
 export default function MenuPerformance() {
   const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]); // NEW: products list
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- NEW: control for chart sorting/metric ---
-  const [sortBy, setSortBy] = useState("quantity"); // 'quantity' = By Volume, 'revenue' = By Sales (₱)
+  const [sortBy, setSortBy] = useState("quantity");
 
   useEffect(() => {
     let mounted = true;
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const snap = await getDocs(collection(db, "orders"));
-        const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        if (!mounted) return;
-        setOrders(data);
-      } catch (err) {
-        console.error("Failed to load orders:", err);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchOrders();
-    return () => (mounted = false);
-  }, []);
+        const [ordersSnap, productsSnap] = await Promise.all([
+          getDocs(collection(db, "orders")),
+          getDocs(collection(db, "products")),
+        ]);
 
-  // NEW: fetch products collection (to access createdAt and product list)
-  useEffect(() => {
-    let mounted = true;
-    const fetchProducts = async () => {
-      try {
-        const snap = await getDocs(collection(db, "products"));
-        const data = snap.docs.map((doc) => {
+        if (!mounted) return;
+
+        const ordersData = ordersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        const productsData = productsSnap.docs.map((doc) => {
           const d = doc.data();
-          // normalize createdAt if Firestore Timestamp
           const createdAt = d?.createdAt && typeof d.createdAt.toDate === "function"
             ? d.createdAt.toDate()
             : d?.createdAt || null;
           return { id: doc.id, name: d?.name || "Unknown", createdAt, ...d };
         });
-        if (!mounted) return;
-        setProducts(data);
+
+        setOrders(ordersData);
+        setProducts(productsData);
       } catch (err) {
-        console.error("Failed to load products:", err);
+        console.error("Failed to load data:", err);
+      } finally {
+        if (mounted) setLoading(false);
       }
     };
-    fetchProducts();
+
+    fetchData();
     return () => (mounted = false);
   }, []);
 
@@ -78,11 +74,9 @@ export default function MenuPerformance() {
         const price = Number(item.price ?? 0);
         totalItems += qty;
 
-        // Category aggregation (by quantity)
         const cat = item?.category || "Uncategorized";
         categoryMap[cat] = (categoryMap[cat] || 0) + qty;
 
-        // Item aggregation: keep both quantity and revenue
         const name = item.name || "Unknown";
         if (!itemMap[name]) itemMap[name] = { quantity: 0, revenue: 0 };
         itemMap[name].quantity += qty;
@@ -102,21 +96,17 @@ export default function MenuPerformance() {
     return { categoryData, itemsList, totalItemsSold: totalItems, avgSales };
   }, [orders]);
 
-  // --- NEW: derive top 5 based on sortBy ---
   const topItems = useMemo(() => {
     const key = sortBy === "revenue" ? "revenue" : "quantity";
     return [...itemsList]
       .sort((a, b) => (b[key] || 0) - (a[key] || 0))
       .slice(0, 5)
-      .map((it) => ({ ...it, value: Math.round(it[key] * (key === "revenue" ? 100 : 1)) / (key === "revenue" ? 100 : 1) /* keep revenue/quantity as value */ }));
+      .map((it) => ({ ...it, value: Math.round(it[key] * (key === "revenue" ? 100 : 1)) / (key === "revenue" ? 100 : 1) }));
   }, [itemsList, sortBy]);
 
-  // NEW: total of topItems values (used for insight %s)
   const topItemsTotal = topItems.reduce((s, x) => s + (x.value || 0), 0) || 1;
   
-  // NEW: compute underperforming items (exclude products created today)
   const underperformingItems = useMemo(() => {
-    // helper: is same day
     const isSameDay = (d1, d2) => {
       if (!d1 || !d2) return false;
       return d1.getFullYear() === d2.getFullYear() &&
@@ -125,13 +115,10 @@ export default function MenuPerformance() {
     };
 
     const today = new Date();
-    // map sold counts by product name from itemsList
     const soldMap = {};
     itemsList.forEach((it) => { soldMap[it.name] = it.quantity || 0; });
 
-    // Build candidate list from products. If products list empty (no fetch), fall back to itemsList names.
     let candidatesSource = products && products.length ? products : itemsList.map(it => ({ name: it.name, createdAt: null }));
-    // normalize objects
     const normalized = candidatesSource.map(p => ({
       id: p.id,
       name: p.name,
@@ -139,19 +126,42 @@ export default function MenuPerformance() {
       sold: soldMap[p.name] ?? 0,
     }));
 
-    // exclude products created today
     const filtered = normalized.filter(p => !(p.createdAt && isSameDay(new Date(p.createdAt), today)));
 
-    // select those with low sales (<5), sort ascending by sold, put zero-sold first
     const low = filtered
       .filter(p => p.sold < 5)
       .sort((a, b) => a.sold - b.sold)
-      .slice(0, 12); // limit the list
+      .slice(0, 12);
 
     return low;
   }, [products, itemsList]);
 
-  if (loading) return <div className="p-6 text-coffee-600">Loading menu performance...</div>;
+  if (loading) {
+    return (
+      <div className="p-6 space-y-8 min-h-screen font-[var(--font-sans)]">
+        {/* Header Skeleton */}
+        <div className="animate-pulse">
+          <div className="h-9 bg-gray-200 rounded w-64 mb-6"></div>
+        </div>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SkeletonChart />
+          <SkeletonPieChart />
+        </div>
+
+        {/* Table Skeleton */}
+        <SkeletonTable rows={8} />
+      </div>
+    );
+  }
 
   const pieColors = ["var(--color-coffee-400)", "var(--color-coffee-500)", "var(--color-coffee-600)", "var(--color-coffee-700)", "var(--color-coffee-800)"];
 
@@ -179,12 +189,11 @@ export default function MenuPerformance() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* ===== Updated: Top 5 Bestsellers Horizontal Bar Chart ===== */}
+        {/* Top 5 Bestsellers Horizontal Bar Chart */}
         <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-[var(--color-coffee-800)]">🏆 Top 5 Bestsellers</h2>
 
-            {/* --- NEW: Toggle Controls --- */}
             <div className="inline-flex rounded-md shadow-sm bg-[var(--color-coffee-50)] p-1">
               <button
                 onClick={() => setSortBy("quantity")}
@@ -206,7 +215,6 @@ export default function MenuPerformance() {
           </div>
 
           <ResponsiveContainer width="100%" height={300}>
-            {/* key={sortBy} helps re-mount/animate when metric changes */}
             <BarChart
               key={sortBy}
               layout="vertical"
@@ -221,14 +229,14 @@ export default function MenuPerformance() {
                 {topItems.map((_, index) => (
                   <Cell
                     key={index}
-                    fill={index === 0 ? "#D4AF37" /* gold for #1 */ : "var(--color-coffee-600)"}
+                    fill={index === 0 ? "#D4AF37" : "var(--color-coffee-600)"}
                   />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
 
-          {/* --- NEW: Insights for Top 5 Bestsellers --- */}
+          {/* Insights for Top 5 Bestsellers */}
           <div className="mt-4 pt-4 border-t border-[var(--color-coffee-100)]">
             <h4 className="text-sm font-semibold text-[var(--color-coffee-800)] mb-2">Insights</h4>
             <ul className="text-[var(--color-coffee-700)] text-sm space-y-2">
@@ -257,7 +265,6 @@ export default function MenuPerformance() {
         <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
           <h2 className="text-lg font-semibold text-[var(--color-coffee-800)] mb-4">Category Sales Share</h2>
 
-          {/* compute largest % and any small category */}
           {(() => {
             const total = totalItemsSold || 0;
             const largest = categoryData[0];
@@ -282,7 +289,6 @@ export default function MenuPerformance() {
                       ))}
                     </Pie>
 
-                    {/* Center text showing largest category % */}
                     <text
                       x="50%"
                       y="50%"
@@ -297,7 +303,6 @@ export default function MenuPerformance() {
                   </PieChart>
                 </ResponsiveContainer>
 
-                {/* Dynamic Legend: show name + % (growth not available) */}
                 <div className="mt-4 grid gap-2">
                   {categoryData.map((cat, i) => {
                     const pct = total ? Math.round((cat.sales / total) * 100) : 0;
@@ -316,7 +321,6 @@ export default function MenuPerformance() {
                   })}
                 </div>
 
-                {/* Actionable insight if any category < 5% */}
                 {smallCategory ? (
                   <div className="mt-4 text-sm text-[var(--color-coffee-700)]">
                     💡 Tip: Create a bundle deal to boost {smallCategory.name} sales.
@@ -328,7 +332,7 @@ export default function MenuPerformance() {
         </div>
       </div>
 
-      {/* --- NEW: Menu Cleanup Candidates (Underperforming Items) --- */}
+      {/* Menu Cleanup Candidates (Underperforming Items) */}
       <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-[var(--color-coffee-800)]">⚠️ Menu Cleanup Candidates</h3>
@@ -368,8 +372,6 @@ export default function MenuPerformance() {
           <p className="text-[var(--color-coffee-600)]">No menu cleanup candidates found.</p>
         )}
       </div>
-      {/* --- end Menu Cleanup Candidates --- */}
-
     </div>
   );
 }

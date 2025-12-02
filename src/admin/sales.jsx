@@ -12,13 +12,20 @@ import {
   PieChart,
   Pie,
   Legend,
-  Area, // <-- Added Area import
-  
+  Area,
 } from "recharts";
 import { useEffect, useMemo, useState } from "react";
-import { db } from "../firebase"; // adjust path if needed
-import { collection, getDocs,getDoc, doc } from "firebase/firestore";
-import DrillDownModal from "./layouts/dmodal"; // adjust path if needed
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
+import DrillDownModal from "./layouts/dmodal";
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+  SkeletonPieChart,
+  SkeletonGoalWidget,
+  skeletonStyles,
+} from "../components/SkeletonLoader";
 
 function parseDate(value) {
   // Firestore Timestamps have toDate(), others might be ISO strings
@@ -172,7 +179,6 @@ export default function Sales() {
   function handleChannelClick(channel) {
     setModalTitle(`Sales Channel: ${channel}`);
     setModalColumns(["Order ID", "Total"]);
-    // Dummy: show all orders (replace with real channel filter if available)
     setModalData(orders.map(o => ({
       "Order ID": o.id,
       "Total": `₱${Number(o.total || 0).toLocaleString()}`
@@ -183,7 +189,6 @@ export default function Sales() {
   function handlePaymentClick(method) {
     setModalTitle(`Payment Method: ${method}`);
     setModalColumns(["Order ID", "Total"]);
-    // Dummy: show all orders (replace with real payment filter if available)
     setModalData(orders.map(o => ({
       "Order ID": o.id,
       "Total": `₱${Number(o.total || 0).toLocaleString()}`
@@ -938,6 +943,43 @@ export default function Sales() {
     );
   }
 
+  // Show loading skeleton
+  if (loading) {
+    return (
+      <>
+        <div className="p-6 space-y-8 font-sans">
+          <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Report</h1>
+
+          {/* KPI Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+
+          {/* Goal Widget Skeleton */}
+          <SkeletonGoalWidget />
+
+          {/* Charts Skeleton */}
+          <div className="grid grid-cols-1 gap-6">
+            <SkeletonChart />
+            <SkeletonTable rows={5} />
+          </div>
+
+          {/* Peak Hours Skeleton */}
+          <SkeletonChart />
+
+          {/* Transaction Insights Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <SkeletonPieChart />
+            <SkeletonPieChart />
+          </div>
+        </div>
+        <style jsx>{skeletonStyles}</style>
+      </>
+    );
+  }
+
   // ---------------------------
   // UI
   // ---------------------------
@@ -954,7 +996,6 @@ export default function Sales() {
 
       <h1 className="text-3xl font-bold text-coffee-800 mb-4">☕ Sales Report</h1>
 
-      {loading && <div className="text-sm text-coffee-600">Loading...</div>}
       {error && <div className="text-sm text-red-600">Error: {error}</div>}
 
       {/* KPI Summary */}
