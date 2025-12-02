@@ -13,11 +13,13 @@ import "swiper/css/pagination";
 
 function Slider() {
   const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Fetch banners from Firestore
   useEffect(() => {
     const loadBanners = async () => {
+      setLoading(true);
       try {
         const snapshot = await getDocs(collection(db, "banners"));
         const banners = snapshot.docs.map((doc) => ({
@@ -27,15 +29,35 @@ function Slider() {
         setSlides(banners);
       } catch (err) {
         console.error("Failed to load banners:", err);
+      } finally {
+        setLoading(false);
       }
     };
     loadBanners();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center" style={{ marginTop: "88px" }}>
+        <div className="relative w-full max-w-5xl mx-auto px-4 min-h-0 md:min-h-[400px]">
+          <div className="rounded-2xl overflow-hidden shadow-lg bg-gray-200 animate-pulse">
+            <div className="w-full h-[200px] md:h-[400px] bg-gray-300"></div>
+            {/* Pagination dots skeleton */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (slides.length === 0) {
     return (
       <div className="h-40 flex justify-center items-center text-gray-500">
-        Loading banners...
+        No banners available
       </div>
     );
   }

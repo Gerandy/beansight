@@ -139,10 +139,8 @@ export default function MenuPerformance() {
   if (loading) {
     return (
       <div className="p-6 space-y-8 min-h-screen font-[var(--font-sans)]">
-        {/* Header Skeleton */}
-        <div className="animate-pulse">
-          <div className="h-9 bg-gray-200 rounded w-64 mb-6"></div>
-        </div>
+        {/* Header - Keep visible during loading */}
+        <h1 className="text-3xl font-bold text-[var(--color-coffee-900)] mb-6">☕ Menu Performance</h1>
 
         {/* KPI Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

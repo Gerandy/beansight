@@ -17,6 +17,7 @@ function Favorites() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
+      setLoading(true);
       if (!favoritesArr) {
         setFavoriteProducts([]);
         setLoading(false);
@@ -68,7 +69,32 @@ function Favorites() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-600">Loading favorites...</div>
+      <div className="max-w-[1050px] mx-auto px-4 py-8 relative">
+        {/* Header Skeleton */}
+        <div className="mb-6 animate-pulse">
+          <div className="h-10 bg-gray-200 rounded w-48 mb-2"></div>
+          <div className="h-6 bg-gray-200 rounded w-64"></div>
+        </div>
+
+        {/* Desktop Skeleton Grid */}
+        <div className="hidden lg:grid grid-cols-5 gap-4">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <MenuCard key={idx} isLoading={true} />
+          ))}
+        </div>
+
+        {/* Mobile Skeleton Swiper */}
+        <div className="lg:hidden flex gap-4 overflow-x-hidden px-2">
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <div
+              key={idx}
+              className="flex-shrink-0 w-[calc(47vw-16px)]"
+            >
+              <MenuCard isLoading={true} />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -105,7 +131,7 @@ function Favorites() {
         {showCarousel && (
           <button
             className={`absolute left-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
-              carouselIndex === 0 ? "cursor-not-allowed" : "cursor-pointer"
+              carouselIndex === 0 ? "cursor-not-allowed opacity-50" : "cursor-pointer"
             }`}
             onClick={handlePrev}
             disabled={carouselIndex === 0}
@@ -125,7 +151,12 @@ function Favorites() {
         >
           {visibleProducts.map((product) => (
             <Link to={`/menu/product-details/${product.id}`} key={product.id}>
-              <MenuCard name={product.name} price={product.price} img={product.img} />
+              <MenuCard 
+                name={product.name} 
+                price={product.price} 
+                img={product.img}
+                isLoading={false}
+              />
             </Link>
           ))}
           {/* Fill empty columns if less than 5 */}
@@ -136,7 +167,7 @@ function Favorites() {
         {showCarousel && (
           <button
             className={`absolute right-[-40px] z-10 bg-coffee-600 rounded-full shadow p-2 hover:bg-coffee-700 text-white ${
-              carouselIndex >= maxIndex ? "cursor-not-allowed" : "cursor-pointer"
+              carouselIndex >= maxIndex ? "cursor-not-allowed opacity-50" : "cursor-pointer"
             }`}
             onClick={handleNext}
             disabled={carouselIndex >= maxIndex}
@@ -161,7 +192,12 @@ function Favorites() {
             className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
           >
             <Link to={`/menu/product-details/${product.id}`}>
-              <MenuCard name={product.name} price={product.price} img={product.img} />
+              <MenuCard 
+                name={product.name} 
+                price={product.price} 
+                img={product.img}
+                isLoading={false}
+              />
             </Link>
           </div>
         ))}

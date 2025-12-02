@@ -11,8 +11,14 @@ import {
 
 import { X, Check, Coffee, Package, Layers, Tag, Ruler, AlertTriangle, Pencil } from "lucide-react";
 
-import { db } from "../firebase"; // your firebase config file
+import { db } from "../firebase";
 import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, getDoc } from "firebase/firestore";
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+  SkeletonPieChart,
+} from "../components/SkeletonLoader";
 
 const generateId = (() => {
   let id = 1000;
@@ -21,6 +27,7 @@ const generateId = (() => {
 
 function InventoryAnalytics() {
   const [inventoryData, setInventoryData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -35,9 +42,11 @@ function InventoryAnalytics() {
 
   // Fetch inventory from Firestore
   useEffect(() => {
+    setLoading(true);
     const unsub = onSnapshot(collection(db, "inventory"), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setInventoryData(data);
+      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -276,6 +285,46 @@ function InventoryAnalytics() {
     0
   );
   
+  if (loading) {
+    return (
+      <div className="p-8 space-y-8 min-h-screen text-coffee-800 font-sans">
+        {/* Header - Keep visible during loading */}
+        <header className="flex items-center mb-6">
+          <h1 className="text-3xl font-bold text-coffee-800">☕ Inventory Analytics</h1>
+          <button
+            disabled
+            className="ml-auto text-2xl font-bold bg-coffee-700 text-coffee-50 px-5 py-2.5 rounded-xl shadow opacity-50 cursor-not-allowed"
+          >
+            + Add Item
+          </button>
+        </header>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="flex flex-col md:flex-row gap-4 items-center animate-pulse">
+          <div className="h-10 bg-gray-200 rounded-xl w-full md:w-1/3"></div>
+          <div className="h-10 bg-gray-200 rounded-xl w-32"></div>
+        </div>
+
+        {/* Donut Chart Skeleton */}
+        <SkeletonPieChart />
+
+        {/* Inventory Table Skeleton */}
+        <SkeletonTable rows={8} />
+
+        {/* Low Stock Table Skeleton */}
+        <SkeletonTable rows={3} />
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-8 min-h-screen text-coffee-800 font-sans">
       <header className="flex items-center mb-6">

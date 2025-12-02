@@ -16,13 +16,57 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
+import {
+  SkeletonCard,
+  SkeletonTable,
+} from "../components/SkeletonLoader";
+
+
+
+// Add this component before ProductManagement
+const ProductImage = ({ product, className = "w-28 h-20" }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  if (!product?.img || imageError) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center rounded-lg border border-dashed border-coffee-300 bg-white/40`}
+      >
+        <Upload className="text-coffee-700" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} relative rounded-lg overflow-hidden`}>
+      {imageLoading && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+      )}
+      <img
+        src={product.img}
+        alt={product?.name}
+        className={`${className} object-cover rounded-lg transition-opacity duration-300 ${
+          imageLoading ? 'opacity-0' : 'opacity-100'
+        }`}
+        onLoad={() => setImageLoading(false)}
+        onError={() => {
+          setImageLoading(false);
+          setImageError(true);
+        }}
+      />
+    </div>
+  );
+};
 
 
 
 export default function ProductManagement() {
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, "Inventory"));
         const productList = querySnapshot.docs.map(doc => {
@@ -37,6 +81,8 @@ export default function ProductManagement() {
         setProducts(productList);
       } catch (error) {
         console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -217,26 +263,6 @@ export default function ProductManagement() {
     }
   };
 
-  // ProductImage component with createObjectURL management (prevents leaks)
-  const ProductImage = ({ product, className = "w-28 h-20" }) => {
-    if (product?.img) {
-      return (
-        <img 
-          src={product.img} 
-          alt={product?.name} 
-          className={`${className} object-cover rounded-lg`} 
-        />
-      );
-    }
-    return (
-      <div
-        className={`${className} flex items-center justify-center rounded-lg border border-dashed border-coffee-300 bg-white/40`}
-      >
-        <Upload className="text-coffee-700" />
-      </div>
-    );
-  };
-
   // Update formImageUrl to show preview or existing image
   const [formImageUrl, setFormImageUrl] = useState(null);
   useEffect(() => {
@@ -379,6 +405,62 @@ export default function ProductManagement() {
       console.error("Error checking availability:", error);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen text-black p-2 sm:p-4 md:p-6 lg:p-10">
+        <div className="mx-auto max-w-screen-2xl w-full">
+          {/* Header - Keep visible during loading */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 mb-6 md:mb-8">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-coffee-900 flex items-center gap-3">
+                <span className="text-xl sm:text-2xl">☕</span> Product Management
+              </h1>
+              <p className="mt-2 text-xs sm:text-sm text-coffee-700 max-w-xl">
+                Manage menu items, pricing, availability and images. Clean, responsive layout designed for quick scanning.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <div className="hidden md:flex items-center gap-3 shrink-0">
+                <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
+                  <div className="text-xs text-coffee-600">Total items</div>
+                  <div className="h-6 w-12 bg-gray-200 rounded animate-pulse mx-auto mt-1"></div>
+                </div>
+                <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
+                  <div className="text-xs text-coffee-600">Available</div>
+                  <div className="h-6 w-12 bg-gray-200 rounded animate-pulse mx-auto mt-1"></div>
+                </div>
+              </div>
+              <button
+                disabled
+                className="flex items-center gap-2 bg-coffee-700 text-white px-4 py-2 rounded-2xl shadow opacity-50 cursor-not-allowed w-full sm:w-auto"
+              >
+                <Plus size={16} /> Add Product
+              </button>
+            </div>
+          </div>
+
+          {/* Controls Skeleton */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-3 sm:p-4 md:p-5 mb-4 md:mb-6 shadow-soft-lg animate-pulse">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+              <div className="h-10 bg-gray-200 rounded-xl w-full lg:w-1/2"></div>
+              <div className="h-10 bg-gray-200 rounded-xl w-full lg:w-1/4"></div>
+            </div>
+          </div>
+
+          {/* Cards Skeleton */}
+          <div className="grid gap-4 sm:gap-6 
+                  grid-cols-[repeat(auto-fit,minmax(330px,1fr))] 
+                  md:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] 
+                  xl:grid-cols-[repeat(auto-fit,minmax(420px,1fr))]">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen text-blackp-2 sm:p-4 md:p-6 lg:p-10">

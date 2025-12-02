@@ -12,6 +12,11 @@ import {
 } from "recharts";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase"; // adjust path if needed
+import {
+  SkeletonCard,
+  SkeletonChart,
+  SkeletonTable,
+} from "../components/SkeletonLoader";
 
 function startOfMonth(date = new Date()) {
   const d = new Date(date);
@@ -128,7 +133,32 @@ export default function CustomerAnalytics() {
     };
   }, [orders]);
 
-  if (loading) return <div className="p-6 text-coffee-700">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="p-6 space-y-8 font-sans min-h-screen">
+        {/* Header - Keep visible during loading */}
+        <h1 className="text-3xl font-bold text-coffee-900 mb-6">👥 Customers Report</h1>
+
+        {/* KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+
+        {/* Table Skeleton */}
+        <SkeletonTable rows={5} />
+      </div>
+    );
+  }
+
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   const {
