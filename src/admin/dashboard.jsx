@@ -15,68 +15,17 @@ import {
 } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
-import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase"; // Adjust path
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { NavLink } from "react-router-dom";
-import DrillDownModal from "./layouts/dmodal";
+import DrillDownModal from "./layouts/dmodal"; // Adjust path
 
-// Skeleton Loading Components
-function SkeletonCard() {
-  return (
-    <div className="bg-white rounded-2xl shadow-sm p-6 animate-pulse">
-      <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-      <div className="h-12 bg-gray-300 rounded w-2/3 mb-2"></div>
-      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-    </div>
-  );
-}
-
-function SkeletonChart() {
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
-      <div className="h-5 bg-gray-200 rounded w-1/3 mb-4"></div>
-      <div className="h-64 bg-gray-100 rounded"></div>
-    </div>
-  );
-}
-
-function SkeletonTable() {
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-6 animate-pulse">
-      <div className="h-5 bg-gray-200 rounded w-1/3 mb-4"></div>
-      <div className="space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex justify-between items-center">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SkeletonFinancialCard() {
-  return (
-    <div className="relative rounded-2xl shadow-sm md:col-span-2 p-6 overflow-hidden animate-pulse"
-         style={{ background: "linear-gradient(135deg,#FBF6EE 0%,#F3E8D8 50%,#EFE1C8 100%)" }}>
-      <div className="flex flex-col items-center justify-center text-center h-40">
-        <div className="h-4 bg-gray-300 rounded w-24 mb-2"></div>
-        <div className="h-16 bg-gray-400 rounded w-48 mb-2"></div>
-        <div className="h-3 bg-gray-200 rounded w-32"></div>
-      </div>
-      <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between">
-        <div className="flex flex-col">
-          <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
-          <div className="h-4 bg-gray-300 rounded w-24"></div>
-        </div>
-        <div className="flex flex-col text-right">
-          <div className="h-3 bg-gray-200 rounded w-20 mb-1"></div>
-          <div className="h-4 bg-gray-300 rounded w-24"></div>
-        </div>
-      </div>
-    </div>
-  );
+function parseDate(value) {
+  // Firestore Timestamps have toDate(), others might be ISO strings
+  if (!value) return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 // Helper to calculate % change
@@ -114,11 +63,13 @@ function filterByPeriod(date, period, customStart, customEnd) {
 }
 
 export default function Dashboard() {
-  const [dateRange, setDateRange] = useState("Today");
+  const [dateRange, setDateRange] = useState("This Month");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tax, setTax] = useState(12);
+  const vat = tax /100;
+  
 
   const [marginPercent, setMarginPercent] = useState(40);
   const [dailyGoal, setDailyGoal] = useState(5000);
@@ -136,17 +87,21 @@ export default function Dashboard() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const [ordersSnap, productsSnap, inventorySnap, expensesSnap] = await Promise.all([
-          getDocs(collection(db, "orders")),
-          getDocs(collection(db, "products")),
-          getDocs(collection(db, "inventory")),
-          getDocs(collection(db, "expenses")),
-        ]);
+        const snapshot = await getDocs(collection(db, "orders"));
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setOrders(data);
+        
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      }
+    };
 
-        setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setProducts(productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setInventory(inventorySnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setExpensesData(expensesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    // Fetch products for inventory alerts
+    const fetchProducts = async () => {
+      try {
+        const snap = await getDocs(collection(db, "inventory"));
+        const pdata = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setProducts(pdata);
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
@@ -156,6 +111,19 @@ export default function Dashboard() {
 
     fetchAllData();
   }, []);
+
+
+  useEffect(()=>{
+    const loadSettings = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      if(!docRef.exists()){console.log("data doesnt exist");return;}
+      const data = docRef.data();
+      setTax(data.taxRate);
+
+
+    }
+    loadSettings();
+  },[])
 
   // -------------------------------
   // Compute today's sales, yesterday's sales, trend, and peak hour suggestion
@@ -274,9 +242,10 @@ export default function Dashboard() {
     const staffMap = {};
 
     orders.forEach(order => {
-      const completedDate = new Date(order.completedAt || order.createdAt);
+      const completedDate = new parseDate(order.completedAt || order.createdAt);
       if (filterByPeriod(completedDate, dateRange, customStartDate, customEndDate)) {
         totalSales += order.total || 0;
+        console.log(order.total)
         totalOrders += 1;
         if (order.customerName && !customerSet.has(order.customerName)) customerSet.add(order.customerName);
 
@@ -301,7 +270,7 @@ export default function Dashboard() {
     let totalExpenses = 0;
     expensesData.forEach(exp => {
       const d = new Date(exp.date);
-      if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
+      if (filterByPeriod(d, dateRange, parseDate(customStartDate), parseDate(customEndDate))) {
         totalExpenses += exp.amount || 0;
       }
     });
@@ -347,7 +316,7 @@ export default function Dashboard() {
       // By day of month (1-31)
       const dayMap = {};
       orders.forEach(order => {
-        const d = new Date(order.completedAt || order.createdAt);
+        const d = new parseDate(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const day = d.getDate();
           dayMap[day] = (dayMap[day] || 0) + (order.total || 0);
@@ -358,12 +327,12 @@ export default function Dashboard() {
       periodUnit = "day";
     } else if (dateRange === "Custom Range" && customStartDate && customEndDate) {
       // By day in custom range
-      const start = new Date(customStartDate);
-      const end = new Date(customEndDate);
+      const start = new parseDate(customStartDate);
+      const end = new parseDate(customEndDate);
       const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       const dayMap = {};
       orders.forEach(order => {
-        const d = new Date(order.completedAt || order.createdAt);
+        const d = new parseDate(order.completedAt || order.createdAt);
         if (filterByPeriod(d, dateRange, customStartDate, customEndDate)) {
           const dateKey = d.toLocaleDateString();
           dayMap[dateKey] = (dayMap[dateKey] || 0) + (order.total || 0);
@@ -411,7 +380,14 @@ export default function Dashboard() {
 
   // Financial calculations: use real expenses
   const expenses = totalExpenses;
-  const netProfit = totalSales - expenses;
+  
+  
+
+  const grossSales = totalSales;
+  const vatAmount = grossSales * vat;
+  const netProfit = totalSales - expenses - vatAmount;
+  
+
 
   // Functions to get data and columns for financial modal
   const getFinancialData = (view) => {
@@ -428,23 +404,25 @@ export default function Dashboard() {
       if (expandedSections.category) {
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
-      data.push({ Detail: "Total Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
+      data.push({ Detail: "Total Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Sum of all sales in the selected period" });
       return data;
     }
     if (view === "net") {
       let data = [
-        { Detail: "Gross Revenue", Value: `₱${totalSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
+        { Detail: "Gross Revenue", Value: `₱${grossSales.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "gross" },
       ];
       if (expandedSections.gross) {
         data.push(...salesData.map(d => ({ Detail: `  ${d.unit}`, Value: `₱${d.sales.toLocaleString()}`, Breakdown: "Daily contribution" })));
         data.push(...categorySalesData.sort((a, b) => b.sales - a.sales).map(c => ({ Detail: `  ${c.category}`, Value: `₱${c.sales.toLocaleString()}`, Breakdown: "By category" })));
       }
       data.push({ Detail: "Expenses", Value: `₱${expenses.toLocaleString()}`, Breakdown: "Click to expand", expandable: true, type: "expenses" });
+      
       if (expandedSections.expenses) {
         const periodExpenses = expensesData.filter(exp => filterByPeriod(new Date(exp.date), dateRange, customStartDate, customEndDate)).sort((a, b) => (a.category || "").localeCompare(b.category || ""));
         data.push(...periodExpenses.map(exp => ({ Detail: `  ${exp.category || "Uncategorized"}`, Value: `₱${exp.amount.toLocaleString()}`, Breakdown: new Date(exp.date).toLocaleDateString() })));
       }
-      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses = Net` });
+      data.push({ Detail: "VAT", Value: `₱${vatAmount.toLocaleString()}`, Breakdown: "Perecentage for all the Sales", expandable: false, type: "expenses" });
+      data.push({ Detail: "Net Profit", Value: `₱${netProfit.toLocaleString()}`, Breakdown: `Gross - Expenses - VAT = Net` });
       return data;
     }
     if (view === "expenses") {
@@ -596,7 +574,7 @@ export default function Dashboard() {
           <div className="absolute left-6 right-6 bottom-4 flex items-center justify-between text-sm text-gray-600">
             <div className="flex flex-col">
               <span className="text-xs">Gross Revenue</span>
-              <span className="font-semibold">₱{totalSales.toLocaleString()}</span>
+              <span className="font-semibold">₱{grossSales.toLocaleString()}</span>
             </div>
             <div className="flex flex-col text-right">
               <span className="text-xs">Expenses</span>

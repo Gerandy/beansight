@@ -44,15 +44,6 @@ function ModalTooltip({ open, text, onClose }) {
 export default function StorePreferences() {
   // Day order for proper sequence
   const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-  const dayLabels = {
-    mon: 'Monday',
-    tue: 'Tuesday',
-    wed: 'Wednesday',
-    thu: 'Thursday',
-    fri: 'Friday',
-    sat: 'Saturday',
-    sun: 'Sunday'
-  };
 
   // Ordering Preferences
   const [onlineOrdering, setOnlineOrdering] = useState(true);
@@ -66,26 +57,21 @@ export default function StorePreferences() {
     sun: { time: "00:00", enabled: true },
   });
   const [storeOpenTime, setStoreOpenTime] = useState("00:00");
-  const [storeCloseTime, setStoreCloseTime] = useState("00:00");
+
   const [minOrder, setMinOrder] = useState(0);
-  const [maxOrder, setMaxOrder] = useState(0);
+
   const [orderType, setOrderType] = useState({
     pickup: true,
     delivery: true,
   });
-  const [orderNotification, setOrderNotification] = useState({
-    email: true,
-    sms: false,
-    app: true,
-  });
-  const [orderScheduling, setOrderScheduling] = useState(false);
+
 
   // System-wide Transaction Preferences
   const [paymentMethods, setPaymentMethods] = useState({
     cash: true,
     gcash: true,
   });
-  const [autoPrint, setAutoPrint] = useState(false);
+
   const [discountRules, setDiscountRules] = useState([
     { 
       enabled: false,
@@ -253,16 +239,11 @@ export default function StorePreferences() {
     setOrderType(data?.orderType || { pickup: true, delivery: true });
     setOnlineOrdering(data?.onlineOrder ?? true);
     setPaymentMethods(data?.paymentMet || { cash: true, gcash: true });
+    console.log("data",data.storeTime)
     
     setOrderScheduling(false);
     setAutoPrint(false);
-    setDiscountRules([{ 
-      enabled: false,
-      name: "",
-      type: "percentage",
-      amount: "",
-      minSpend: ""
-    }]);
+    setDiscountRules([data.discountRules]);
     setTaxOn(true);
     setReceiptHeader("");
     setReceiptFooter("");
@@ -271,15 +252,16 @@ export default function StorePreferences() {
     setErrors({});
     setMessage("Fields reset to default.");
   };
-  const handlePreview = () => {
-    setMessage("Preview not implemented.");
-  };
-
   // Tooltip trigger
   const showTooltip = text => {
     setTooltipText(text);
     setTooltipOpen(true);
   };
+  console.log(cutoffTimes);
+
+
+
+
 
  useEffect(() => {
   const loadSettings = async () => {
@@ -288,17 +270,17 @@ export default function StorePreferences() {
       console.log("data does not exists");
       return;
     };
-
+    
     const data = docSnap.data();
     setTaxRate(data.taxRate || "");
     setMinOrder(data.minOrder || 0);
-    
+    setOnlineOrdering(data.onlineOrder);
     setCutoffTimes(convertToNewFormat(data.storeTime));
-    setStoreOpenTime(data.storeOpenTime || "00:00");
-    setStoreCloseTime(data.storeCloseTime || "00:00");
+    setStoreOpenTime(data.storeOpen);
     setOrderType(data.orderType || { pickup: true, delivery: true });
     setOnlineOrdering(data.onlineOrder ?? true);
     setPaymentMethods(data.paymentMet || { cash: true, gcash: true });
+    setDiscountRules(data.discountRules);
   };
   
   loadSettings();
@@ -818,12 +800,6 @@ export default function StorePreferences() {
           onClick={handleReset}
         >
           Reset
-        </button>
-        <button
-          className="bg-coffee-400 text-white px-6 py-2 rounded-xl font-semibold shadow hover:bg-coffee-500 transition cursor-pointer"
-          onClick={handlePreview}
-        >
-          Preview
         </button>
       </div>
     </div>
