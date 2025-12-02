@@ -1,4 +1,4 @@
-import React from "react";
+
 
 // Skeleton Card Component
 export function SkeletonCard() {
