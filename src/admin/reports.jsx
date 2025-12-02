@@ -31,7 +31,7 @@ import {
 } from "recharts";
 
 import { db } from "../firebase"; // adjust path
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDoc, onSnapshot, doc } from "firebase/firestore";
 
 export default function Reports() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
@@ -60,6 +60,15 @@ export default function Reports() {
       return date >= start && date <= end;
     });
   };
+
+  useEffect(() =>{
+    const loadSettings = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      const data = docRef.data();
+      setTax(data?.taxRate);
+    }
+    loadSettings();
+  },[]);
   
 
   // Fetch orders from Firestore
@@ -197,128 +206,128 @@ export default function Reports() {
   };  
 
    const handleExportExcel = async () => {
-  const workbook = new ExcelJS.Workbook();
+    const workbook = new ExcelJS.Workbook();
 
-  // ✅ Use dateRange from state
-  const now = new Date();
-  const start = dateRange.start ? new Date(dateRange.start) : new Date(now.getFullYear(), 0, 1);
-  const end = dateRange.end ? new Date(dateRange.end) : new Date(now.getFullYear(), 11, 31);
+    // ✅ Use dateRange from state
+    const now = new Date();
+    const start = dateRange.start ? new Date(dateRange.start) : new Date(now.getFullYear(), 0, 1);
+    const end = dateRange.end ? new Date(dateRange.end) : new Date(now.getFullYear(), 11, 31);
 
-  // 1️⃣ Filter orders based on dateRange
-  const filteredOrdersExcel = orders.filter(order => {
-    const orderDate = order.date || order.createdAt?.toDate?.() || new Date();
-    return orderDate >= start && orderDate <= end;
+    // 1️⃣ Filter orders based on dateRange
+    const filteredOrdersExcel = orders.filter(order => {
+      const orderDate = order.date || order.createdAt?.toDate?.() || new Date();
+      return orderDate >= start && orderDate <= end;
+    });
+
+    /* ================================================
+  * DAILY SALES WITH VAT (Gross & Net)
+  * ================================================ */
+  const dailyMap = {};
+  filteredOrdersExcel.forEach(order => {
+    const dateObj = order.date || order.createdAt?.toDate?.() || new Date();
+    const day = dateObj.toISOString().split("T")[0];
+    dailyMap[day] = (dailyMap[day] || 0) + (order.total || 0);
   });
 
-  /* ================================================
- * DAILY SALES WITH VAT (Gross & Net)
- * ================================================ */
-const dailyMap = {};
-filteredOrdersExcel.forEach(order => {
-  const dateObj = order.date || order.createdAt?.toDate?.() || new Date();
-  const day = dateObj.toISOString().split("T")[0];
-  dailyMap[day] = (dailyMap[day] || 0) + (order.total || 0);
-});
+  const dailyRows = Object.entries(dailyMap)
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    .map(([day, gross]) => ({
+      Date: new Date(day).toLocaleDateString(),
+      "Gross Sales (₱)": Number(gross.toFixed(2)),
+      "VAT (Net) (₱)": Number((gross - (gross * vat) ).toFixed(2)) // Net VAT
+    }));
 
-const dailyRows = Object.entries(dailyMap)
-  .sort((a, b) => new Date(a[0]) - new Date(b[0]))
-  .map(([day, gross]) => ({
-    Date: new Date(day).toLocaleDateString(),
-    "Gross Sales (₱)": Number(gross.toFixed(2)),
-    "VAT (Net) (₱)": Number((gross - (gross * vat) ).toFixed(2)) // Net VAT
-  }));
+  const sheetDaily = workbook.addWorksheet("Daily Sales");
+  sheetDaily.columns = [
+    { header: "Date", key: "Date", width: 15 },
+    { header: "Gross Sales (₱)", key: "Gross Sales (₱)", width: 20 },
+    { header: "VAT (Net) (₱)", key: "VAT (Net) (₱)", width: 18 }
+  ];
 
-const sheetDaily = workbook.addWorksheet("Daily Sales");
-sheetDaily.columns = [
-  { header: "Date", key: "Date", width: 15 },
-  { header: "Gross Sales (₱)", key: "Gross Sales (₱)", width: 20 },
-  { header: "VAT (Net) (₱)", key: "VAT (Net) (₱)", width: 18 }
-];
+  dailyRows.forEach(row => sheetDaily.addRow(row));
 
-dailyRows.forEach(row => sheetDaily.addRow(row));
-
-// Style headers & add borders
-sheetDaily.getRow(1).eachCell(cell => {
-  cell.font = { bold: true };
-  cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
-  cell.border = {
-    top: {style:'thin'}, bottom: {style:'thin'},
-    left: {style:'thin'}, right: {style:'thin'}
-  };
-});
-
-sheetDaily.eachRow((row, rowNumber) => {
-  row.eachCell(cell => {
+  // Style headers & add borders
+  sheetDaily.getRow(1).eachCell(cell => {
+    cell.font = { bold: true };
+    cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
     cell.border = {
       top: {style:'thin'}, bottom: {style:'thin'},
       left: {style:'thin'}, right: {style:'thin'}
     };
   });
-});
+
+  sheetDaily.eachRow((row, rowNumber) => {
+    row.eachCell(cell => {
+      cell.border = {
+        top: {style:'thin'}, bottom: {style:'thin'},
+        left: {style:'thin'}, right: {style:'thin'}
+      };
+    });
+  });
 
 
-  /* ================================================
-   * 1️⃣ MONTHLY SALES
-   * ================================================ */
-const monthlyMap = {};
+    /* ================================================
+    * 1️⃣ MONTHLY SALES
+    * ================================================ */
+  const monthlyMap = {};
 
-// Aggregate sales by month
-orders.forEach(order => {
-  const date = order.date || order.createdAt?.toDate?.() || new Date();
-  const month = date.toLocaleString("default", { month: "short", year: "numeric" });
-  monthlyMap[month] = (monthlyMap[month] || 0) + (order.total || 0);
-});
+  // Aggregate sales by month
+  orders.forEach(order => {
+    const date = order.date || order.createdAt?.toDate?.() || new Date();
+    const month = date.toLocaleString("default", { month: "short", year: "numeric" });
+    monthlyMap[month] = (monthlyMap[month] || 0) + (order.total || 0);
+  });
 
-// Prepare rows with Gross, VAT, and Net
-const monthlyRows = Object.entries(monthlyMap).map(([month, gross]) => {
-  const vatAmount = gross * vat;            // VAT
-  const netSales = gross - vatAmount;       // Net Sales
-  return {
-    Month: month,
-    "Gross Sales (₱)": Number(gross.toFixed(2)),
-    "VAT (₱)": Number(vatAmount.toFixed(2)),
-    "Net Sales (₱)": Number(netSales.toFixed(2))
-  };
-});
+  // Prepare rows with Gross, VAT, and Net
+  const monthlyRows = Object.entries(monthlyMap).map(([month, gross]) => {
+    const vatAmount = gross * vat;            // VAT
+    const netSales = gross - vatAmount;       // Net Sales
+    return {
+      Month: month,
+      "Gross Sales (₱)": Number(gross.toFixed(2)),
+      "VAT (₱)": Number(vatAmount.toFixed(2)),
+      "Net Sales (₱)": Number(netSales.toFixed(2))
+    };
+  });
 
-// Create worksheet
-const sheetMonthly = workbook.addWorksheet("Monthly Sales");
-sheetMonthly.columns = [
-  { header: "Month", key: "Month", width: 20 },
-  { header: "Gross Sales (₱)", key: "Gross Sales (₱)", width: 20 },
-  { header: "VAT (₱)", key: "VAT (₱)", width: 15 },
-  { header: "Net Sales (₱)", key: "Net Sales (₱)", width: 20 }
-];
+  // Create worksheet
+  const sheetMonthly = workbook.addWorksheet("Monthly Sales");
+  sheetMonthly.columns = [
+    { header: "Month", key: "Month", width: 20 },
+    { header: "Gross Sales (₱)", key: "Gross Sales (₱)", width: 20 },
+    { header: "VAT (₱)", key: "VAT (₱)", width: 15 },
+    { header: "Net Sales (₱)", key: "Net Sales (₱)", width: 20 }
+  ];
 
-// Add rows
-monthlyRows.forEach(row => sheetMonthly.addRow(row));
+  // Add rows
+  monthlyRows.forEach(row => sheetMonthly.addRow(row));
 
-// Style headers
-sheetMonthly.getRow(1).eachCell(cell => {
-  cell.font = { bold: true };
-  cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
-  cell.border = {
-    top: {style:'thin'}, bottom: {style:'thin'},
-    left: {style:'thin'}, right: {style:'thin'}
-  };
-});
-
-// Style all cells with borders
-sheetMonthly.eachRow(row => {
-  row.eachCell(cell => {
+  // Style headers
+  sheetMonthly.getRow(1).eachCell(cell => {
+    cell.font = { bold: true };
+    cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
     cell.border = {
       top: {style:'thin'}, bottom: {style:'thin'},
       left: {style:'thin'}, right: {style:'thin'}
     };
   });
-});
+
+  // Style all cells with borders
+  sheetMonthly.eachRow(row => {
+    row.eachCell(cell => {
+      cell.border = {
+        top: {style:'thin'}, bottom: {style:'thin'},
+        left: {style:'thin'}, right: {style:'thin'}
+      };
+    });
+  });
 
 
-  /* ================================================
-   * 2️⃣ TOP MENU ITEMS
+    /* ================================================
+   * TOP MENU ITEMS
    * ================================================ */
   const itemMap = {};
-  orders.forEach(order => {
+  filteredOrders.forEach(order => {
     if (!Array.isArray(order.items)) return;
     order.items.forEach(i => {
       const name = i.name || "Unnamed Item";
@@ -351,160 +360,158 @@ sheetMonthly.eachRow(row => {
   sheetMenu.getRow(1).eachCell(cell => {
     cell.font = { bold: true };
     cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
-    cell.border = {
-      top: {style:'thin'}, bottom: {style:'thin'},
-      left: {style:'thin'}, right: {style:'thin'}
-    };
+    cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
   });
-
   sheetMenu.eachRow(row => {
     row.eachCell(cell => {
+      cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+    });
+  });
+
+
+
+
+
+
+    /* ================================================
+    * 3️⃣ INVENTORY
+    * ================================================ */
+    const inventoryRows = inventory.map(i => ({
+      Item: i.name || "(No Name)",
+      Stock: i.stock,
+      Status:
+        i.stock === 0 ? "OUT OF STOCK" :
+        i.stock < 3 ? "CRITICAL" :
+        i.stock < 6 ? "LOW" : "OK"
+    }));
+
+    const sheetInventory = workbook.addWorksheet("Inventory");
+    sheetInventory.columns = [
+      { header: "Item", key: "Item", width: 25 },
+      { header: "Stock", key: "Stock", width: 10 },
+      { header: "Status", key: "Status", width: 15 }
+    ];
+    inventoryRows.forEach(row => sheetInventory.addRow(row));
+
+    // Conditional formatting for status
+    sheetInventory.eachRow((row, rowNumber) => {
+      row.eachCell(cell => {
+        cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+        if (rowNumber === 1) {
+          cell.font = { bold: true };
+          cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
+        }
+        if (cell.value === "CRITICAL") cell.font = { color: { argb: "FF0000" }, bold: true };
+        if (cell.value === "LOW") cell.font = { color: { argb: "FFA500" }, bold: true };
+        if (cell.value === "OUT OF STOCK") cell.font = { color: { argb: "FF0000" }, bold: true };
+      });
+    });
+
+    /* ================================================
+    * 4️⃣ EXPENSES
+    * ================================================ */
+  const expenseRows = expenses
+    .filter(e => {
+      if (!dateRange.start && !dateRange.end) return true; // no filter
+      const expenseDate = e.date ? new Date(e.date) : new Date();
+      const start = dateRange.start ? new Date(dateRange.start) : null;
+      const end = dateRange.end ? new Date(dateRange.end) : null;
+      if (start && expenseDate < start) return false;
+      if (end && expenseDate > end) return false;
+      return true;
+    })
+    .map(e => ({
+      Category: e.category || "Misc",
+      Amount: Number(e.amount || 0).toFixed(2),
+      Date: e.date ? new Date(e.date).toLocaleDateString() : "-"
+    }));
+
+
+    const sheetExpenses = workbook.addWorksheet("Expenses");
+    sheetExpenses.columns = [
+      { header: "Category", key: "Category", width: 20 },
+      { header: "Amount", key: "Amount", width: 12 },
+      { header: "Date", key: "Date", width: 15 }
+    ];
+    expenseRows.forEach(row => sheetExpenses.addRow(row));
+
+    sheetExpenses.eachRow((row, rowNumber) => {
+      row.eachCell(cell => {
+        cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
+        if (rowNumber === 1) {
+          cell.font = { bold: true };
+          cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
+        }
+      });
+    });
+
+    /* ================================================
+    * 5️⃣ SUMMARY DASHBOARD
+    * ================================================ */
+  const summaryRows = [
+    { Metric: "Orders Summary", Value: " " },
+    { Metric: "Total Orders", Value: totalOrders },
+    { Metric: "Total Revenue (₱)", Value: totalRevenue.toFixed(2) },
+    { Metric: "Total Expenses (₱)", Value: totalExpenses.toFixed(2) },
+    { Metric: "Customer Summary", Value: " " },
+    { Metric: "Net Profit (₱)", Value: netProfit.toFixed(2) },
+    { Metric: "Total Customers", Value: totalCustomers },
+    { Metric: "Stock Summary", Value: " " },
+    { Metric: "Low Stock Items", Value: inventory.filter(i => i.stock < 5).length }
+  ];
+
+  // Calculate monthly gross, VAT, and net
+
+
+  // Add monthly totals to summary
+  Object.entries(monthlyMap).forEach(([month, gross]) => {
+    const vatAmount = gross * vat;
+    const netSales = gross - vatAmount;
+    summaryRows.push({ Metric: `${month} Gross Sales (₱)`, Value: gross.toFixed(2) });
+    summaryRows.push({ Metric: `${month} VAT (₱)`, Value: vatAmount.toFixed(2) });
+    summaryRows.push({ Metric: `${month} Net Sales (₱)`, Value: netSales.toFixed(2) });
+  });
+
+  // Create worksheet
+  const sheetSummary = workbook.addWorksheet("Summary Overview");
+  sheetSummary.columns = [
+    { header: "Metric", key: "Metric", width: 30 },
+    { header: "Value", key: "Value", width: 20 }
+  ];
+
+  // Add rows
+  summaryRows.forEach((row, index) => {
+    const excelRow = sheetSummary.addRow(row);
+
+    // Merge and center if Value is blank (section headers)
+    if (row.Value === " ") {
+      const rowNumber = excelRow.number;
+      sheetSummary.mergeCells(`A${rowNumber}:B${rowNumber}`);
+      excelRow.getCell(1).alignment = { horizontal: 'center' };
+      excelRow.getCell(1).font = { bold: true };
+      excelRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D9E1F2' } };
+    }
+  });
+
+  // Add borders to all cells
+  sheetSummary.eachRow(row => {
+    row.eachCell(cell => {
       cell.border = {
-        top: {style:'thin'}, bottom: {style:'thin'},
-        left: {style:'thin'}, right: {style:'thin'}
+        top: { style: 'thin' }, bottom: { style: 'thin' },
+        left: { style: 'thin' }, right: { style: 'thin' }
       };
     });
   });
 
-  /* ================================================
-   * 3️⃣ INVENTORY
-   * ================================================ */
-  const inventoryRows = inventory.map(i => ({
-    Item: i.name || "(No Name)",
-    Stock: i.stock,
-    Status:
-      i.stock === 0 ? "OUT OF STOCK" :
-      i.stock < 3 ? "CRITICAL" :
-      i.stock < 6 ? "LOW" : "OK"
-  }));
-
-  const sheetInventory = workbook.addWorksheet("Inventory");
-  sheetInventory.columns = [
-    { header: "Item", key: "Item", width: 25 },
-    { header: "Stock", key: "Stock", width: 10 },
-    { header: "Status", key: "Status", width: 15 }
-  ];
-  inventoryRows.forEach(row => sheetInventory.addRow(row));
-
-  // Conditional formatting for status
-  sheetInventory.eachRow((row, rowNumber) => {
-    row.eachCell(cell => {
-      cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-      if (rowNumber === 1) {
-        cell.font = { bold: true };
-        cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
-      }
-      if (cell.value === "CRITICAL") cell.font = { color: { argb: "FF0000" }, bold: true };
-      if (cell.value === "LOW") cell.font = { color: { argb: "FFA500" }, bold: true };
-      if (cell.value === "OUT OF STOCK") cell.font = { color: { argb: "FF0000" }, bold: true };
-    });
-  });
-
-  /* ================================================
-   * 4️⃣ EXPENSES
-   * ================================================ */
- const expenseRows = expenses
-  .filter(e => {
-    if (!dateRange.start && !dateRange.end) return true; // no filter
-    const expenseDate = e.date ? new Date(e.date) : new Date();
-    const start = dateRange.start ? new Date(dateRange.start) : null;
-    const end = dateRange.end ? new Date(dateRange.end) : null;
-    if (start && expenseDate < start) return false;
-    if (end && expenseDate > end) return false;
-    return true;
-  })
-  .map(e => ({
-    Category: e.category || "Misc",
-    Amount: Number(e.amount || 0).toFixed(2),
-    Date: e.date ? new Date(e.date).toLocaleDateString() : "-"
-  }));
 
 
-  const sheetExpenses = workbook.addWorksheet("Expenses");
-  sheetExpenses.columns = [
-    { header: "Category", key: "Category", width: 20 },
-    { header: "Amount", key: "Amount", width: 12 },
-    { header: "Date", key: "Date", width: 15 }
-  ];
-  expenseRows.forEach(row => sheetExpenses.addRow(row));
-
-  sheetExpenses.eachRow((row, rowNumber) => {
-    row.eachCell(cell => {
-      cell.border = { top: {style:'thin'}, bottom: {style:'thin'}, left: {style:'thin'}, right: {style:'thin'} };
-      if (rowNumber === 1) {
-        cell.font = { bold: true };
-        cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'D9E1F2'} };
-      }
-    });
-  });
-
-  /* ================================================
-   * 5️⃣ SUMMARY DASHBOARD
-   * ================================================ */
-const summaryRows = [
-  { Metric: "Orders Summary", Value: " " },
-  { Metric: "Total Orders", Value: totalOrders },
-  { Metric: "Total Revenue (₱)", Value: totalRevenue.toFixed(2) },
-  { Metric: "Total Expenses (₱)", Value: totalExpenses.toFixed(2) },
-  { Metric: "Customer Summary", Value: " " },
-  { Metric: "Net Profit (₱)", Value: netProfit.toFixed(2) },
-  { Metric: "Total Customers", Value: totalCustomers },
-  { Metric: "Stock Summary", Value: " " },
-  { Metric: "Low Stock Items", Value: inventory.filter(i => i.stock < 5).length }
-];
-
-// Calculate monthly gross, VAT, and net
-
-
-// Add monthly totals to summary
-Object.entries(monthlyMap).forEach(([month, gross]) => {
-  const vatAmount = gross * vat;
-  const netSales = gross - vatAmount;
-  summaryRows.push({ Metric: `${month} Gross Sales (₱)`, Value: gross.toFixed(2) });
-  summaryRows.push({ Metric: `${month} VAT (₱)`, Value: vatAmount.toFixed(2) });
-  summaryRows.push({ Metric: `${month} Net Sales (₱)`, Value: netSales.toFixed(2) });
-});
-
-// Create worksheet
-const sheetSummary = workbook.addWorksheet("Summary Overview");
-sheetSummary.columns = [
-  { header: "Metric", key: "Metric", width: 30 },
-  { header: "Value", key: "Value", width: 20 }
-];
-
-// Add rows
-summaryRows.forEach((row, index) => {
-  const excelRow = sheetSummary.addRow(row);
-
-  // Merge and center if Value is blank (section headers)
-  if (row.Value === " ") {
-    const rowNumber = excelRow.number;
-    sheetSummary.mergeCells(`A${rowNumber}:B${rowNumber}`);
-    excelRow.getCell(1).alignment = { horizontal: 'center' };
-    excelRow.getCell(1).font = { bold: true };
-    excelRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D9E1F2' } };
-  }
-});
-
-// Add borders to all cells
-sheetSummary.eachRow(row => {
-  row.eachCell(cell => {
-    cell.border = {
-      top: { style: 'thin' }, bottom: { style: 'thin' },
-      left: { style: 'thin' }, right: { style: 'thin' }
-    };
-  });
-});
-
-
-
-  /* ================================================
-   * EXPORT FILE
-   * ================================================ */
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: "application/octet-stream" });
-  saveAs(blob, "Business_Report.xlsx");
-};
+    /* ================================================
+    * EXPORT FILE
+    * ================================================ */
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, "Business_Report.xlsx");
+  };
 
   
   const handleExportCSV = () => {
