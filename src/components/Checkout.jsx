@@ -17,7 +17,7 @@ export default function Checkout() {
   const [expandedItems, setExpandedItems] = useState({});
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
-  const [settings]
+  
   useEffect(() => {
       const loadSettings = async () => {
         setLoading(true);
