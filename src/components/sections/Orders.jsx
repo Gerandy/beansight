@@ -326,6 +326,7 @@ const triggerFlyToCart = (imgSrc) => {
                                                                     className="bg-coffee-100 text-coffee-700 text-xs px-2 py-1 rounded-full"
                                                                   >
                                                                   {a.name}
+                                                                  
                                                                   <br/>
                                                                   </span>
                                                                 ))}</p>
