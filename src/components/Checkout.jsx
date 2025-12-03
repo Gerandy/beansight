@@ -17,15 +17,15 @@ export default function Checkout() {
   const [expandedItems, setExpandedItems] = useState({});
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
-  
+  const [settings, setSettings] = useState(0);
   useEffect(() => {
       const loadSettings = async () => {
         setLoading(true);
         try {
-          const docRef = await getDoc(doc(db, "settings", "analytics"));
+          const docRef = await getDoc(doc(db, "settings", "mapRadius"));
           if (docRef.exists()) {
             const data = docRef.data();
-            setSettings(data.settings);
+            setSettings(data);
           }
         } catch (err) {
           console.error("Error loading settings:", err);
@@ -35,7 +35,10 @@ export default function Checkout() {
       };
   
       loadSettings();
-    }, []);
+    }, []); 
+
+    
+    
   
 
     
@@ -97,7 +100,7 @@ export default function Checkout() {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
-  const grandTotal = subtotal + deliveryFees;
+  const grandTotal = subtotal + (settings.feeType === "flat" ? settings.flatFee : deliveryFees);
 
   useEffect(() => {
     if (!defaultAddress) return;
