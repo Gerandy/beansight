@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Eye, X, ChevronDown } from "lucide-react";
+import { Eye, X, ChevronDown, Package, User, MapPin, Clock, Phone, Mail, CreditCard } from "lucide-react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 
@@ -64,9 +64,14 @@ export default function History() {
     );
 
     const compareValues = (a, b, key) => {
-        if (key === "date") return new Date(b.date) - new Date(a.date);
-        if (key === "total") return b.total - a.total;
-        return a[key]?.toString().localeCompare(b[key]?.toString());
+        if (key === "date") {
+            // Fix: Use createdAt timestamp instead of date field
+            const dateA = a.createdAt?.toDate() || new Date(0);
+            const dateB = b.createdAt?.toDate() || new Date(0);
+            return dateB - dateA; // Most recent first
+        }
+        if (key === "total") return (b.total || 0) - (a.total || 0);
+        return String(a[key] || "").localeCompare(String(b[key] || ""));
     };
 
     const visibleOrders = useMemo(() => {
@@ -100,6 +105,20 @@ export default function History() {
     useEffect(() => {
         setCurrentPage(1);
     }, [search, primarySort, secondarySort]);
+
+    const closeOrderModal = () => {
+        setSelectedOrder(null);
+    };
+
+    const formatTime = (iso) =>
+        new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    const formatDate = (iso) =>
+        new Date(iso).toLocaleDateString([], {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        });
 
     return (
         <>
@@ -242,9 +261,9 @@ export default function History() {
                                             <td className="py-3 px-4 text-right">
                                                 <button
                                                     onClick={() => setSelectedOrder(o)}
-                                                    className="cursor-pointer px-3 py-1.5 text-sm bg-white border border-[var(--color-coffee-100)] rounded hover:bg-[var(--color-coffee-50)] transition-colors"
+                                                    className="cursor-pointer px-3 py-1.5 text-xs bg-white border border-[var(--color-coffee-200)] rounded-full hover:bg-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-semibold transition-colors shadow"
                                                 >
-                                                    View
+                                                    View Details
                                                 </button>
                                             </td>
                                         </tr>
@@ -291,7 +310,7 @@ export default function History() {
 
                                     <button
                                         onClick={() => setSelectedOrder(o)}
-                                        className="cursor-pointer w-full px-3 py-2 bg-[var(--color-coffee-500)] hover:bg-[var(--color-coffee-600)] text-white rounded text-xs sm:text-sm font-medium transition-colors"
+                                        className="cursor-pointer w-full px-3 py-2 text-xs bg-white border border-[var(--color-coffee-200] rounded-md hover:bg-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-semibold transition-colors"
                                     >
                                         View Details
                                     </button>
@@ -355,85 +374,245 @@ export default function History() {
                 )}
             </div>
 
-            {/* 🪟 Modal */}
+            {/* 🪟 Improved Modal */}
             {selectedOrder && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative">
-                        <button
-                            onClick={() => setSelectedOrder(null)}
-                            className="cursor-pointer absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-500 hover:text-gray-800 bg-white rounded-full p-1 shadow-sm"
-                        >
-                            <X size={18} />
-                        </button>
-                        <h3 className="text-lg sm:text-xl font-bold text-[var(--color-coffee-800)] mb-3 pr-8">
-                            Order #{selectedOrder.id}
-                        </h3>
-
-                        <div className="text-xs sm:text-sm text-[var(--color-coffee-700)] space-y-2">
-                            <div className="flex justify-between">
-                                <strong>Date:</strong>
-                                <span className="text-right">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Modal Header */}
+                        <div className="bg-[var(--color-coffee-600)] text-white p-4 sm:p-6 flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                                    <Package className="w-5 h-5" />
+                                    Order Details
+                                </h3>
+                                <p className="text-xs sm:text-sm text-[var(--color-coffee-100)] mt-1">
                                     {selectedOrder.createdAt &&
-                                        selectedOrder.createdAt.toDate().toLocaleString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                            hour: "numeric",
-                                            minute: "2-digit",
-                                        })}
-                                </span>
+                                        formatDate(selectedOrder.createdAt.toDate())} at{" "}
+                                    {selectedOrder.createdAt &&
+                                        formatTime(selectedOrder.createdAt.toDate())}
+                                </p>
                             </div>
-                            <div className="flex justify-between">
-                                <strong>Customer:</strong>
-                                <span>{selectedOrder.user?.firstName || selectedOrder.user?.customerName || "Anonymous"}</span>
+                            <button
+                                onClick={closeOrderModal}
+                                className="cursor-pointer p-2 hover:bg-[var(--color-coffee-700)] rounded-lg transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="overflow-y-auto p-4 sm:p-6 space-y-6">
+                            {/* Order Info */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-[var(--color-coffee-50)] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <User className="w-4 h-4 text-[var(--color-coffee-600)]" />
+                                        <h4 className="font-semibold text-[var(--color-coffee-800)]">
+                                            Customer Information
+                                        </h4>
+                                    </div>
+                                    <div className="space-y-2 text-sm">
+                                        <div>
+                                            <span className="text-[var(--color-coffee-600)]">Name:</span>{" "}
+                                            <span className="font-medium text-[var(--color-coffee-900)]">
+                                                {selectedOrder.user?.firstName || selectedOrder.user?.customerName || "Anonymous"}
+                                            </span>
+                                        </div>
+                                        {selectedOrder.user?.email && (
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-3 h-3 text-[var(--color-coffee-600)]" />
+                                                <span className="text-[var(--color-coffee-900)]">
+                                                    {selectedOrder.user.email}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {selectedOrder.user?.phone && (
+                                            <div className="flex items-center gap-2">
+                                                <Phone className="w-3 h-3 text-[var(--color-coffee-600)]" />
+                                                <span className="text-[var(--color-coffee-900)]">
+                                                    {selectedOrder.user.phone}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="bg-[var(--color-coffee-50)] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <MapPin className="w-4 h-4 text-[var(--color-coffee-600)]" />
+                                        <h4 className="font-semibold text-[var(--color-coffee-800)]">
+                                            Order Details
+                                        </h4>
+                                    </div>
+                                    <div className="space-y-2 text-sm">
+                                        <div>
+                                            <span className="text-[var(--color-coffee-600)]">Order ID:</span>{" "}
+                                            <span className="font-medium text-[var(--color-coffee-900)]">
+                                                #{selectedOrder.id}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[var(--color-coffee-600)]">Type:</span>{" "}
+                                            <span className="font-medium text-[var(--color-coffee-900)] bg-[var(--color-coffee-200)] text-[var(--color-coffee-700)] text-xs px-2 py-1 rounded-full capitalize">
+                                                {selectedOrder.source === "POS" ? "Walk In" : "Online"}
+                                            </span>
+                                        </div>
+                                        {selectedOrder.staff && (
+                                            <div>
+                                                <span className="text-[var(--color-coffee-600)]">Cashier:</span>{" "}
+                                                <span className="text-[var(--color-coffee-900)]">
+                                                    {selectedOrder.staff}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {selectedOrder.user?.address?.address && (
+                                            <div className="flex items-start gap-2">
+                                                <MapPin className="w-3 h-3 text-[var(--color-coffee-600)] mt-0.5 flex-shrink-0" />
+                                                <span className="text-[var(--color-coffee-900)] text-xs">
+                                                    {selectedOrder.user.address.address}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <strong>Payment:</strong>
-                                <span>{selectedOrder.paymentMethod || selectedOrder.paymentType || "N/A"}</span>
+
+                            {/* Order Status & Payment */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-[var(--color-coffee-50)] rounded-lg p-4">
+                                    <h4 className="font-semibold text-[var(--color-coffee-800)] mb-2">
+                                        Status
+                                    </h4>
+                                    <StatusBadge status={selectedOrder.status} />
+                                </div>
+                                <div className="bg-[var(--color-coffee-50)] rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <CreditCard className="w-4 h-4 text-[var(--color-coffee-600)]" />
+                                        <h4 className="font-semibold text-[var(--color-coffee-800)]">
+                                            Payment Method
+                                        </h4>
+                                    </div>
+                                    <span className="text-sm text-[var(--color-coffee-900)] uppercase font-medium">
+                                        {selectedOrder.paymentMethod || selectedOrder.paymentType || "N/A"}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <strong>Type:</strong>
-                                <span>{selectedOrder.source === "POS" ? "Walk In" : "Online"}</span>
-                            </div>
-                            {selectedOrder.staff && (
-                                <div className="flex justify-between">
-                                    <strong>Cashier:</strong>
-                                    <span>{selectedOrder.staff}</span>
+
+                            {/* Items */}
+                            {selectedOrder.items && selectedOrder.items.length > 0 && (
+                                <div>
+                                    <h4 className="font-semibold text-[var(--color-coffee-800)] mb-3 flex items-center gap-2">
+                                        <Package className="w-4 h-4" />
+                                        Order Items
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {selectedOrder.items.map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="bg-[var(--color-coffee-50)] rounded-lg p-4"
+                                            >
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-[var(--color-coffee-900)]">
+                                                            {item.name}
+                                                        </div>
+                                                        {item.size && (
+                                                            <div className="text-xs text-[var(--color-coffee-600)]">
+                                                                Size: {item.size}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-medium text-[var(--color-coffee-900)]">
+                                                            {currency(item.price * item.quantity)}
+                                                        </div>
+                                                        <div className="text-xs text-[var(--color-coffee-600)]">
+                                                            {currency(item.price)} × {item.quantity}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Add-ons */}
+                                                {item.addons && item.addons.length > 0 && (
+                                                    <div className="mt-2 pt-2 border-t border-[var(--color-coffee-200)]">
+                                                        <div className="text-xs font-semibold text-[var(--color-coffee-700)] mb-1">
+                                                            Add-ons:
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            {item.addons.map((addon, addonIdx) => (
+                                                                <div
+                                                                    key={addonIdx}
+                                                                    className="flex justify-between text-xs text-[var(--color-coffee-600)]"
+                                                                >
+                                                                    <span>
+                                                                        • {addon.name}{" "}
+                                                                        {addon.quantity > 1 &&
+                                                                            `(×${addon.quantity})`}
+                                                                    </span>
+                                                                    <span>
+                                                                        {currency(
+                                                                            addon.price * addon.quantity
+                                                                        )}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                            <div className="flex justify-between items-center">
-                                <strong>Status:</strong>
-                                <StatusBadge status={selectedOrder.status} />
+
+                            {/* Order Summary */}
+                            <div className="bg-[var(--color-coffee-100)] rounded-lg p-4">
+                                <h4 className="font-semibold text-[var(--color-coffee-800)] mb-3">
+                                    Order Summary
+                                </h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-[var(--color-coffee-600)]">Subtotal</span>
+                                        <span className="text-[var(--color-coffee-900)]">
+                                            {currency(
+                                                selectedOrder.items?.reduce(
+                                                    (sum, i) =>
+                                                        sum + (i.price || 0) * (i.quantity || 0),
+                                                    0
+                                                ) || 0
+                                            )}
+                                        </span>
+                                    </div>
+                                    {selectedOrder.deliveryFee > 0 && (
+                                        <div className="flex justify-between">
+                                            <span className="text-[var(--color-coffee-600)]">
+                                                Delivery Fee
+                                            </span>
+                                            <span className="text-[var(--color-coffee-900)]">
+                                                {currency(selectedOrder.deliveryFee)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between pt-2 border-t border-[var(--color-coffee-300)]">
+                                        <span className="font-semibold text-[var(--color-coffee-800)]">
+                                            Total
+                                        </span>
+                                        <span className="font-bold text-[var(--color-coffee-900)] text-lg">
+                                            {currency(selectedOrder.total)}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {selectedOrder.items && selectedOrder.items.length > 0 && (
-                            <div className="mt-4 border-t pt-3">
-                                <h4 className="font-semibold mb-2 text-sm sm:text-base text-[var(--color-coffee-800)]">
-                                    Items
-                                </h4>
-                                <ul className="space-y-2 text-xs sm:text-sm text-[var(--color-coffee-700)]">
-                                    {selectedOrder.items.map((i, idx) => (
-                                        <li key={idx} className="flex justify-between gap-2">
-                                            <span className="flex-1">
-                                                {i.name} <span className="text-[var(--color-coffee-600)]">x{i.quantity}</span>
-                                            </span>
-                                            <span className="font-medium text-[var(--color-coffee-800)]">
-                                                {currency(i.price * i.quantity)}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-
-                        <div className="mt-4 border-t pt-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm sm:text-base font-bold text-[var(--color-coffee-800)]">Total:</span>
-                                <span className="text-lg sm:text-xl font-bold text-[var(--color-coffee-800)]">
-                                    {currency(selectedOrder.total)}
-                                </span>
-                            </div>
+                        {/* Modal Footer */}
+                        <div className="bg-[var(--color-coffee-50)] p-4 flex items-center justify-end gap-3 border-t border-[var(--color-coffee-200)]">
+                            <button
+                                onClick={closeOrderModal}
+                                className="cursor-pointer px-4 py-2 text-sm bg-white border border-[var(--color-coffee-200)] rounded-lg hover:bg-[var(--color-coffee-100)] text-[var(--color-coffee-800)] font-semibold transition-colors"
+                            >
+                                Close
+                            </button>
                         </div>
                     </div>
                 </div>

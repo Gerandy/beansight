@@ -31,19 +31,19 @@ function MenuGrid() {
   }, []);
 
   return (
-    <div className="max-w-[1050px] mx-auto px-4 py-8 relative">
+    <div className="max-w-[1050px] mx-auto px-4 py-4 sm:py-6 lg:py-8 relative">
       {/* Header */}
       {loading ? (
-        <div className="mb-6 animate-pulse">
-          <div className="h-10 bg-gray-200 rounded w-64 mb-2"></div>
-          <div className="h-6 bg-gray-200 rounded w-48"></div>
+        <div className="mb-4 sm:mb-6 animate-pulse">
+          <div className="h-8 sm:h-10 bg-gray-200 rounded w-48 sm:w-64 mb-2"></div>
+          <div className="h-4 sm:h-6 bg-gray-200 rounded w-36 sm:w-48"></div>
         </div>
       ) : (
-        <div className="mb-6">
-          <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold mb-2">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-coffee-900 text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">
             Hello, {firstNamee}!
           </h1>
-          <p className="text-coffee-600 text-sm sm:text-base lg:text-lg">
+          <p className="text-coffee-600 text-xs sm:text-sm lg:text-lg">
             Food Options for you!
           </p>
         </div>
@@ -59,11 +59,11 @@ function MenuGrid() {
           </div>
 
           {/* Mobile Skeleton Swiper */}
-          <div className="lg:hidden flex gap-4 overflow-x-hidden px-2">
+          <div className="lg:hidden flex gap-3 overflow-x-hidden px-1">
             {Array.from({ length: 3 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex-shrink-0 w-[calc(47vw-16px)]"
+                className="flex-shrink-0 w-[calc(47vw-12px)]"
               >
                 <MenuCard isLoading={true} />
               </div>
@@ -89,7 +89,7 @@ function MenuGrid() {
           {/* Mobile Swiper */}
           <div
             ref={scrollRef}
-            className="lg:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2"
+            className="lg:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-1"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -98,7 +98,7 @@ function MenuGrid() {
             {foodMenu.map((item) => (
               <div
                 key={item.id}
-                className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
+                className="flex-shrink-0 w-[calc(47vw-12px)] snap-start"
               >
                 <Link to={`/menu/product-details/${item.id}`}>
                   <MenuCard

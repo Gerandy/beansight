@@ -395,56 +395,56 @@ export default function Signup() {
 
           {/* Progress Steps */}
           <div className="mb-8">
-            <div className="flex items-center justify-between max-w-md mx-auto">
-              {[1, 2, 3, 4].map((step) => (
-                <div key={step} className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(step)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all
-                      ${currentStep === step ? "bg-coffee-600 text-white scale-110" : 
-                        currentStep > step ? "bg-green-500 text-white hover:bg-green-600" : "bg-gray-300 text-gray-600 hover:bg-gray-400"}
-                      cursor-pointer focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2`}
-                    aria-label={`Go to step ${step}`}
-                  >
-                    {currentStep > step ? <Check size={20} /> : step}
-                  </button>
-                  {step < 4 && (
-                    <div className={`w-12 sm:w-20 h-1 mx-2 transition-all
-                      ${currentStep > step ? "bg-green-500" : "bg-gray-300"}`} />
-                  )}
+            <div className="max-w-3xl mx-auto px-4">
+              <div className="relative">
+                {/* SVG connector clipped between first and last circle centers */}
+                <svg
+                  className="absolute left-0 right-0 top-[20px] h-1 w-full"
+                  viewBox="0 0 100 2"
+                  preserveAspectRatio="none"
+                >
+                  {/* background line from 12.5% to 87.5% */}
+                  <line x1="12.5" y1="1" x2="87.5" y2="1" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" />
+                  {/* progress segment from 12.5% up to current step */}
+                  <line
+                    x1="12.5"
+                    y1="1"
+                    x2={12.5 + Math.min(((currentStep - 1) / 3) * 75, 75)}
+                    y2="1"
+                    stroke="#C69064" /* coffee-300 */
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+
+                {/* circles + labels */}
+                <div className="grid grid-cols-4 gap-4 items-start">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div key={step} className="flex flex-col items-center">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(step)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all text-base z-10
+                          ${currentStep === step ? "bg-coffee-600 text-white scale-110" : 
+                            currentStep > step ? "bg-green-500 text-white hover:bg-green-600" : "bg-gray-300 text-gray-600 hover:bg-gray-400"}
+                          cursor-pointer focus:outline-none focus:ring-2 focus:ring-coffee-500 focus:ring-offset-2`}
+                        aria-label={`Go to step ${step}`}
+                      >
+                        {currentStep > step ? <Check size={18} /> : step}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(step)}
+                        className={`mt-2 text-xs sm:text-sm hover:text-coffee-600 transition-colors truncate max-w-full
+                          ${currentStep === step ? "font-semibold text-coffee-700" : "text-gray-600"}`}
+                      >
+                        {step === 1 ? "Personal" : step === 2 ? "Security" : step === 3 ? "Address" : "Terms"}
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="flex justify-between max-w-md mx-auto mt-2 text-xs sm:text-sm text-gray-600">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(1)}
-                className={`hover:text-coffee-600 transition-colors ${currentStep === 1 ? 'font-semibold text-coffee-700' : ''}`}
-              >
-                Personal
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(2)}
-                className={`hover:text-coffee-600 transition-colors ${currentStep === 2 ? 'font-semibold text-coffee-700' : ''}`}
-              >
-                Security
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(3)}
-                className={`hover:text-coffee-600 transition-colors ${currentStep === 3 ? 'font-semibold text-coffee-700' : ''}`}
-              >
-                Address
-              </button>
-              <button
-                type="button"
-                onClick={() => setCurrentStep(4)}
-                className={`hover:text-coffee-600 transition-colors ${currentStep === 4 ? 'font-semibold text-coffee-700' : ''}`}
-              >
-                Terms
-              </button>
+              </div>
             </div>
           </div>
 

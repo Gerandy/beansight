@@ -32,19 +32,19 @@ function MenuFeatured() {
   }, []);
 
   return (
-    <div className="max-w-[1050px] mx-auto px-4 py-6 relative">
+    <div className="max-w-[1050px] mx-auto px-4 py-4 sm:py-6 relative">
       {/* Header */}
       {loading ? (
-        <div className="animate-pulse mb-4">
-          <div className="h-10 bg-gray-200 rounded w-48 mb-2"></div>
-          <div className="h-6 bg-gray-200 rounded w-72"></div>
+        <div className="animate-pulse mb-4 sm:mb-6">
+          <div className="h-8 sm:h-10 bg-gray-200 rounded w-32 sm:w-48 mb-2"></div>
+          <div className="h-4 sm:h-6 bg-gray-200 rounded w-48 sm:w-72"></div>
         </div>
       ) : (
         <>
-          <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold">
+          <h1 className="text-coffee-900 text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">
             Featured
           </h1>
-          <p className="text-coffee-700 mb-4 text-sm sm:text-base lg:text-lg">
+          <p className="text-coffee-700 mb-3 sm:mb-4 text-xs sm:text-base lg:text-lg">
             Discover what might be your next favorites
           </p>
         </>
@@ -59,12 +59,12 @@ function MenuFeatured() {
             ))}
           </div>
 
-          {/* Mobile Skeleton Swiper */}
-          <div className="lg:hidden flex gap-4 overflow-x-hidden px-2">
-            {Array.from({ length: 3 }).map((_, idx) => (
+          {/* Tablet & Mobile Skeleton Swiper */}
+          <div className="lg:hidden flex gap-3 overflow-x-hidden px-1">
+            {Array.from({ length: 2 }).map((_, idx) => (
               <div
                 key={idx}
-                className="flex-shrink-0 w-[calc(47vw-16px)]"
+                className="flex-shrink-0 w-[calc(50%-6px)]"
               >
                 <MenuCard isLoading={true} />
               </div>
@@ -88,10 +88,10 @@ function MenuFeatured() {
             ))}
           </div>
 
-          {/* Mobile Swiper */}
+          {/* Tablet & Mobile Swiper - 2 cards visible */}
           <div
             ref={scrollRef}
-            className="lg:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2"
+            className="lg:hidden flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-1"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -100,7 +100,7 @@ function MenuFeatured() {
             {foodMenu.map((item) => (
               <div
                 key={item.id}
-                className="flex-shrink-0 w-[calc(47vw-16px)] snap-start"
+                className="flex-shrink-0 w-[calc(50%-6px)] snap-start"
               >
                 <Link to={`/menu/product-details/${item.id}`}>
                   <MenuCard
