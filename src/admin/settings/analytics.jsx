@@ -119,6 +119,7 @@ export default function AnalyticsSettings() {
         const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         data.sort((a, b) => new Date(b.date) - new Date(a.date));
         setExpenses(data);
+        console.log(data);
       } catch (err) {
         console.error("Error fetching expenses:", err);
       }

@@ -65,7 +65,6 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       quantity: item.quantity,
       size: item.size || null,
       addons: item.addons || [],
-      // Calculate item total including add-ons
       itemTotal: (Number(item.price) + 
         (item.addons ? item.addons.reduce((sum, addon) => sum + (addon.price * addon.qty), 0) : 0)) * 
         Number(item.quantity)
@@ -76,9 +75,12 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       source: "POS",
       items: formattedItems,
       user: username,
+      customerName: customerName,
+      orderType: "Walk In",
       subtotal,
       discountType,
       discountAmount,
+      change,
       tip,
       total,
       paymentType,
@@ -87,14 +89,14 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       createdAt: serverTimestamp(),
       completedAt: new Date().toISOString(),
     };
-
+    console.log()
     try {
       const ref = doc(collection(db, "orders"), orderId);
       await setDoc(ref, orderData);
 
       setSavedOrder(orderData);
-      setShowReceipt(true);
-
+      setShowReceipt(true); // Show receipt modal which auto-prints
+      
       onComplete(orderData);
       
       // Reset form
@@ -275,12 +277,15 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
           items={savedOrder.items}
           total={savedOrder.total}
           subtotal={savedOrder.subtotal}
-          discount={savedOrder.discountAmount}
+          discountAmount={savedOrder.discountAmount}
           discountType={savedOrder.discountType}
           tip={savedOrder.tip}
           date={savedOrder.completedAt}
           orderId={savedOrder.id}
-          customer={savedOrder.user.customerName}
+          customer={savedOrder.customerName || "Guest"}
+          change={savedOrder.change}
+          cashGiven={savedOrder.cashGiven}
+          orderType={savedOrder.orderType}
           onClose={() => setShowReceipt(false)}
         />
       )}
