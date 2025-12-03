@@ -62,13 +62,13 @@ const Orders = () => {
 }, []);
 
   const hasOrders = orders.length > 0;
-  const currentOrders = orders.filter(order => !["Delivered", "Completed"].includes(order.status));
-  const pastOrders = orders.filter(order => ["Delivered", "Completed"].includes(order.status));
+  const currentOrders = orders.filter(order => !["Delivered", "Completed","Cancelled"].includes(order.status));
+  const pastOrders = orders.filter(order => ["Delivered", "Completed","Cancelled"].includes(order.status));
   
 
   let filteredOrders = activeTab === "current" ? currentOrders : pastOrders;
   if (filter !== "All") filteredOrders = filteredOrders.filter(order => order.status === filter);
-  if (sortBy === "oldest") filteredOrders.reverse();
+  if (sortBy === "newest") filteredOrders.reverse();
 
   const handleOrderClick = order => setSelectedOrder(order);
   const closeModal = () => setSelectedOrder(null);
@@ -137,6 +137,7 @@ const triggerFlyToCart = (imgSrc) => {
   const getStatusIcon = status => {
     if (["Delivered", "Completed"].includes(status)) return <CheckCircle className="w-5 h-5" />;
     if (status === "Pending") return <Clock className="w-5 h-5" />;
+    if (status === "Cancelled") return <X className="w-5 h-5" />;
     return <Package className="w-5 h-5" />;
   };
 
@@ -227,7 +228,10 @@ const triggerFlyToCart = (imgSrc) => {
                             ? "bg-green-100 text-green-700"
                             : order.status === "Pending"
                             ? "bg-coffee-200 text-coffee-800"
+                            : order.status === "Cancelled"
+                            ? "bg-red-300 text-black-800"
                             : "bg-yellow-100 text-yellow-800"
+                            
                         }`}
                       >
                         {order.status}
@@ -326,7 +330,7 @@ const triggerFlyToCart = (imgSrc) => {
                                                                     className="bg-coffee-100 text-coffee-700 text-xs px-2 py-1 rounded-full"
                                                                   >
                                                                   {a.name}
-                                                                  
+                                                                  P{a.price}
                                                                   <br/>
                                                                   </span>
                                                                 ))}</p>
