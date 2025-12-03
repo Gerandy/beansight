@@ -10,6 +10,14 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
   const [addOns, setAddOns] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   // Fetch add-ons from Firestore
   useEffect(() => {
   const fetchAddOns = async () => {
@@ -142,10 +150,10 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto p-4 sm:p-6 space-y-6 flex-1">
+        <div className="overflow-y-auto p-4 sm:p-6 space-y-6 flex-1 scrollbar-hide">
           {/* Product Image */}
           {product.img && (
-            <div className="w-full aspect-video bg-coffee-100 rounded-xl overflow-hidden">
+            <div className="w-full h-48 bg-coffee-100 rounded-xl overflow-hidden">
               <img
                 src={product.img}
                 alt={product.name}
@@ -189,55 +197,65 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
                     <h4 className="font-semibold text-coffee-800 mb-3">
                       {category} Add-ons (Optional)
                     </h4>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {items.map((addon) => {
                         const selected = selectedAddOns.find(a => a.id === addon.id);
                         
                         return (
-                          <div
+                          <button
                             key={addon.id}
-                            className={`p-3 rounded-lg border-2 transition-all ${
+                            onClick={() => handleAddOnToggle(addon)}
+                            className={`p-4 rounded-xl border-2 transition-all text-left ${
                               selected
                                 ? "border-coffee-600 bg-coffee-50"
-                                : "border-coffee-200"
+                                : "border-coffee-200 bg-white hover:border-coffee-300"
                             }`}
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
-                                <div className="font-medium text-coffee-900">{addon.name}</div>
-                                <div className="text-sm text-coffee-600">+₱{addon.price}</div>
+                                <div className="font-semibold text-coffee-900 text-base mb-1">
+                                  {addon.name}
+                                </div>
+                                <div className="text-sm text-coffee-600">
+                                  +₱ {addon.price.toFixed(2)}
+                                </div>
                               </div>
                               
-                              {selected && addon.allowMultiple ? (
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => handleAddOnDecrease(addon.id)}
-                                    className="cursor-pointer w-8 h-8 rounded-full bg-coffee-200 hover:bg-coffee-300 flex items-center justify-center transition"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className="w-8 text-center font-semibold">{selected.qty}</span>
-                                  <button
-                                    onClick={() => handleAddOnToggle(addon)}
-                                    className="cursor-pointer w-8 h-8 rounded-full bg-coffee-600 hover:bg-coffee-700 text-white flex items-center justify-center transition"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleAddOnToggle(addon)}
-                                  className={`cursor-pointer w-10 h-10 rounded-full flex items-center justify-center transition ${
+                              <div className="flex-shrink-0">
+                                {selected && addon.allowMultiple ? (
+                                  <div className="flex items-center gap-1 bg-coffee-100 rounded-lg px-2 py-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddOnDecrease(addon.id);
+                                      }}
+                                      className="cursor-pointer w-5 h-5 rounded flex items-center justify-center hover:bg-coffee-200 transition"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <span className="w-6 text-center font-semibold text-xs">{selected.qty}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddOnToggle(addon);
+                                      }}
+                                      className="cursor-pointer w-5 h-5 rounded flex items-center justify-center hover:bg-coffee-200 transition"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition ${
                                     selected
-                                      ? "bg-coffee-600 text-white"
-                                      : "bg-coffee-200 hover:bg-coffee-300"
-                                  }`}
-                                >
-                                  {selected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                                </button>
-                              )}
+                                      ? "border-coffee-600 bg-coffee-600"
+                                      : "border-coffee-300 bg-white"
+                                  }`}>
+                                    {selected && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
