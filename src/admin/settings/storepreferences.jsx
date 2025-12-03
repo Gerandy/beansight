@@ -289,8 +289,20 @@ export default function StorePreferences() {
     setSaving(true);
     try {
       // Simulate save to Firebase
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setSuccessModalOpen(true);
+      await setDoc(doc(db, "settings", "storePref"),{
+        discountRules: discountRules,
+        minOrder: minOrder,
+        onlineOrder: onlineOrdering,
+        orderType: orderType,
+        paymentMet: paymentMethods,
+        storeOpen: storeOpenTime,
+        storeTime: cutoffTimes,
+        taxRate: taxRate
+
+      }
+    )
+
+      showMessage("✓ Settings saved successfully!", "success");
     } catch (err) {
       showMessage("Failed to save settings. Please try again.", "error");
     } finally {

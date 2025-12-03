@@ -268,7 +268,7 @@ function ProductDetails() {
                           key={size.name}
                           type="button"
                           onClick={() => setSelectedSize(size.name)}
-                          className={`px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
+                          className={`cursor-pointer px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
                         >
                           {size.name} ({size.oz} oz)
                         </button>
@@ -325,10 +325,10 @@ function ProductDetails() {
                               </button>
                             </div>
                           ) : (
-                            <label className="inline-flex items-center gap-2 cursor-pointer">
+                            <label className=" inline-flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
-                                className="accent-[#7D5A50] w-5 h-5"
+                                className="cursor-pointer accent-[#7D5A50] w-5 h-5"
                                 checked={checked}
                                 onChange={() => toggleAddOn(a.id)}
                                 aria-label={`Toggle ${a.name}`}

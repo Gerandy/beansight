@@ -153,7 +153,7 @@ export default function Checkout() {
         <header className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-black">Checkout</h1>
           <Link to="/menu">
-            <button className="px-4 py-2 rounded-lg bg-yellow-950 text-white font-medium hover:bg-yellow-800">
+            <button className="cursor-pointer px-4 py-2 rounded-lg bg-yellow-950 text-white font-medium hover:bg-yellow-800">
               Continue shopping
             </button>
           </Link>
@@ -483,7 +483,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <button onClick={handleCheckout} disabled={loading} className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 hover:bg-yellow-800 transition">
+                <button onClick={handleCheckout} disabled={loading} className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 hover:bg-yellow-800 transition cursor-pointer">
                   {loading ? "Processing..." : "Place Order"}
                 </button>
               </div>
