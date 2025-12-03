@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
 import { X, Package, User, MapPin, Clock, Phone, Mail } from "lucide-react";
+import ThermalReceipt from "../../components/ThermalReceipt";
 
 export default function OnlineOrders() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +13,7 @@ export default function OnlineOrders() {
   const [toast, setToast] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [printOrder, setPrintOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -105,6 +107,18 @@ export default function OnlineOrders() {
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
 
+       // If moving from Pending -> Preparing, trigger print
+      if (currentStatus === "Pending" && newStatus === "Preparing") {
+        const orderToPrint =
+          orders.find((o) => o.id === orderId) ||
+          (await (async () => {
+            // fallback: build minimal order object
+            return { id: orderId, items: [], subtotal: 0, total: 0, customer: "Guest", placedAt: new Date(), shippingDetails: orderType };
+          })());
+        setPrintOrder(orderToPrint);
+      }
+
+
       setToast({
         message: `Order ${orderId} → ${newStatus}`,
         tone: ["Delivering", "Completed"].includes(newStatus)
@@ -179,6 +193,24 @@ export default function OnlineOrders() {
 
   return (
     <div className="bg-coffee-50 rounded-xl shadow p-3 sm:p-5">
+       {/* Thermal receipt overlay / auto-print */}
+     {printOrder && (
+       <ThermalReceipt
+         items={printOrder.items || []}
+         subtotal={printOrder.subtotal || 0}
+         discountType={"none"}
+         discountAmount={0}
+         total={printOrder.total || 0}
+         customer={printOrder.customer || "Guest"}
+         orderId={printOrder.id}
+         date={printOrder.placedAt}
+         orderType={printOrder.shippingDetails}
+         onClose={() => setPrintOrder(null)}
+       />
+     )}
+    
+  
+
       <div className="flex flex-col gap-3 sm:gap-4 mb-4">
         <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-coffee-800">
           📦 Online Orders

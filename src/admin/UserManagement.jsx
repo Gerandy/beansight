@@ -21,6 +21,9 @@ import {
   query,
   where,
   setDoc,
+  getDoc,
+  addDoc,
+  serverTimestamp, // added
 } from "firebase/firestore";
 import { db, auth, functions } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -435,7 +438,28 @@ export default function UserManagement() {
 
   const handleDeleteUser = async (user) => {
     try {
-      await deleteDoc(doc(db, "users", user.id));
+      // get latest user data
+      const userRef = doc(db, "users", user.id);
+      const snap = await getDoc(userRef);
+      const data = snap.exists() ? snap.data() : user;
+
+      // archive user (store originalId and originalData)
+      await addDoc(collection(db, "archives"), {
+        date: new Date().toISOString(),
+        type: "user",
+        name: `${data?.firstName || ""} ${data?.lastName || ""}`.trim() || data?.email || "Unknown user",
+        details: `Email: ${data?.email || "N/A"} - Role: ${data?.role || "N/A"}`,
+        archivedBy: "admin",
+        reason: "Deleted",
+        originalId: user.id,
+        originalData: data || {},
+        createdAt: serverTimestamp(),
+      });
+
+      // delete original user doc
+      await deleteDoc(userRef);
+      // update local state
+      setUsers(prev => prev.filter(u => u.id !== user.id));
     } catch (err) {
       console.error(err);
     }
