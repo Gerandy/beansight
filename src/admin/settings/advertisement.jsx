@@ -2,7 +2,75 @@ import React, { useState, useEffect } from "react";
 import { db, storage } from "../../firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Upload, Trash2, Edit2, Image as ImageIcon, Settings, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, Trash2, Edit2, Image as ImageIcon, Settings, Save, AlertCircle, CheckCircle, X, Check, Info } from "lucide-react";
+
+// Modal Tooltip Component
+function ModalTooltip({ open, text, onClose }) {
+  if (!open) return null;
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm cursor-pointer animate-fadeIn" 
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 relative transform transition-all" 
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          className="absolute top-4 right-4 text-coffee-400 hover:text-coffee-700 transition"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 text-coffee-600 flex-shrink-0 mt-0.5" />
+          <div className="text-coffee-800 text-sm leading-relaxed">{text}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Success Modal
+function SuccessModal({ open, onClose, title, message }) {
+  if (!open) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative animate-scaleIn">
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <Check className="w-12 h-12 text-green-600" strokeWidth={3} />
+          </div>
+          
+          <h3 className="text-2xl font-bold text-coffee-900 mb-2">
+            {title}
+          </h3>
+          
+          <p className="text-gray-600 mb-6">
+            {message}
+          </p>
+          
+          <button
+            onClick={onClose}
+            className="bg-coffee-700 hover:bg-coffee-800 text-white px-8 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AdvertisementSettings() {
   const [banners, setBanners] = useState([]);
@@ -11,6 +79,8 @@ export default function AdvertisementSettings() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [uploadingId, setUploadingId] = useState(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successModalContent, setSuccessModalContent] = useState({ title: "", message: "" });
 
   // Load existing banners and maxBanners on mount
   useEffect(() => {
@@ -38,6 +108,11 @@ export default function AdvertisementSettings() {
     setTimeout(() => setMessage({ text: "", type: "" }), 4000);
   };
 
+  const showSuccessModal = (title, message) => {
+    setSuccessModalContent({ title, message });
+    setSuccessModalOpen(true);
+  };
+
   const handleAddBanner = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -55,7 +130,7 @@ export default function AdvertisementSettings() {
       const downloadURL = await getDownloadURL(storageRef);
       const docRef = await addDoc(collection(db, "banners"), { img: downloadURL, createdAt: new Date() });
       setBanners(prev => [...prev, { id: docRef.id, img: downloadURL }]);
-      showMessage("Banner added successfully! 🎉", "success");
+      showSuccessModal("Banner Added!", "Your new banner has been successfully uploaded and added to the slider.");
       e.target.value = ""; // Reset file input
     } catch (err) {
       console.error("Failed to add banner:", err);
@@ -80,7 +155,7 @@ export default function AdvertisementSettings() {
       const downloadURL = await getDownloadURL(storageRef);
       await updateDoc(doc(db, "banners", id), { img: downloadURL, updatedAt: new Date() });
       setBanners(prev => prev.map(b => b.id === id ? { ...b, img: downloadURL } : b));
-      showMessage("Banner updated successfully! ✨", "success");
+      showSuccessModal("Banner Updated!", "Your banner has been successfully replaced with the new image.");
     } catch (err) {
       console.error("Failed to update banner:", err);
       showMessage("Failed to update banner. Please try again.", "error");
@@ -96,7 +171,7 @@ export default function AdvertisementSettings() {
     try {
       await deleteDoc(doc(db, "banners", id));
       setBanners(prev => prev.filter(b => b.id !== id));
-      showMessage("Banner deleted successfully", "success");
+      showSuccessModal("Banner Deleted!", "The banner has been successfully removed from your slider.");
     } catch (err) {
       console.error("Failed to delete banner:", err);
       showMessage("Failed to delete banner. Please try again.", "error");
@@ -107,7 +182,7 @@ export default function AdvertisementSettings() {
 
   const handleSaveMax = () => {
     localStorage.setItem("maxBanners", maxBanners);
-    showMessage("Settings saved successfully! 💾", "success");
+    showSuccessModal("Settings Saved!", "Your slider settings have been successfully updated.");
   };
 
   if (initialLoading) {
@@ -135,6 +210,13 @@ export default function AdvertisementSettings() {
 
   return (
     <div className="w-full max-w-5xl mx-auto pt-8 px-4 pb-12">
+      <SuccessModal 
+        open={successModalOpen} 
+        onClose={() => setSuccessModalOpen(false)}
+        title={successModalContent.title}
+        message={successModalContent.message}
+      />
+
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-3xl md:text-4xl font-extrabold mb-3 flex items-center gap-3 text-coffee-900">
@@ -296,6 +378,23 @@ export default function AdvertisementSettings() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

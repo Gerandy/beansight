@@ -67,6 +67,46 @@ function ModalTooltip({ open, text, onClose }) {
   );
 }
 
+// Success Modal
+function SuccessModal({ open, onClose }) {
+  if (!open) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 relative animate-scaleIn">
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        
+        <div className="flex flex-col items-center text-center">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <Check className="w-12 h-12 text-green-600" strokeWidth={3} />
+          </div>
+          
+          <h3 className="text-2xl font-bold text-coffee-900 mb-2">
+            Settings Saved!
+          </h3>
+          
+          <p className="text-gray-600 mb-6">
+            Your store preferences have been successfully updated.
+          </p>
+          
+          <button
+            onClick={onClose}
+            className="bg-coffee-700 hover:bg-coffee-800 text-white px-8 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StorePreferences() {
   // Day order for proper sequence
   const dayOrder = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -118,6 +158,7 @@ export default function StorePreferences() {
   const [gcashQRPreview, setGcashQRPreview] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
@@ -249,7 +290,7 @@ export default function StorePreferences() {
     try {
       // Simulate save to Firebase
       await new Promise(resolve => setTimeout(resolve, 1000));
-      showMessage("✓ Settings saved successfully!", "success");
+      setSuccessModalOpen(true);
     } catch (err) {
       showMessage("Failed to save settings. Please try again.", "error");
     } finally {
@@ -343,6 +384,7 @@ export default function StorePreferences() {
   return (
     <div className="w-full max-w-7xl mx-auto pt-8 px-4 pb-12">
       <ModalTooltip open={tooltipOpen} text={tooltipText} onClose={() => setTooltipOpen(false)} />
+      <SuccessModal open={successModalOpen} onClose={() => setSuccessModalOpen(false)} />
       
       {/* Header */}
       <div className="mb-8">
@@ -964,6 +1006,23 @@ export default function StorePreferences() {
           )}
         </button>
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
