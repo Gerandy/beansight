@@ -17,10 +17,28 @@ function CartSidebar({ cartOpen, setCartOpen }) {
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
 
+  const [settings, setSettings] = useState(0);
+  useEffect(() => {
+      const loadSettings = async () => {
+        
+        try {
+          const docRef = await getDoc(doc(db, "settings", "mapRadius"));
+          if (docRef.exists()) {
+            const data = docRef.data();
+            setSettings(data);
+          }
+        } catch (err) {
+          console.error("Error loading settings:", err);
+        };
+      };
+  
+      loadSettings();
+    }, []); 
+
   const { cart = [], removeFromCart, updateQuantity, totalPrice = 0,  calculateDeliveryFee } = useCart() || {};
   const navigate = useNavigate();
-
-  const grandTotal = totalPrice + deliveryFees ;
+  
+  const grandTotal = totalPrice + (settings.feeType === "flat" ? settings.flatFee : deliveryFees) ;
 
   useEffect(() => {
       if (!uid) return;
