@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Search, PlusCircle, Star, PackageX } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase"; 
+import AddOnModal from "./AddOnModal";
 
 export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const [search, setSearch] = useState("");
@@ -10,6 +11,7 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [modalProduct, setModalProduct] = useState(null);
 
   useEffect(() => {
     const loadInventory = async () => {
@@ -140,8 +142,8 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
               </div>
              <button
               onClick={() => {
-                if (!p.availability) return; 
-                  onAdd(p);
+                if (!p.availability) return;
+                setModalProduct(p); // Open modal instead of directly adding
               }}
               disabled={!p.availability}
               className={`cursor-pointer flex items-center gap-1 px-3 py-1.5 rounded-md text-xs sm:text-sm active:scale-95 transition-all shadow-sm
@@ -218,6 +220,15 @@ export default function ProductGrid({ category = "All", onAdd = () => {} }) {
             Next →
           </button>
         </div>
+      )}
+
+      {/* AddOnModal for product addition */}
+      {modalProduct && (
+        <AddOnModal
+          product={modalProduct}
+          onClose={() => setModalProduct(null)}
+          onAddToCart={onAdd}
+        />
       )}
     </div>
   );

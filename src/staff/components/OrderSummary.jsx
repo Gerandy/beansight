@@ -32,8 +32,15 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     quantity: item.quantity ?? item.qty ?? 1,
   }));
 
+  // Calculate subtotal including add-ons
   const subtotal = useMemo(
-    () => normalizedCart.reduce((s, it) => s + Number(it.price) * Number(it.quantity), 0),
+    () => normalizedCart.reduce((s, it) => {
+      const basePrice = Number(it.price) * Number(it.quantity);
+      const addOnsPrice = it.addons 
+        ? it.addons.reduce((addOnSum, addon) => addOnSum + (addon.price * addon.qty), 0) * Number(it.quantity)
+        : 0;
+      return s + basePrice + addOnsPrice;
+    }, 0),
     [normalizedCart]
   );
 
@@ -50,10 +57,24 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
     const orderId = `POS-${Date.now().toString().slice(-6)}`;
     const username = { customerName, uid: "walk-in" };
 
+    // Format items for saving with add-ons
+    const formattedItems = normalizedCart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      size: item.size || null,
+      addons: item.addons || [],
+      // Calculate item total including add-ons
+      itemTotal: (Number(item.price) + 
+        (item.addons ? item.addons.reduce((sum, addon) => sum + (addon.price * addon.qty), 0) : 0)) * 
+        Number(item.quantity)
+    }));
+
     const orderData = {
       id: orderId,
       source: "POS",
-      items: normalizedCart,
+      items: formattedItems,
       user: username,
       subtotal,
       discountType,
@@ -75,6 +96,13 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
       setShowReceipt(true);
 
       onComplete(orderData);
+      
+      // Reset form
+      setCashGiven("");
+      setCustomerName("");
+      setDiscountType("none");
+      setTip(0);
+      
       onClear();
     } catch (err) {
       console.error(err);
@@ -85,7 +113,14 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
   const handlePrint = () => {
     if (savedOrder) setShowReceipt(true);
   };
-  const handleClear = () => onClear?.();
+  
+  const handleClear = () => {
+    setCashGiven("");
+    setCustomerName("");
+    setDiscountType("none");
+    setTip(0);
+    onClear?.();
+  };
 
   return (
     <div className="border-t border-[var(--color-coffee-200)] pt-3 sm:pt-4 mt-3 sm:mt-4 text-[var(--color-coffee-900)]">
@@ -108,6 +143,23 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
           <span className="text-[var(--color-coffee-700)]">Subtotal</span>
           <span className="font-medium text-[var(--color-coffee-800)]">₱{subtotal.toFixed(2)}</span>
         </div>
+
+        {/* Show add-ons breakdown if any items have add-ons */}
+        {normalizedCart.some(item => item.addons && item.addons.length > 0) && (
+          <div className="text-[10px] sm:text-xs text-[var(--color-coffee-600)] pl-2 border-l-2 border-coffee-200">
+            <div className="font-medium mb-1">Includes add-ons:</div>
+            {normalizedCart.map((item, idx) => {
+              if (!item.addons || item.addons.length === 0) return null;
+              const addonsTotal = item.addons.reduce((sum, addon) => sum + (addon.price * addon.qty), 0) * item.quantity;
+              return (
+                <div key={idx} className="flex justify-between">
+                  <span className="truncate mr-2">{item.name}</span>
+                  <span>+₱{addonsTotal.toFixed(2)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Discount */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -201,7 +253,8 @@ export default function OrderSummary({ cartItems = [], onComplete = () => {}, on
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handlePrint}
-            className="cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 sm:py-2.5 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150 text-xs sm:text-sm font-medium active:scale-98"
+            disabled={!savedOrder}
+            className="cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 border border-[var(--color-coffee-400)] text-[var(--color-coffee-700)] py-2 sm:py-2.5 rounded-md hover:bg-[var(--color-coffee-100)] transition-all duration-150 text-xs sm:text-sm font-medium active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Printer size={14} className="sm:w-4 sm:h-4" /> 
             <span className="hidden sm:inline">Print</span>

@@ -14,27 +14,36 @@ export default function POSPage() {
   const productContainerRef = useRef(null);
 
   const handleAddToCart = (product) => {
-    const exists = cartItems.find((i) => i.id === product.id);
-    if (exists) {
-      setCartItems(
-        cartItems.map((i) =>
-          i.id === product.id ? { ...i, qty: i.qty + 1 } : i
-        )
-      );
+    // Products with uniqueId come from the modal with customizations
+    if (product.uniqueId) {
+      setCartItems([...cartItems, product]);
     } else {
-      setCartItems([...cartItems, { ...product, qty: 1 }]);
+      // Fallback for simple add (shouldn't happen with modal approach)
+      const exists = cartItems.find((i) => i.id === product.id && !i.uniqueId);
+      if (exists) {
+        setCartItems(
+          cartItems.map((i) =>
+            i.id === product.id && !i.uniqueId ? { ...i, qty: i.qty + 1 } : i
+          )
+        );
+      } else {
+        setCartItems([...cartItems, { ...product, qty: 1 }]);
+      }
     }
   };
 
-  const handleQtyChange = (id, delta) => {
+  const handleRemove = (uniqueId) =>
+    setCartItems(cartItems.filter((i) => (i.uniqueId || i.id) !== uniqueId));
+
+  const handleQtyChange = (uniqueId, delta) => {
     setCartItems(
       cartItems.map((i) =>
-        i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i
+        (i.uniqueId || i.id) === uniqueId
+          ? { ...i, qty: Math.max(1, i.qty + delta) }
+          : i
       )
     );
   };
-
-  const handleRemove = (id) => setCartItems(cartItems.filter((i) => i.id !== id));
 
   const handleComplete = () => {
     setCartItems([]);

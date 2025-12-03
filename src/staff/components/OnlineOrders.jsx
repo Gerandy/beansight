@@ -424,7 +424,7 @@ export default function OnlineOrders() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="bg-coffee-700 text-white p-4 sm:p-6 flex items-center justify-between">
+            <div className="bg-coffee-600 text-white p-4 sm:p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
                   <Package className="w-5 h-5" />
