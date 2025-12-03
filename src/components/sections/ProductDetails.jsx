@@ -10,9 +10,6 @@ import HomeCard from "../home/HomeCard";
 // Define add-ons catalogs
 
 
-const foodAddOns = [
-  { id: "extra_rice", name: "Extra Rice", price: 20, allowMultiple: true },
-];
 
 const suggestedBeverages = [
   { id: "latte", name: "Latte", price: 120, img: logo },
@@ -31,7 +28,8 @@ function ProductDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [flyImage, setFlyImage] = useState(null);
   const [selectedAddOns, setSelectedAddOns] = useState({}); // { addonId: qty }
-  const [beverageAddOns, setBeverageAddOns]= useState([]);
+  const [beverageAddOns, setBeverageAddOns]= useState([]); 
+  const [foodAddOns, setfoodAddOns] = useState([]);
 
 
 
@@ -44,7 +42,8 @@ function ProductDetails() {
       const data = docRef.data();
 
       setBeverageAddOns(data.beverageAddOns);
-      console.log(data.beverageAddOns);
+      setfoodAddOns(data.foodAddOns);
+      
 
 
     }
@@ -90,7 +89,7 @@ function ProductDetails() {
   // Determine product type flags (safe with optional chaining)
   const isBeverage = product?.category === "Beverage"; // Remove && product?.sizes === true
   const isBeverages = product?.category === "Beverage";
-  const isFood = product?.category === "Food" || product?.allowExtraRice === true;
+  const isFood = product?.category === "Meal" || product?.allowExtraRice === true;
 
   // Build current add-ons catalog based on product type - BEFORE early return
   const addOnsCatalog = useMemo(() => {
