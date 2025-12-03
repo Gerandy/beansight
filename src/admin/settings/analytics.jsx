@@ -488,7 +488,7 @@ export default function AnalyticsSettings() {
             </div>
             <button
               onClick={handleAddExpense}
-              className="mt-4 flex items-center gap-2 bg-coffee-700 text-white px-6 py-2.5 rounded-xl hover:bg-coffee-800 transition font-semibold shadow-md"
+              className="cursor-pointer mt-4 flex items-center gap-2 bg-coffee-700 text-white px-6 py-2.5 rounded-xl hover:bg-coffee-800 transition font-semibold shadow-md"
             >
               <Plus className="w-5 h-5" />
               Add Expense
@@ -591,7 +591,7 @@ export default function AnalyticsSettings() {
                           <td className="px-4 py-3 text-center">
                             <button
                               onClick={() => handleDeleteExpense(expense.id)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
+                              className="cursor-pointer text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition"
                               title="Delete expense"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -622,7 +622,7 @@ export default function AnalyticsSettings() {
                           className={`px-4 py-2 rounded-xl transition font-semibold ${
                             currentPage === index + 1
                               ? "bg-coffee-700 text-white shadow-md"
-                              : "bg-coffee-100 text-coffee-800 hover:bg-coffee-200 border-2 border-coffee-200"
+                              : "cursor-pointer bg-coffee-100 text-coffee-800 hover:bg-coffee-200 border-2 border-coffee-200"
                           }`}
                         >
                           {index + 1}
@@ -649,7 +649,7 @@ export default function AnalyticsSettings() {
         <div className="flex flex-col sm:flex-row gap-4 justify-end mt-8">
           <button
             onClick={handleReset}
-            className="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-gray-300 transition flex items-center justify-center gap-2"
+            className="cursor-pointer bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-gray-300 transition flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
             Reset to Defaults
@@ -657,7 +657,7 @@ export default function AnalyticsSettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-coffee-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-coffee-800 hover:shadow-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="cursor-pointer bg-coffee-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-coffee-800 hover:shadow-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {saving ? (
               <>

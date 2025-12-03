@@ -842,7 +842,7 @@ export default function StorePreferences() {
 
               <button
                 type="button"
-                className="w-full bg-coffee-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:bg-coffee-800 transition mt-4 flex items-center justify-center gap-2"
+                className="cursor-pointer w-full bg-coffee-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:bg-coffee-800 transition mt-4 flex items-center justify-center gap-2"
                 onClick={addDiscountRule}
               >
                 <Tag className="w-5 h-5" />

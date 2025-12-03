@@ -482,12 +482,12 @@ export default function Dashboard() {
           <p className="text-coffee-600 text-sm">Welcome back! Here's your latest business summary.</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <div className="flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
+          <div className="cursor-pointer flex items-center gap-2 bg-white border border-coffee-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition">
             <Calendar className="text-coffee-600 w-4 h-4" />
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="text-coffee-700 bg-transparent outline-none text-sm"
+              className="cursor-pointer text-coffee-700 bg-transparent outline-none text-sm"
             >
               <option>Today</option>
               <option>This Month</option>

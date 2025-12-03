@@ -802,7 +802,7 @@ export default function ProductManagement() {
                       setCategoryFilter("All");
                       setSortBy("Newest");
                     }}
-                    className="px-3 py-2 rounded-xl bg-coffee-50 border border-coffee-200 text-coffee-700"
+                    className="cursor-pointer px-3 py-2 rounded-xl bg-coffee-50 border border-coffee-200 text-coffee-700"
                     title="Reset filters"
                   >
                     Reset
@@ -813,14 +813,14 @@ export default function ProductManagement() {
                 <div className="inline-flex items-center rounded-xl border border-coffee-200 bg-white shrink-0">
                   <button
                     onClick={() => setView("cards")}
-                    className={`px-3 py-2 ${view === "cards" ? "bg-coffee-100" : ""}`}
+                    className={`cursor-pointer px-3 py-2 ${view === "cards" ? "bg-coffee-100" : ""}`}
                     title="Card view"
                   >
                     Cards
                   </button>
                   <button
                     onClick={() => setView("table")}
-                    className={`px-3 py-2 ${view === "table" ? "bg-coffee-100" : ""}`}
+                    className={`cursor-pointer px-3 py-2 ${view === "table" ? "bg-coffee-100" : ""}`}
                     title="Table view"
                   >
                     Table
@@ -885,7 +885,7 @@ export default function ProductManagement() {
                             <button
                               onClick={() => openModal(p)}
                               title="Edit"
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-coffee-200 hover:shadow transition"
+                              className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-coffee-200 hover:shadow transition"
                             >
                               <Edit size={16} />
                               <span className="hidden lg:inline text-sm">Edit</span>
@@ -894,7 +894,7 @@ export default function ProductManagement() {
                             <button
                               onClick={() => handleDelete(p.id)}
                               title="Delete"
-                              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition"
+                              className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition"
                             >
                               <Trash2 size={16} />
                               <span className="hidden lg:inline text-sm">Delete</span>
@@ -995,10 +995,10 @@ export default function ProductManagement() {
              {/* Pagination controls */}
              {filtered.length > pageSize && (
                <div className="mt-6 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-                 <button onClick={() => setPage((s) => Math.max(1, s - 1))} disabled={page === 1} className="px-3 py-1 rounded border">Prev</button>
+                 <button onClick={() => setPage((s) => Math.max(1, s - 1))} disabled={page === 1} className="cursor-pointer px-3 py-1 rounded border">Prev</button>
                  <div className="px-3 py-1">Page {page} / {totalPages}</div>
-                 <button onClick={() => setPage((s) => Math.min(totalPages, s + 1))} disabled={page === totalPages} className="px-3 py-1 rounded border">Next</button>
-                 <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="sm:ml-3 rounded border px-2">
+                 <button onClick={() => setPage((s) => Math.min(totalPages, s + 1))} disabled={page === totalPages} className="cursor-pointer px-3 py-1 rounded border">Next</button>
+                 <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="cursor-pointer sm:ml-3 rounded border px-2">
                    <option value={6}>6</option>
                    <option value={12}>12</option>
                    <option value={24}>24</option>
@@ -1099,13 +1099,13 @@ export default function ProductManagement() {
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => openAddOnModal(addOn)}
-                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white border border-coffee-100 text-coffee-700 hover:shadow transition"
+                                  className="cursor-pointer inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white border border-coffee-100 text-coffee-700 hover:shadow transition"
                                 >
                                   <Edit size={14} /> <span className="text-sm">Edit</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteAddOn(addOn.id)}
-                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-50 border border-red-100 text-red-700 hover:bg-red-100"
+                                  className="cursor-pointer inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-50 border border-red-100 text-red-700 hover:bg-red-100"
                                 >
                                   <Trash2 size={14} /> <span className="text-sm">Delete</span>
                                 </button>
@@ -1189,7 +1189,7 @@ export default function ProductManagement() {
                 {/* Close Button */}
                 <button
                   onClick={closeModal}
-                  className="absolute top-4 right-4 text-coffee-700 hover:text-accent-500 transition"
+                  className="cursor-pointer absolute top-4 right-4 text-coffee-700 hover:text-accent-500 transition"
                   title="Close"
                 >
                   <X size={22} />
@@ -1325,18 +1325,18 @@ export default function ProductManagement() {
                   </div>
 
                   {/* Buttons */}
-                  <div className="flex justify-end gap-3 pt-6 bg-coffee-50/90 backdrop-blur-sm pb-4">
+                  <div className="flex justify-end gap-3">
                     <button
                       type="button"
                       onClick={closeModal}
-                      className="px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
                     >
                       <X className="w-4 h-4" /> Cancel
                     </button>
 
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl text-white font-medium flex items-center gap-2 transition bg-coffee-700 hover:bg-coffee-800"
+                      className="cursor-pointer px-5 py-2.5 rounded-xl text-white font-medium flex items-center gap-2 transition bg-coffee-700 hover:bg-coffee-800"
                     >
                       <Save className="w-4 h-4" />
                       {editing ? "Update Product" : "Save Product"}
@@ -1369,7 +1369,7 @@ export default function ProductManagement() {
               >
                 <button
                   onClick={closeAddOnModal}
-                  className="absolute top-4 right-4 text-coffee-700 hover:text-accent-500 transition"
+                  className="cursor-pointer absolute top-4 right-4 text-coffee-700 hover:text-accent-500 transition"
                   title="Close"
                 >
                   <X size={22} />
@@ -1430,7 +1430,7 @@ export default function ProductManagement() {
                       name="allowMultiple"
                       checked={addOnForm.allowMultiple}
                       onChange={handleAddOnInput}
-                      className="w-5 h-5 accent-coffee-700"
+                      className="cursor-pointer w-5 h-5 accent-coffee-700"
                       id="allowMultiple"
                     />
                     <label htmlFor="allowMultiple" className="text-sm text-coffee-700">
@@ -1442,13 +1442,13 @@ export default function ProductManagement() {
                     <button
                       type="button"
                       onClick={closeAddOnModal}
-                      className="px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
                     >
                       <X className="w-4 h-4" /> Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 transition"
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 transition"
                     >
                       <Save className="w-4 h-4" />
                       {editingAddOn ? "Update" : "Save"}

@@ -208,7 +208,7 @@ function ProductDetails() {
       <div className="max-w-6xl mx-auto py-12 px-6">
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg flex flex-col lg:flex-row overflow-hidden">
           {/* LEFT - Image & Controls */}
-          <div className="lg:w-1/2 flex flex-col items-center justify-center p-10 bg-gradient-to-br from-[#FCECDC] to-[#FCDEC0] relative">
+          <div className="lg:w-1/2 items-center justify-center p-10 bg-gradient-to-br from-[#FCECDC] to-[#FCDEC0] relative">
             <button
               className="absolute top-4 left-4 text-[#7D5A50] hover:text-[#5C4036] transition cursor-pointer"
               onClick={() => navigate(-1)}

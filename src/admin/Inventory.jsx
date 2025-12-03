@@ -122,7 +122,7 @@ function InventoryAnalytics() {
     show ? (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
         <div className="bg-coffee-50/90 backdrop-blur-md border border-coffee-200/50 rounded-2xl shadow-2xl w-full max-w-lg p-8 relative animate-fadeIn">
-          <button className="absolute top-3 right-3 text-coffee-700 hover:text-accent-500" onClick={onClose}>
+          <button className="cursor-pointer absolute top-3 right-3 text-coffee-700 hover:text-accent-500" onClick={onClose}>
             <X className="w-6 h-6" />
           </button>
           <h2 className="text-2xl font-semibold text-coffee-800 mb-6 flex items-center gap-2">
@@ -247,14 +247,14 @@ function InventoryAnalytics() {
         <div className="flex justify-end gap-3 pt-3">
           <button
             type="button"
-            className="px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2"
+            className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2"
             onClick={() => (type === "Add" ? setShowAddModal(false) : setShowEditModal(false))}
           >
             <X className="w-4 h-4" /> Cancel
           </button>
           <button
             type="submit"
-            className={`px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2`}
+            className={`cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2`}
           >
             <Check className="w-4 h-4" />
             {type === "Add" ? "Add Item" : "Save Changes"}
@@ -431,7 +431,7 @@ function InventoryAnalytics() {
                       <td className="px-4 py-3">{item.category}</td>
                       <td className="px-4 py-3 flex items-center gap-2">
                         <button
-                          className="bg-coffee-200 text-coffee-800 px-2 rounded hover:bg-coffee-300"
+                          className="cursor-pointer bg-coffee-200 text-coffee-800 px-2 rounded hover:bg-coffee-300"
                           onClick={() => handleAdjustStock(item.id, -1)}
                           disabled={item.stock <= 0}
                         >
@@ -439,7 +439,7 @@ function InventoryAnalytics() {
                         </button>
                         <span>{item.stock}</span>
                         <button
-                          className="bg-coffee-200 text-coffee-800 px-2 rounded hover:bg-coffee-300"
+                          className="cursor-pointer bg-coffee-200 text-coffee-800 px-2 rounded hover:bg-coffee-300"
                           onClick={() => handleAdjustStock(item.id, 1)}
                         >
                           +
@@ -451,13 +451,13 @@ function InventoryAnalytics() {
                       <td className="px-4 py-3 font-semibold text-red-500">{status === "Low" ? "Low" : "OK"}</td>
                       <td className="px-4 py-3 flex gap-2">
                         <button
-                          className="bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1"
+                          className="cursor-pointer bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold flex items-center gap-1"
                           onClick={() => handleEditClick(item)}
                         >
                           <Pencil size={12} /> Edit
                         </button>
                         <button
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold"
+                          className="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold"
                           onClick={() => handleDelete(item.id)}
                         >
                           Delete

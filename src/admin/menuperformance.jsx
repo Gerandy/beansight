@@ -20,6 +20,14 @@ import {
   SkeletonPieChart,
 } from "../components/SkeletonLoader";
 
+// Helper to read Firestore Timestamp | ISO string | Date
+function parseDate(value) {
+  if (!value) return null;
+  if (typeof value.toDate === "function") return value.toDate();
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export default function MenuPerformance() {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -66,13 +74,13 @@ export default function MenuPerformance() {
     return () => (mounted = false);
   }, []);
 
-  // Filter orders by date range
+  // Filter orders by date range (use completedAt || createdAt like Sales)
   const filteredOrders = useMemo(() => {
     if (dateRange === "all") return orders;
 
     const now = new Date();
     let startDate = null;
-    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
     if (dateRange === "custom") {
       if (!customStartDate || !customEndDate) return orders;
@@ -80,27 +88,15 @@ export default function MenuPerformance() {
       endDate = new Date(customEndDate);
       endDate.setHours(23, 59, 59, 999);
     } else {
-      const days = parseInt(dateRange);
+      const days = parseInt(dateRange, 10);
       startDate = new Date(now);
       startDate.setDate(startDate.getDate() - days);
       startDate.setHours(0, 0, 0, 0);
     }
 
-    return orders.filter(order => {
-      let orderDate = null;
-      
-      if (order.createdAt) {
-        if (typeof order.createdAt.toDate === "function") {
-          orderDate = order.createdAt.toDate();
-        } else if (order.createdAt instanceof Date) {
-          orderDate = order.createdAt;
-        } else if (typeof order.createdAt === "string") {
-          orderDate = new Date(order.createdAt);
-        }
-      }
-
-      if (!orderDate || isNaN(orderDate.getTime())) return false;
-      return orderDate >= startDate && orderDate <= endDate;
+    return orders.filter((order) => {
+      const orderDate = parseDate(order.completedAt || order.createdAt);
+      return orderDate && orderDate >= startDate && orderDate <= endDate;
     });
   }, [orders, dateRange, customStartDate, customEndDate]);
 
@@ -112,20 +108,31 @@ export default function MenuPerformance() {
     let totalRev = 0;
 
     filteredOrders.forEach((order) => {
+      // Make revenue match Sales page: prefer order.total, fallback to sum of items
+      const numericTotal = Number(order.total);
+      if (!isNaN(numericTotal) && numericTotal > 0) {
+        totalRev += numericTotal;
+      } else if (Array.isArray(order.items)) {
+        totalRev += order.items.reduce(
+          (s, it) => s + Number(it.quantity ?? 0) * Number(it.price ?? 0),
+          0
+        );
+      }
+
       if (!Array.isArray(order.items)) return;
       order.items.forEach((item) => {
         const qty = Number(item.quantity ?? 0);
         const price = Number(item.price ?? 0);
+
         totalItems += qty;
-        totalRev += qty * price;
 
         const cat = item?.category || "Uncategorized";
-        categoryMap[cat] = (categoryMap[cat] || 0) + qty;
+        categoryMap[cat] = (categoryMap[cat] || 0) + qty; // units share
 
         const name = item.name || "Unknown";
         if (!itemMap[name]) itemMap[name] = { quantity: 0, revenue: 0 };
         itemMap[name].quantity += qty;
-        itemMap[name].revenue += qty * price;
+        itemMap[name].revenue += qty * price; // keep for "By Sales (₱)" toggle
       });
     });
 
@@ -133,10 +140,14 @@ export default function MenuPerformance() {
       .map(([name, sales]) => ({ name, sales }))
       .sort((a, b) => b.sales - a.sales);
 
-    const itemsList = Object.entries(itemMap)
-      .map(([name, metrics]) => ({ name, quantity: metrics.quantity, revenue: metrics.revenue }));
+    const itemsList = Object.entries(itemMap).map(([name, m]) => ({
+      name,
+      quantity: m.quantity,
+      revenue: m.revenue,
+    }));
 
-    const avgSales = totalItems && itemsList.length ? Math.round(totalItems / itemsList.length) : 0;
+    const avgSales =
+      totalItems && itemsList.length ? Math.round(totalItems / itemsList.length) : 0;
 
     return { categoryData, itemsList, totalItemsSold: totalItems, avgSales, totalRevenue: totalRev };
   }, [filteredOrders]);
@@ -151,35 +162,91 @@ export default function MenuPerformance() {
 
   const topItemsTotal = topItems.reduce((s, x) => s + (x.value || 0), 0) || 1;
   
-  const underperformingItems = useMemo(() => {
-    const isSameDay = (d1, d2) => {
-      if (!d1 || !d2) return false;
-      return d1.getFullYear() === d2.getFullYear() &&
-        d1.getMonth() === d2.getMonth() &&
-        d1.getDate() === d2.getDate();
-    };
+  // Human-readable label for the selected date range
+  const rangeLabel = useMemo(() => {
+    if (dateRange === "7") return "past 7 days";
+    if (dateRange === "30") return "past 30 days";
+    if (dateRange === "90") return "past 90 days";
+    if (dateRange === "all") return "all time";
+    if (dateRange === "custom" && customStartDate && customEndDate) {
+      const opts = { month: "short", day: "numeric" };
+      const s = new Date(customStartDate).toLocaleDateString(undefined, opts);
+      const e = new Date(customEndDate).toLocaleDateString(undefined, opts);
+      return `${s}–${e}`;
+    }
+    return "selected period";
+  }, [dateRange, customStartDate, customEndDate]);
 
-    const today = new Date();
+  const underperformingItems = useMemo(() => {
+    const now = new Date();
+    let startDate;
+    let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    if (dateRange === "all") {
+      startDate = new Date(0);
+    } else if (dateRange === "custom" && customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      const days = parseInt(dateRange || "30", 10);
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - days);
+      startDate.setHours(0, 0, 0, 0);
+    }
+
     const soldMap = {};
     itemsList.forEach((it) => { soldMap[it.name] = it.quantity || 0; });
 
-    let candidatesSource = products && products.length ? products : itemsList.map(it => ({ name: it.name, createdAt: null }));
-    const normalized = candidatesSource.map(p => ({
-      id: p.id,
-      name: p.name,
-      createdAt: p.createdAt || null,
-      sold: soldMap[p.name] ?? 0,
-    }));
+    const base = (products && products.length)
+      ? products
+      : itemsList.map(it => ({ name: it.name, createdAt: null }));
 
-    const filtered = normalized.filter(p => !(p.createdAt && isSameDay(new Date(p.createdAt), today)));
+    const MS = 24 * 60 * 60 * 1000;
+    const records = base.map((p) => {
+      const created = p.createdAt ? new Date(p.createdAt) : null;
+      const activeStart = created ? new Date(Math.max(created.getTime(), startDate.getTime())) : startDate;
+      const activeDays = Math.max(1, Math.ceil((endDate.getTime() - activeStart.getTime()) / MS));
+      const ageDays = created ? Math.floor((endDate.getTime() - created.getTime()) / MS) : Infinity;
+      const sold = soldMap[p.name] ?? 0;
+      return {
+        id: p.id,
+        name: p.name,
+        sold,
+        activeDays,
+        ageDays,
+        salesPerDay: sold / activeDays,
+      };
+    });
 
-    const low = filtered
-      .filter(p => p.sold < 5)
-      .sort((a, b) => a.sold - b.sold)
+    const minActiveDays = (dateRange === "90" || dateRange === "all") ? 14 : 7;
+
+    // Exclude items that are too new to judge
+    const eligible = records.filter(r => r.activeDays >= minActiveDays && r.ageDays >= minActiveDays);
+    if (!eligible) return [];
+
+    const nonZeroRates = eligible.map(r => r.salesPerDay).filter(v => v > 0).sort((a,b) => a - b);
+    const median = nonZeroRates.length ? nonZeroRates[Math.floor(nonZeroRates.length / 2)] : 0;
+    const threshold = median > 0 ? median * 0.3 : 0;
+
+    const low = eligible
+      .map(r => ({
+        id: r.id,
+        name: r.name,
+        sold: r.sold,
+        status: r.sold === 0 ? "Dead Stock" : (r.salesPerDay < threshold ? "Slow Moving" : null),
+        score: r.sold === 0 ? -Infinity : r.salesPerDay,
+      }))
+      .filter(r => r.status)
+      .sort((a, b) =>
+        a.status === "Dead Stock" && b.status !== "Dead Stock" ? -1 :
+        b.status === "Dead Stock" && a.status !== "Dead Stock" ? 1 :
+        a.score - b.score
+      )
       .slice(0, 12);
 
     return low;
-  }, [products, itemsList]);
+  }, [products, itemsList, dateRange, customStartDate, customEndDate]);
 
   if (loading) {
     return (
@@ -213,7 +280,7 @@ export default function MenuPerformance() {
           <div className="inline-flex rounded-lg shadow-sm bg-[var(--color-coffee-50)] p-1">
             <button
               onClick={() => setDateRange("7")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "7" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -223,7 +290,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("30")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "30" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -233,7 +300,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("90")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "90" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -243,7 +310,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("all")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "all" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -255,7 +322,7 @@ export default function MenuPerformance() {
 
           <button
             onClick={() => setDateRange("custom")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               dateRange === "custom" 
                 ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                 : "bg-[var(--color-coffee-50)] text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -296,7 +363,7 @@ export default function MenuPerformance() {
       {/* Empty State */}
       {filteredOrders.length === 0 && (
         <div className="bg-white p-12 rounded-[var(--radius-2xl)] text-center">
-          <p className="text-lg text-[var(--color-coffee-600)]">📭 No orders found for the selected date range.</p>
+          <p className="text-lg text-[var(--color-coffee-600]">📭 No orders found for the selected date range.</p>
           <button
             onClick={() => setDateRange("all")}
             className="mt-4 px-4 py-2 bg-[var(--color-coffee-600)] text-white rounded-md hover:bg-[var(--color-coffee-700)] transition-colors"
@@ -340,7 +407,7 @@ export default function MenuPerformance() {
                 <div className="inline-flex rounded-md shadow-sm bg-[var(--color-coffee-50)] p-1">
                   <button
                     onClick={() => setSortBy("quantity")}
-                    className={`px-3 py-1 text-sm font-medium rounded ${sortBy === "quantity" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
+                    className={`cursor-pointer px-3 py-1 text-sm font-medium rounded ${sortBy === "quantity" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
                     aria-pressed={sortBy === "quantity"}
                     title="By Volume"
                   >
@@ -348,7 +415,7 @@ export default function MenuPerformance() {
                   </button>
                   <button
                     onClick={() => setSortBy("revenue")}
-                    className={`px-3 py-1 text-sm font-medium rounded ${sortBy === "revenue" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
+                    className={`cursor-pointer px-3 py-1 text-sm font-medium rounded ${sortBy === "revenue" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
                     aria-pressed={sortBy === "revenue"}
                     title="By Sales (₱)"
                   >
@@ -399,7 +466,7 @@ export default function MenuPerformance() {
                   })}
                 </ul>
                 <p className="mt-3 text-xs text-[var(--color-coffee-600)]">
-                  💡 Tip: Promote the top seller with a bundle including the #2 item to increase AOV.
+                  💡 Tip: The {topItems[0]?.name || "top item"} is the top seller for the {rangeLabel}. Consider restocking more ingredients to prevent stock‑outs.
                 </p>
               </div>
             </div>
@@ -466,7 +533,7 @@ export default function MenuPerformance() {
 
                     {smallCategory ? (
                       <div className="mt-4 text-sm text-[var(--color-coffee-700)]">
-                        💡 Tip: Create a bundle deal to boost {smallCategory.name} sales.
+                        💡 Tip: {smallCategory.name} contributes only {total ? Math.round((smallCategory.sales / total) * 100) : 0}% of sales for the {rangeLabel}. Improve visibility (move it higher in the menu or feature it in the slider) and review pricing/flavors.
                       </div>
                     ) : null}
                   </>
@@ -478,7 +545,7 @@ export default function MenuPerformance() {
           {/* Menu Cleanup Candidates (Underperforming Items) */}
           <div className="bg-white p-6 rounded-[var(--radius-2xl)]">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold text-[var(--color-coffee-800)]">⚠️ Menu Cleanup Candidates</h3>
+              <h3 className="text-lg font-semibold text-[var(--color-coffee-800)]">⚠️ Low Performing Products</h3>
               <p className="text-sm text-[var(--color-coffee-600)]">These items have low sales in the selected period.</p>
             </div>
 
@@ -498,9 +565,9 @@ export default function MenuPerformance() {
                         <td className="py-3 text-[var(--color-coffee-900)]">{item.name}</td>
                         <td className="py-3 text-[var(--color-coffee-700)]">{item.sold} sold</td>
                         <td className="py-3">
-                          {item.sold === 0 ? (
+                          {item.status === "Dead Stock" ? (
                             <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Dead Stock</span>
-                          ) : item.sold < 5 ? (
+                          ) : item.status === "Slow Moving" ? (
                             <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Slow Moving</span>
                           ) : (
                             <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-[var(--color-coffee-700)]">—</span>
@@ -514,6 +581,9 @@ export default function MenuPerformance() {
             ) : (
               <p className="text-[var(--color-coffee-600)]">No menu cleanup candidates found.</p>
             )}
+            <p className="mt-3 text-xs text-[var(--color-coffee-600)]">
+              Note: Newly added products are excluded until they have at least {dateRange === "90" || dateRange === "all" ? 14 : 7} days of sales data.
+            </p>
           </div>
         </>
       )}
