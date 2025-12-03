@@ -90,9 +90,10 @@ export default function Dashboard() {
       const dataa = docRefs.data();
 
       setTax(data.taxRate);
-      setDateRange(dataa.settings.defaultPeriod.toLowerCase());
+      setDateRange(dataa.settings.defaultPeriod);
 
     }
+    
     loadSettings();
 
   },[])
@@ -222,7 +223,7 @@ export default function Dashboard() {
     periodUnit,
   } = useMemo(() => {
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
+   
     // Get previous period for comparison
     const getPreviousPeriod = (period, customStart, customEnd) => {
       const now = new Date();
