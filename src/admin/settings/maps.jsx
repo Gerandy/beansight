@@ -673,7 +673,7 @@ export default function MapsSettings() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-end">
           <button
-            className="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-gray-300 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="cursor-pointer bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-gray-300 transition flex items-center justify-center gap-2 disabled:opacity-50"
             onClick={handleReset}
             disabled={saving}
           >
@@ -681,7 +681,7 @@ export default function MapsSettings() {
             Reset to Saved
           </button>
           <button
-            className="bg-coffee-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-coffee-800 hover:shadow-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+            className="cursor-pointer bg-coffee-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-coffee-800 hover:shadow-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
             onClick={handleSave}
             disabled={saving}
           >

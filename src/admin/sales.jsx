@@ -1080,7 +1080,7 @@ export default function Sales() {
                     setGoalInput(String(finalGoal));
                     setIsEditingGoal(true);
                   }}
-                  className="text-coffee-600 hover:text-coffee-800"
+                  className="cursor-pointer text-coffee-600 hover:text-coffee-800"
                 >
                   {/* simple pencil icon */}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1091,7 +1091,7 @@ export default function Sales() {
                   <button
                     title="Clear manual goal"
                     onClick={() => setManualGoal(null)}
-                    className="text-xs px-2 py-1 border rounded text-coffee-600"
+                    className="cursor-pointer text-xs px-2 py-1 border rounded text-coffee-600"
                   >
                     Clear
                   </button>
@@ -1113,13 +1113,13 @@ export default function Sales() {
                     }
                     setIsEditingGoal(false);
                   }}
-                  className="text-xs px-2 py-1 rounded-md border bg-coffee-800 text-white"
+                  className="cursor-pointer text-xs px-2 py-1 rounded-md border bg-coffee-800 text-white"
                 >
                   Save
                 </button>
                 <button
                   onClick={() => setIsEditingGoal(false)}
-                  className="text-xs px-2 py-1 rounded-md border bg-white text-coffee-700"
+                  className="cursor-pointer text-xs px-2 py-1 rounded-md border bg-white text-coffee-700"
                 >
                   Cancel
                 </button>
@@ -1219,7 +1219,7 @@ export default function Sales() {
                     <button
                       key={m}
                       onClick={() => setProfitMargin(m)}
-                      className={`text-xs px-2 py-1 rounded-md border ${
+                      className={`cursor-pointer text-xs px-2 py-1 rounded-md border ${
                         profitMargin === m ? "bg-coffee-800 text-white" : "bg-white text-coffee-700"
                       }`}
                     >

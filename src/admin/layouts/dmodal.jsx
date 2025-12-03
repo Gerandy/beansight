@@ -54,7 +54,7 @@ export default function DrillDownModal({
               <select
                 value={currentView}
                 onChange={(e) => onViewChange(e.target.value)}
-                className="px-3 py-1 rounded border border-[#C28F5E] bg-white text-[#8E5A3A]"
+                className="cursor-pointer px-3 py-1 rounded border border-[#C28F5E] bg-white text-[#8E5A3A]"
               >
                 {viewOptions.map((option) => (
                   <option key={option} value={option}>
@@ -64,7 +64,7 @@ export default function DrillDownModal({
               </select>
             )}
             <button
-              className="text-[#8E5A3A] px-3 py-2 rounded-lg hover:bg-[#F5E9DA] font-bold"
+              className="cursor-pointer text-[#8E5A3A] px-3 py-2 rounded-lg hover:bg-[#F5E9DA] font-bold"
               onClick={onClose}
               aria-label="Close"
             >
@@ -104,7 +104,7 @@ export default function DrillDownModal({
         {/* Bottom Actions */}
         <div className="flex justify-end px-6 py-4 border-t border-[#C28F5E]">
           <button
-            className="bg-[#C28F5E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#8E5A3A] transition"
+            className="cursor-pointer bg-[#C28F5E] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#8E5A3A] transition"
             onClick={() => exportToCSV(data, columns, title)}
           >
             Export Report

@@ -280,7 +280,7 @@ export default function MenuPerformance() {
           <div className="inline-flex rounded-lg shadow-sm bg-[var(--color-coffee-50)] p-1">
             <button
               onClick={() => setDateRange("7")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "7" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -290,7 +290,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("30")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "30" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -300,7 +300,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("90")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "90" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -310,7 +310,7 @@ export default function MenuPerformance() {
             </button>
             <button
               onClick={() => setDateRange("all")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 dateRange === "all" 
                   ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                   : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -322,7 +322,7 @@ export default function MenuPerformance() {
 
           <button
             onClick={() => setDateRange("custom")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            className={`cursor-pointer px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               dateRange === "custom" 
                 ? "bg-[var(--color-coffee-600)] text-white shadow-sm" 
                 : "bg-[var(--color-coffee-50)] text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"
@@ -407,7 +407,7 @@ export default function MenuPerformance() {
                 <div className="inline-flex rounded-md shadow-sm bg-[var(--color-coffee-50)] p-1">
                   <button
                     onClick={() => setSortBy("quantity")}
-                    className={`px-3 py-1 text-sm font-medium rounded ${sortBy === "quantity" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
+                    className={`cursor-pointer px-3 py-1 text-sm font-medium rounded ${sortBy === "quantity" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
                     aria-pressed={sortBy === "quantity"}
                     title="By Volume"
                   >
@@ -415,7 +415,7 @@ export default function MenuPerformance() {
                   </button>
                   <button
                     onClick={() => setSortBy("revenue")}
-                    className={`px-3 py-1 text-sm font-medium rounded ${sortBy === "revenue" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
+                    className={`cursor-pointer px-3 py-1 text-sm font-medium rounded ${sortBy === "revenue" ? "bg-[var(--color-coffee-600)] text-white" : "text-[var(--color-coffee-700)] hover:bg-[var(--color-coffee-100)]"}`}
                     aria-pressed={sortBy === "revenue"}
                     title="By Sales (₱)"
                   >

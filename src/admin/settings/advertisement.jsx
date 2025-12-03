@@ -271,7 +271,7 @@ export default function AdvertisementSettings() {
             <p className="text-xs text-coffee-500 mt-2">Choose how many banners to show in the slider (1-10)</p>
           </div>
           <button
-            className="bg-coffee-700 text-white px-6 py-3 rounded-xl hover:bg-coffee-800 transition flex items-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap"
+            className="cursor-pointer bg-coffee-700 text-white px-6 py-3 rounded-xl hover:bg-coffee-800 transition flex items-center gap-2 font-medium shadow-md hover:shadow-lg disabled:opacity-50 whitespace-nowrap"
             onClick={handleSaveMax}
             disabled={loading}
           >
@@ -366,7 +366,7 @@ export default function AdvertisementSettings() {
                     disabled={uploadingId === banner.id}
                   />
                   <button
-                    className="bg-red-500 text-white px-4 py-2.5 rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+                    className="cursor-pointer bg-red-500 text-white px-4 py-2.5 rounded-lg hover:bg-red-600 transition flex items-center gap-2 text-sm font-medium disabled:opacity-50"
                     onClick={() => handleDeleteBanner(banner.id)}
                     disabled={uploadingId === banner.id}
                   >

@@ -209,7 +209,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
-                className="px-4 py-2 rounded-xl bg-[#F1E1C8] text-[#5B321B] font-medium hover:bg-[#E9D5AF] transition"
+                className="cursor-pointer px-4 py-2 rounded-xl bg-[#F1E1C8] text-[#5B321B] font-medium hover:bg-[#E9D5AF] transition"
                 onClick={onClose}
               >
                 ✕ Cancel
@@ -217,7 +217,7 @@ const UserModal = ({ isOpen, onClose, onSave, user, setUser, title }) => {
               <button
                 className={`px-4 py-2 rounded-xl text-white font-medium transition ${
                   user.firstName && user.lastName && user.email
-                    ? "bg-[#8B5E3C] hover:bg-[#6F4427]"
+                    ? "cursor-pointer bg-[#8B5E3C] hover:bg-[#6F4427]"
                     : "bg-[#C9B5A2] cursor-not-allowed"
                 }`}
                 onClick={user.firstName && user.lastName && user.email ? onSave : undefined}
@@ -290,7 +290,7 @@ const UserTable = ({ users, onEdit, onDelete, onStatusToggle, onAdd }) => {
           </select>
         </div>
         <button
-          className="bg-coffee-600 hover:bg-coffee-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition flex items-center gap-2"
+          className="cursor-pointer bg-coffee-600 hover:bg-coffee-700 text-white px-4 py-2 rounded-lg font-semibold shadow transition flex items-center gap-2"
           onClick={onAdd}
         >
           <Plus size={16} /> Add User
@@ -337,13 +337,13 @@ const UserTable = ({ users, onEdit, onDelete, onStatusToggle, onAdd }) => {
                   <td className="py-3 px-4">{user.status || "N/A"}</td>
                   <td className="py-3 px-4 flex gap-2 flex-wrap">
                     <button
-                      className="bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1"
+                      className="cursor-pointer bg-coffee-500 hover:bg-coffee-600 text-white px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1"
                       onClick={() => onEdit(user)}
                     >
                       <Pencil size={12} /> Edit
                     </button>
                     <button
-                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
+                      className="cursor-pointer bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold transition"
                       onClick={() => onDelete(user)}
                     >
                       Delete

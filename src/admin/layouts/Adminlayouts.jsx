@@ -189,7 +189,7 @@ export default function AdminLayout() {
                     e.stopPropagation();
                     setSettingsOpen(!settingsOpen);
                   }}
-                  className="p-1 rounded hover:bg-yellow-800"
+                  className="cursor-pointer p-1 rounded hover:bg-yellow-800"
                 >
                   {settingsOpen ? (
                     <ChevronDown size={18} />
@@ -252,7 +252,7 @@ export default function AdminLayout() {
         <div className="mt-4">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-2 p-2 rounded transition ${
+            className={`cursor-pointer w-full flex items-center gap-2 p-2 rounded transition ${
               isMobile
                 ? "bg-yellow-700 text-white hover:bg-yellow-600"
                 : "hover:bg-yellow-950 hover:text-white"

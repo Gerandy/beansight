@@ -106,7 +106,7 @@ const DetailsModal = ({ log, onClose }) => {
         onClick={e => e.stopPropagation()}
       >
         <button
-          className="absolute top-4 right-4 text-coffee-400 hover:text-coffee-700 transition"
+          className="cursor-pointer absolute top-4 right-4 text-coffee-400 hover:text-coffee-700 transition"
           onClick={onClose}
           aria-label="Close"
         >
@@ -171,7 +171,7 @@ const DetailsModal = ({ log, onClose }) => {
 
         <button
           onClick={onClose}
-          className="w-full mt-6 bg-coffee-700 hover:bg-coffee-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md"
+          className="cursor-pointer w-full mt-6 bg-coffee-700 hover:bg-coffee-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md"
         >
           Close
         </button>
@@ -378,14 +378,14 @@ export default function AuditLog() {
           {/* Actions */}
           <div className="flex flex-wrap gap-3 mt-5 pt-5 border-t border-coffee-200">
             <button
-              className="bg-coffee-700 hover:bg-coffee-800 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2"
+              className="cursor-pointer bg-coffee-700 hover:bg-coffee-800 text-white px-6 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2"
               onClick={handleExport}
             >
               <Download className="w-4 h-4" />
               Export CSV
             </button>
             <button
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2"
+              className="cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-xl font-semibold shadow-md transition flex items-center gap-2"
               onClick={() => {
                 setSearch("");
                 setDateFrom("");

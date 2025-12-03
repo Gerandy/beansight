@@ -286,14 +286,14 @@ export default function OrderManagement() {
 
           <div className="flex items-center gap-3">
             {selectedOrders.length > 0 && (
-              <button onClick={handleBulkDelete} className="px-4 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200">
+              <button onClick={handleBulkDelete} className="cursor-pointer px-4 py-2 rounded-xl bg-red-100 text-red-700 border border-red-200">
                 Delete selected ({selectedOrders.length})
               </button>
             )}
 
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 bg-coffee-600 hover:bg-coffee-700 text-white px-5 py-2 rounded-xl font-semibold shadow transition"
+              className="cursor-pointer flex items-center gap-2 bg-coffee-600 hover:bg-coffee-700 text-white px-5 py-2 rounded-xl font-semibold shadow transition"
             >
               <Download size={18} /> Export CSV
             </button>
@@ -310,6 +310,7 @@ export default function OrderManagement() {
                     type="checkbox"
                     checked={paginatedOrders.length > 0 && paginatedOrders.every((o) => selectedOrders.includes(o.id))}
                     onChange={toggleSelectAll}
+                    className="cursor-pointer"
                   />
                 </th>
                 {["ID", "Type", "Customer", "Items", "Date/Time", "Actions"].map((h) => (
@@ -330,7 +331,7 @@ export default function OrderManagement() {
                 paginatedOrders.map((order, i) => (
                   <tr key={order.id} className={`${i % 2 === 0 ? "bg-white" : "bg-coffee-50"} hover:bg-coffee-100 transition`}>
                     <td className="px-4 py-3">
-                      <input type="checkbox" checked={selectedOrders.includes(order.id)} onChange={() => toggleSelectOrder(order.id)} />
+                      <input type="checkbox" className="cursor-pointer" checked={selectedOrders.includes(order.id)} onChange={() => toggleSelectOrder(order.id)} />
                     </td>
                     <td className="px-4 py-3 font-medium">{order.id}</td>
                     <td className="px-4 py-3">{order.type}</td>
@@ -340,13 +341,13 @@ export default function OrderManagement() {
                     <td className="px-4 py-3 flex gap-2">
                       <button
                         onClick={() => handleShowDetails(order)}
-                        className="flex items-center gap-1 bg-coffee-100 border border-coffee-200 hover:bg-coffee-200 px-3 py-1 rounded-lg text-sm font-medium transition"
+                        className="cursor-pointer flex items-center gap-1 bg-coffee-100 border border-coffee-200 hover:bg-coffee-200 px-3 py-1 rounded-lg text-sm font-medium transition"
                       >
                         <Eye size={14} /> View
                       </button>
                       <button
                         onClick={() => handleDeleteOrder(order.id)}
-                        className="flex items-center gap-1 bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1 rounded-lg text-sm font-medium transition"
+                        className="cursor-pointer flex items-center gap-1 bg-red-100 border border-red-200 hover:bg-red-200 px-3 py-1 rounded-lg text-sm font-medium transition"
                       >
                         <Trash2 size={14} /> Delete
                       </button>
@@ -361,11 +362,11 @@ export default function OrderManagement() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-4 mt-6">
-            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className={`flex items-center gap-1 px-4 py-2 border rounded-xl bg-coffee-100 hover:bg-coffee-200 ${page === 1 ? "opacity-50 cursor-not-allowed" : ""}`}>
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className={`flex items-center gap-1 px-4 py-2 border rounded-xl bg-coffee-100 hover:bg-coffee-200 ${page === 1 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
               <ChevronLeft size={16} /> Prev
             </button>
             <span className="font-medium">Page {page} of {totalPages}</span>
-            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`flex items-center gap-1 px-4 py-2 border rounded-xl bg-coffee-100 hover:bg-coffee-200 ${page === totalPages ? "opacity-50 cursor-not-allowed" : ""}`}>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className={`flex items-center gap-1 px-4 py-2 border rounded-xl bg-coffee-100 hover:bg-coffee-200 ${page === totalPages ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
               Next <ChevronRight size={16} />
             </button>
           </div>
@@ -406,8 +407,8 @@ export default function OrderManagement() {
             </div>
 
             <div className="mt-6 flex gap-2">
-              <button onClick={() => { handleDeleteOrder(selectedOrder.id); handleCloseModal(); }} className="flex-1 bg-red-100 text-red-700 px-4 py-2 rounded-xl">Delete</button>
-              <button onClick={handleCloseModal} className="flex-1 bg-coffee-600 text-white px-4 py-2 rounded-xl">Close</button>
+              <button onClick={() => { handleDeleteOrder(selectedOrder.id); handleCloseModal(); }} className="cursor-pointer flex-1 bg-red-100 text-red-700 px-4 py-2 rounded-xl">Delete</button>
+              <button onClick={handleCloseModal} className="cursor-pointer flex-1 bg-coffee-600 text-white px-4 py-2 rounded-xl">Close</button>
             </div>
           </div>
         </div>
