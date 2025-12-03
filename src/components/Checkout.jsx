@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCart } from "./CartContext";
 import { Link } from "react-router-dom";
-import { collection, doc, setDoc, serverTimestamp, onSnapshot } from "firebase/firestore";
+import { collection, doc, setDoc, serverTimestamp, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
 import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { loadGoogleMaps } from "../utils/loadGoogleMaps";
+
 
 export default function Checkout() {
   const [userData, setUserData] = useState({});
@@ -12,11 +16,10 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const [expandedItems, setExpandedItems] = useState({}); // Track which items show add-ons
- 
-
+  const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState(0);
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
-
-  
 
   // Fetch user document and addresses subcollection in real-time
   useEffect(() => {
@@ -41,7 +44,6 @@ export default function Checkout() {
     };
   }, [uid]);
 
-  
   const defaultAddress = addresses?.find(addr => addr.isDefault);
 
   // Shipping state
@@ -77,8 +79,27 @@ export default function Checkout() {
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = shipping.type === "delivery" ? 60 : 0;
-  const grandTotal = subtotal + deliveryFee;
+  const deliveryFee = shipping.type === "delivery" ? dynamicDeliveryFee : 0;
+  const grandTotal = subtotal + deliveryFees;
+
+  useEffect(() => {
+    if (!defaultAddress) return;
+  
+    const handleDeliveryCalculation = async (lat, long, type) => {
+      const origin = "14.4427288619125,120.9102805815219";
+  
+      // Google Maps requires LAT, LNG format
+      const destination = `${lat},${long}`;
+     
+      const { fee } = await calculateDeliveryFeeUtil(origin, destination);
+      setDeliveryFee(fee);  
+      calculateDeliveryFee(fee, type);
+    };
+  
+    handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long, "delivery");
+  
+  }, [defaultAddress]);
+
 
   const updateQty = (id, delta) => {
     const updated = items.map(item =>
@@ -188,7 +209,7 @@ export default function Checkout() {
                     className="hidden"
                   />
                   <span className="font-medium">Delivery</span>
-                  <span className="text-sm text-gray-500">(₱60)</span>
+                  <span className="text-sm text-gray-500">₱{shipping.type === 'delivery' ? deliveryFees.toFixed(2) : '0.00'}</span>
                 </label>
 
                 <label
@@ -200,7 +221,10 @@ export default function Checkout() {
                     type="radio"
                     name="shiptype"
                     checked={shipping.type === 'pickup'}
-                    onChange={() => setShipping({ ...shipping, type: 'pickup' })}
+                    onChange={() => {
+                      setShipping({ ...shipping, type: 'pickup' });
+                      setDeliveryFee(0); // Reset delivery fee for pickup
+                    }}
                     className="hidden"
                   />
                   <span className="font-medium">Pickup</span>
@@ -229,7 +253,10 @@ export default function Checkout() {
                         name="deliverySchedule"
                         value="later"
                         checked={shipping.schedule === "later"}
-                        onChange={() => setShipping({ ...shipping, schedule: "later" })}
+                        onChange={() => {
+                          setShipping({ ...shipping, schedule: "later" });
+                          // Recalculate delivery fee when scheduling changes
+                        }}
                         className="accent-yellow-950"
                       />
                       Schedule
@@ -253,29 +280,17 @@ export default function Checkout() {
                     </>
                   )}
 
-                  <Input
+                 <Input
                     label="Address"
-                    value={shipping.address}
+                    value={shipping.address || ""}
                     onChange={(v) => setShipping({ ...shipping, address: v })}
                     placeholder="Street, House no."
                     required
+                    readOnly={true}  // now this will work!
                   />
-                  <Input
-                    label="City"
-                    value={shipping.city}
-                    onChange={(v) => setShipping({ ...shipping, city: v })}
-                    required
-                  />
-                  <Input
-                    label="Province"
-                    value={shipping.province}
-                    onChange={(v) => setShipping({ ...shipping, province: v })}
-                  />
-                  <Input
-                    label="ZIP"
-                    value={shipping.zip}
-                    onChange={(v) => setShipping({ ...shipping, zip: v })}
-                  />
+
+                  
+                  
                   <textarea
                     className="col-span-1 md:col-span-2 mt-2 p-3 border border-gray-200 rounded-lg"
                     placeholder="Delivery notes (optional)"
@@ -477,7 +492,7 @@ export default function Checkout() {
                 <hr className="my-4" />
                 <div className="text-sm text-gray-600 space-y-2">
                   <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal.toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFee.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>Delivery</span><span>₱{deliveryFees.toFixed(2)}</span></div>
                   <div className="flex justify-between font-semibold text-lg mt-2 pt-2 border-t border-gray-200">
                     <span>Total</span>
                     <span>₱{grandTotal.toFixed(2)}</span>
@@ -576,14 +591,22 @@ function SectionCard({ title, children, icon }) {
   );
 }
 
-function Input({ label, value, onChange, placeholder = '', required = false, icon = null }) {
+function Input({ label, value, onChange, placeholder = '', required = false, icon = null, readOnly = false, disabled = false }) {
   return (
     <label className="block">
       <div className="text-sm flex items-center gap-2 mb-1">
         {icon}
         <span className="font-medium">{label}{required && <span className="text-red-500 ml-1">*</span>}</span>
       </div>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200" />
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        readOnly={readOnly}       // ← add this
+        disabled={disabled}       // ← optional
+        className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+      />
     </label>
   );
 }
+

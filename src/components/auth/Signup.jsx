@@ -28,6 +28,8 @@ export default function Signup() {
   const [address, setAddress] = useState({
     label: "",
     details: "",
+    long: "",
+    lat: ""
   });
 
   // Password strength indicator
@@ -283,14 +285,39 @@ export default function Signup() {
 
   const fillAddressFromPlace = (place) => {
     let street = "";
-    place.address_components.forEach(comp => {
-      const types = comp.types;
+    (place.address_components || []).forEach(comp => {
+      const types = comp.types || [];
       if (types.includes("street_number")) street = comp.long_name + " " + street;
       if (types.includes("route")) street += comp.long_name;
     });
+
+    // get formatted address
+    const formatted = place.formatted_address || place.name || "";
+
+    // obtain lat/lng (handles both PlaceResult and GeocoderResult LatLng)
+    let lat = null;
+    let lng = null;
+    if (place.geometry && place.geometry.location) {
+      // google.maps.LatLng has lat()/lng() methods
+      try {
+        lat = typeof place.geometry.location.lat === "function"
+          ? place.geometry.location.lat()
+          : place.geometry.location.lat;
+        lng = typeof place.geometry.location.lng === "function"
+          ? place.geometry.location.lng()
+          : place.geometry.location.lng;
+      } catch (e) {
+        lat = null;
+        lng = null;
+      }
+    }
+
     setAddress(prev => ({
       ...prev,
-      details: street || place.formatted_address,
+      details: street || formatted,
+      // preserve label if user set it, but ensure coords are stored
+      long: lng ?? prev.long ?? "",
+      lat: lat ?? prev.lat ?? "",
     }));
   };
 

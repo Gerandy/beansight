@@ -16,6 +16,8 @@ function MyAddresses() {
     city: "",
     zipcode: "",
     isDefault: false,
+    lat: null,
+    long: null,
   });
   const [errors, setErrors] = useState({});
 
@@ -67,7 +69,7 @@ function MyAddresses() {
       const pos = markerInstance.current.getPosition();
       const geocoder = new window.google.maps.Geocoder();
       const res = await geocoder.geocode({ location: pos });
-      if (res.results[0]) fillAddressFromPlace(res.results[0]);
+      if (res?.results?.[0]) fillAddressFromPlace(res.results[0]);
     });
 
     // Click map to move marker
@@ -93,7 +95,7 @@ function MyAddresses() {
 
     autocompleteRef.current.addListener("place_changed", () => {
       const place = autocompleteRef.current.getPlace();
-      if (!place.address_components) return;
+      if (!place) return;
       fillAddressFromPlace(place);
 
       if (place.geometry && mapInstance.current && markerInstance.current) {
@@ -105,10 +107,12 @@ function MyAddresses() {
   }, [showForm]);
 
   const fillAddressFromPlace = (place) => {
+    // support both PlaceResult and GeocoderResult shapes
+    const components = place.address_components || [];
     let street = "", city = "", province = "", zipcode = "";
 
-    place.address_components.forEach(comp => {
-      const types = comp.types;
+    components.forEach(comp => {
+      const types = comp.types || [];
       if (types.includes("street_number")) street = comp.long_name + " " + street;
       if (types.includes("route")) street += comp.long_name;
       if (types.includes("locality")) city = comp.long_name;
@@ -116,12 +120,29 @@ function MyAddresses() {
       if (types.includes("postal_code")) zipcode = comp.long_name;
     });
 
+    const formatted = place.formatted_address || place.formattedAddress || "";
+
+    // get lat/lng safely (may be google.maps.LatLng with lat()/lng())
+    let lat = null;
+    let lng = null;
+    try {
+      if (place.geometry && place.geometry.location) {
+        const loc = place.geometry.location;
+        lat = typeof loc.lat === "function" ? loc.lat() : loc.lat;
+        lng = typeof loc.lng === "function" ? loc.lng() : loc.lng;
+      }
+    } catch (e) {
+      // ignore
+    }
+
     setFormData(prev => ({
       ...prev,
-      details: street || place.formatted_address,
-      city,
-      province,
-      zipcode
+      details: street || formatted || prev.details,
+      city: city || prev.city,
+      province: province || prev.province,
+      zipcode: zipcode || prev.zipcode,
+      lat: lat ?? prev.lat,
+      long: lng ?? prev.long,
     }));
   };
 
@@ -145,16 +166,37 @@ function MyAddresses() {
     if (!userId) return;
 
     try {
+      // prepare payload, ensure numeric lat/long or null
+      const payload = {
+        label: formData.label,
+        details: formData.details,
+        province: formData.province,
+        city: formData.city,
+        zipcode: formData.zipcode,
+        isDefault: !!formData.isDefault,
+        lat: formData.lat ?? null,
+        long: formData.long ?? null,
+      };
+
       if (editingAddress) {
         const docRef = doc(db, "users", userId, "addresses", editingAddress.id);
-        await updateDoc(docRef, formData);
-        setAddresses(prev => prev.map(addr => addr.id === editingAddress.id ? { ...addr, ...formData } : addr));
+        await updateDoc(docRef, payload);
+        setAddresses(prev => prev.map(addr => addr.id === editingAddress.id ? { ...addr, ...payload } : addr));
       } else {
         const colRef = collection(db, "users", userId, "addresses");
-        const docRef = await addDoc(colRef, formData);
-        setAddresses(prev => [...prev, { id: docRef.id, ...formData }]);
+        const docRef = await addDoc(colRef, payload);
+        setAddresses(prev => [...prev, { id: docRef.id, ...payload }]);
       }
-      setFormData({ label: "", details: "", province: "", isDefault: true });
+      setFormData({
+        label: "",
+        details: "",
+        province: "",
+        city: "",
+        zipcode: "",
+        isDefault: true,
+        lat: null,
+        long: null,
+      });
       setEditingAddress(null);
       setShowForm(false);
       setErrors({});
@@ -235,18 +277,40 @@ function MyAddresses() {
           {/* Google Maps */}
           <div ref={mapRef} className="w-full h-64 rounded-lg border border-coffee-300"></div>
 
-          
-
-          
-
           <div className="flex items-center mb-3">
-            <input type="checkbox" defaultValuechecked={formData.isDefault} onChange={e => setFormData({ ...formData, isDefault: e.target.checked })} className="cursor-pointer mr-2 accent-coffee-700" />
+            <input
+              type="checkbox"
+              checked={!!formData.isDefault}
+              onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
+              className="cursor-pointer mr-2 accent-coffee-700"
+            />
             <label className="text-sm text-coffee-900">Set as default address</label>
           </div>
 
           <div className="flex gap-3">
             <button type="submit" className="cursor-pointer flex-1 bg-coffee-700 text-white py-2 rounded-lg hover:bg-coffee-800 transition-colors">{editingAddress ? "Save Changes" : "Add Address"}</button>
-            <button type="button" onClick={() => { setShowForm(false); setEditingAddress(null); setErrors({}); window.location.reload();}} className="cursor-pointer flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors">Cancel</button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(false);
+                setEditingAddress(null);
+                setErrors({});
+                // reset form but do not reload whole page
+                setFormData({
+                  label: "",
+                  details: "",
+                  province: "",
+                  city: "",
+                  zipcode: "",
+                  isDefault: false,
+                  lat: null,
+                  long: null,
+                });
+              }}
+              className="cursor-pointer flex-1 bg-coffee-200 text-coffee-900 py-2 rounded-lg hover:bg-coffee-300 transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       )}

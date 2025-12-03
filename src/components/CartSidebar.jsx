@@ -2,18 +2,74 @@ import React, { useState, useEffect } from "react";
 import { useCart } from "./CartContext";
 import { Link, useNavigate } from "react-router-dom";
 import { X, ShoppingBag, Trash2, Plus, Minus, MapPin, Clock, Calendar, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
+import { collection, doc, setDoc, serverTimestamp, onSnapshot, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+
 
 function CartSidebar({ cartOpen, setCartOpen }) {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [userData, setUserData] = useState({});
+  const [addresses, setAddresses] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [deliveryOption, setDeliveryOption] = useState("now");
   const [expandedItems, setExpandedItems] = useState({}); // Track which items are expanded
+  const [deliveryFees, setDeliveryFee] = useState(0);
+  const uid = localStorage.getItem("authToken");
 
-  const { cart = [], removeFromCart, updateQuantity, totalPrice = 0 } = useCart() || {};
+  const { cart = [], removeFromCart, updateQuantity, totalPrice = 0,  calculateDeliveryFee } = useCart() || {};
   const navigate = useNavigate();
 
-  const deliveryFee = cart.length > 0 ? 49 : 0;
-  const grandTotal = totalPrice + deliveryFee;
+  const grandTotal = totalPrice + deliveryFees ;
+
+  useEffect(() => {
+      if (!uid) return;
+  
+      const userRef = doc(db, "users", uid);
+      const unsubUser = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setUserData(docSnap.data());
+        }
+      });
+  
+      const addressesRef = collection(db, "users", uid, "addresses");
+      const unsubAddresses = onSnapshot(addressesRef, (snapshot) => {
+        const addrData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        setAddresses(addrData);
+      });
+  
+      return () => {
+        unsubUser();
+        unsubAddresses();
+      };
+    }, [uid]);
+
+const defaultAddress = addresses.find(addr => addr.isDefault);
+
+useEffect(() => {
+  if (!defaultAddress) return;
+
+  const handleDeliveryCalculation = async (lat, long, type) => {
+    const origin = "14.4427288619125,120.9102805815219";
+
+    // Google Maps requires LAT, LNG format
+    const destination = `${lat},${long}`;
+   
+    const { fee } = await calculateDeliveryFeeUtil(origin, destination);
+    setDeliveryFee(fee);  
+    calculateDeliveryFee(fee, type);
+  };
+
+  handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long, "delivery");
+
+}, [defaultAddress]);
+    
+    console.log("price",deliveryFees);
+    console.log("Default Address:", defaultAddress);
+    console.log("Lat:", defaultAddress?.lat, "Long:", defaultAddress?.long);
+
+
+
 
   useEffect(() => {
     if (showDeliveryModal) {
@@ -222,7 +278,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                 <MapPin className="w-3 h-3" />
                 Delivery fee
               </span>
-              <span className="font-medium">₱{deliveryFee.toFixed(2)}</span>
+              <span className="font-medium">₱{deliveryFees.toFixed(2)}</span>
             </div>
             <div className="pt-3 border-t border-coffee-200 flex justify-between font-bold text-lg">
               <span className="text-coffee-800">Total</span>
