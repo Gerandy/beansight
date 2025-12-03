@@ -105,10 +105,27 @@ export const CartProvider = ({ children }) => {
   /* -----------------------------------------------------------
       CART FUNCTIONS
   ------------------------------------------------------------ */
-  const addToCart = (item) => {
-    const uniqueId = `${item.id}-${Date.now()}-${Math.random()}`;
-    setCart((prev) => [...prev, { ...item, uniqueCartItemId: uniqueId }]);
-  };
+  const addToCart = (item, quantity = 1) => {
+  setCart((prev) => {
+    const existingIndex = prev.findIndex(
+      (i) =>
+        i.id === item.id &&
+        i.size === item.size &&
+        JSON.stringify(i.addOns || []) === JSON.stringify(item.addOns || [])
+    );
+
+    if (existingIndex !== -1) {
+      const updatedCart = [...prev];
+      updatedCart[existingIndex].quantity += quantity;
+      return updatedCart;
+    } else {
+      const uniqueCartItemId = `${item.id}-${Date.now()}-${Math.random()}`;
+      return [...prev, { ...item, quantity, uniqueCartItemId }];
+    }
+  });
+};
+
+
 
   const removeFromCart = (uniqueCartItemId) => {
     setCart((prev) =>

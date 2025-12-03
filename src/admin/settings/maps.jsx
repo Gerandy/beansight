@@ -378,7 +378,7 @@ export default function MapsSettings() {
                       />
                       <Circle
                         center={location}
-                        radius={radius}
+                        radius={radius * 1000}
                         options={{
                           fillColor: "#8B4513",
                           fillOpacity: 0.15,
@@ -486,8 +486,7 @@ export default function MapsSettings() {
                     type="number"
                     className={inputClass}
                     value={radius}
-                    min={0.1}
-                    step={0.5}
+                    
                     onChange={e => {
                       const value = e.target.value;
                       setRadius(value === "" ? "" : Number(value));
@@ -620,42 +619,7 @@ export default function MapsSettings() {
               )}
 
               {/* Free Delivery Threshold */}
-              <div>
-                <label className={labelClass}>
-                  <DollarSign className="w-5 h-5 text-coffee-600" />
-                  Free Delivery Threshold
-                  <button
-                    type="button"
-                    className="text-coffee-600 hover:text-coffee-800 transition"
-                    onClick={() => showTooltip(help.freeThreshold)}
-                    aria-label="Help"
-                  >
-                    <Info className="w-4 h-4" />
-                  </button>
-                </label>
-                <p className="text-sm text-coffee-600 mb-3">
-                  Orders below this amount get free delivery (set to 0 to disable)
-                </p>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-coffee-700 font-bold">₱</span>
-                  <input
-                    type="number"
-                    className={inputClass + " pl-10"}
-                    value={freeThreshold}
-                    /* removed min constraint to allow any number */
-                    onChange={e => setFreeThreshold(e.target.value)}
-                    placeholder="500"
-                  />
-                </div>
-                {freeThreshold > 0 && (
-                  <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 mt-3">
-                    <p className="text-sm text-green-800">
-                      <Check className="w-4 h-4 inline mr-1" />
-                      Orders ₱{freeThreshold} and below will have free delivery
-                    </p>
-                  </div>
-                )}
-              </div>
+              
 
               {/* Preview */}
               <div className="bg-gradient-to-br from-coffee-50 to-coffee-100 rounded-xl p-5 border-2 border-coffee-300">
@@ -666,7 +630,7 @@ export default function MapsSettings() {
                 <div className="space-y-2 text-sm text-coffee-800">
                   <p><strong>Type:</strong> {feeType === "per_km" ? "Per Kilometer" : "Flat Rate"}</p>
                   <p><strong>Rate:</strong> ₱{feeType === "per_km" ? `${feePerKm} per km` : flatFee}</p>
-                  <p><strong>Free Delivery:</strong> {freeThreshold > 0 ? `≤ ₱${freeThreshold}` : "Disabled"}</p>
+                  
                   {feeType === "per_km" && (
                     <div className="mt-3 pt-3 border-t border-coffee-300">
                       <p className="font-semibold mb-1">Example:</p>

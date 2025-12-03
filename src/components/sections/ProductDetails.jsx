@@ -32,7 +32,20 @@ function ProductDetails() {
   const [foodAddOns, setfoodAddOns] = useState([]);
   const [upSizeFee, setUpSizeFee] = useState(10);
 
+useEffect(()=>{
+    const loadStorePref = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      if(!docRef.exists()){"no data";return}
+      const data = docRef.data();
 
+      setUpSizeFee(data.upSizeFee);
+ 
+ 
+  
+    }
+    loadStorePref();
+
+    },[])
 
 
 

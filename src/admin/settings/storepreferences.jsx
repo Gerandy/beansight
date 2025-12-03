@@ -133,7 +133,7 @@ export default function StorePreferences() {
     sat: { time: "00:00", enabled: true },
     sun: { time: "00:00", enabled: true },
   });
-  const [storeOpenTime, setStoreOpenTime] = useState("00:00");
+  const [storeOpenTime, setStoreOpenTime] = useState(true);
   const [minOrder, setMinOrder] = useState(0);
   const [upsizeFee, setUpsizeFee] = useState(0);
   const [orderType, setOrderType] = useState({
@@ -324,7 +324,7 @@ export default function StorePreferences() {
       setMinOrder(data?.minOrder || 0);
       setUpsizeFee(data?.upsizeFee || 0);
       setCutoffTimes(convertToNewFormat(data?.storeTime));
-      setStoreOpenTime(data?.storeOpenTime || "00:00");
+      setStoreOpenTime(data?.storeOpenTime || true);
       setOrderType(data?.orderType || { pickup: true, delivery: true });
       setOnlineOrdering(data?.onlineOrder ?? true);
       setPaymentMethods(data?.paymentMet || { cash: true, gcash: true });
@@ -362,7 +362,7 @@ export default function StorePreferences() {
         setUpsizeFee(data.upSizeFee || 0);
         setOnlineOrdering(data.onlineOrder ?? true);
         setCutoffTimes(convertToNewFormat(data.storeTime));
-        setStoreOpenTime(data.storeOpen || "00:00");
+        setStoreOpenTime(data.storeOpen || true);
         setOrderType(data.orderType || { pickup: true, delivery: true });
         setPaymentMethods(data.paymentMet || { cash: true, gcash: true });
         setDiscountRules(data.discountRules || [{ enabled: false, name: "", type: "percentage", amount: "", minSpend: "" }]);
@@ -478,25 +478,42 @@ export default function StorePreferences() {
             </div>
 
             {/* Store Opening Time */}
+            
             <div>
               <label className={labelClass}>
                 <Clock className="w-5 h-5 text-coffee-600" />
                 Store Opening Time
-                <button
-                  type="button"
-                  className="text-coffee-600 hover:text-coffee-800 transition"
-                  onClick={() => showTooltip(help.cutoffTimes)}
-                >
-                  <Info className="w-4 h-4" />
-                </button>
+                
+                
               </label>
               <p className="text-sm text-coffee-600 mb-3">Same opening time applies to all days</p>
-              <input
-                type="time"
-                value={storeOpenTime}
-                onChange={e => setStoreOpenTime(e.target.value)}
-                className={inputClass + " text-center text-lg font-mono"}
-              />
+          
+            </div>
+            <div className="bg-coffee-50 rounded-xl p-4 border-2 border-coffee-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={storeOpenTime}
+                    onChange={e => setStoreOpenTime(e.target.checked)}
+                    className="accent-coffee-700 w-6 h-6 cursor-pointer rounded"
+                    id="storeOpen"
+                  />
+                  <label htmlFor="storeOpen" className="text-coffee-900 font-semibold cursor-pointer flex items-center gap-2">
+                    Open Store
+                    <button
+                      type="button"
+                      className="text-coffee-600 hover:text-coffee-800 transition"
+                      onClick={() => showTooltip(help.storeOpenTime)}
+                    >
+                      <Info className="w-4 h-4" />
+                    </button>
+                  </label>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${storeOpenTime ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                  {storeOpenTime ? 'OPENED' : 'CLOSED'}
+                </span>
+              </div>
             </div>
 
             {/* Order Cutoff Times */}
@@ -610,45 +627,7 @@ export default function StorePreferences() {
               )}
             </div>
 
-            {/* Order Types */}
-            <div>
-              <label className={labelClass}>
-                <ShoppingCart className="w-5 h-5 text-coffee-600" />
-                Supported Order Types
-                <button
-                  type="button"
-                  className="text-coffee-600 hover:text-coffee-800 transition"
-                  onClick={() => showTooltip(help.orderType)}
-                >
-                  <Info className="w-4 h-4" />
-                </button>
-              </label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {[
-                  { key: "pickup", label: "Pickup", icon: "🏪" },
-                  { key: "delivery", label: "Delivery", icon: "🚚" }
-                ].map(type => (
-                  <label key={type.key} className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition ${
-                    orderType[type.key] 
-                      ? 'border-coffee-500 bg-coffee-50' 
-                      : 'border-gray-200 bg-gray-50'
-                  }`}>
-                    <input
-                      type="checkbox"
-                      checked={orderType[type.key]}
-                      onChange={e => setOrderType(o => ({ ...o, [type.key]: e.target.checked }))}
-                      className="accent-coffee-700 w-5 h-5 cursor-pointer rounded"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{type.icon}</span>
-                        <span className="font-semibold text-coffee-900">{type.label}</span>
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -705,150 +684,8 @@ export default function StorePreferences() {
               </div>
             </div>
 
-            {/* Discount Rules */}
-            <div>
-              <label className={labelClass}>
-                <Tag className="w-5 h-5 text-coffee-600" />
-                Automatic Discounts
-                <button
-                  type="button"
-                  className="text-coffee-600 hover:text-coffee-800 transition"
-                  onClick={() => showTooltip(help.discountRules)}
-                >
-                  <Info className="w-4 h-4" />
-                </button>
-              </label>
-              <p className="text-sm text-coffee-600 mb-4">
-                Reward customers automatically when they spend a certain amount
-              </p>
-              
-              <div className={`space-y-4 ${discountRules.length > 2 ? 'max-h-[400px] overflow-y-auto pr-2' : ''}`}>
-                {discountRules.map((rule, idx) => (
-                  <div key={idx} className="bg-gradient-to-br from-coffee-50 to-coffee-100 rounded-xl p-5 border-2 border-coffee-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={rule.enabled}
-                          onChange={e => handleDiscountRuleChange(idx, "enabled", e.target.checked)}
-                          className="accent-coffee-700 w-5 h-5 cursor-pointer rounded"
-                          id={`discount-enabled-${idx}`}
-                        />
-                        <label htmlFor={`discount-enabled-${idx}`} className="font-bold text-coffee-900 cursor-pointer flex items-center gap-2">
-                          <Tag className="w-4 h-4" />
-                          Discount #{idx + 1}
-                        </label>
-                        {rule.enabled && <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">ACTIVE</span>}
-                      </div>
-                      {discountRules.length > 1 && (
-                        <button
-                          type="button"
-                          className="text-red-600 hover:text-red-700 transition"
-                          onClick={() => removeDiscountRule(idx)}
-                          title="Delete discount"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-
-                    {rule.enabled && (
-                      <div className="space-y-3 pl-8">
-                        <div>
-                          <label className="block text-sm font-semibold text-coffee-800 mb-1">
-                            Discount Name
-                          </label>
-                          <input
-                            type="text"
-                            value={rule.name}
-                            onChange={e => handleDiscountRuleChange(idx, "name", e.target.value)}
-                            className={inputClass}
-                            placeholder="e.g., Big Spender Reward"
-                          />
-                          {errors[`discount_${idx}_name`] && (
-                            <p className="text-red-600 text-xs mt-1">{errors[`discount_${idx}_name`]}</p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-sm font-semibold text-coffee-800 mb-1">Type</label>
-                            <select
-                              value={rule.type}
-                              onChange={e => handleDiscountRuleChange(idx, "type", e.target.value)}
-                              className={inputClass + " cursor-pointer"}
-                            >
-                              <option value="percentage">Percentage %</option>
-                              <option value="fixed">Fixed Amount ₱</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold text-coffee-800 mb-1">
-                              {rule.type === "percentage" ? "Percent" : "Amount"}
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="number"
-                                value={rule.amount}
-                                min={0}
-                                max={rule.type === "percentage" ? 100 : undefined}
-                                onChange={e => handleDiscountRuleChange(idx, "amount", e.target.value)}
-                                className={inputClass + " pr-10"}
-                                placeholder={rule.type === "percentage" ? "10" : "50"}
-                              />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-coffee-700 font-bold">
-                                {rule.type === "percentage" ? "%" : "₱"}
-                              </span>
-                            </div>
-                            {errors[`discount_${idx}_amount`] && (
-                              <p className="text-red-600 text-xs mt-1">{errors[`discount_${idx}_amount`]}</p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-coffee-800 mb-1">
-                            Minimum Spend Required
-                          </label>
-                          <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-coffee-700 font-bold">₱</span>
-                            <input
-                              type="number"
-                              value={rule.minSpend}
-                              min={0}
-                              onChange={e => handleDiscountRuleChange(idx, "minSpend", e.target.value)}
-                              className={inputClass + " pl-10"}
-                              placeholder="500"
-                            />
-                          </div>
-                          {errors[`discount_${idx}_minSpend`] && (
-                            <p className="text-red-600 text-xs mt-1">{errors[`discount_${idx}_minSpend`]}</p>
-                          )}
-                        </div>
-
-                        {rule.name && rule.amount && rule.minSpend && (
-                          <div className="bg-white border-2 border-green-300 rounded-lg p-3 mt-3">
-                            <p className="text-sm text-green-800">
-                              <Check className="w-4 h-4 inline mr-1" />
-                              <span className="font-bold">{rule.name}:</span> Get {rule.type === "percentage" ? `${rule.amount}%` : `₱${rule.amount}`} off on orders ₱{rule.minSpend}+
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="cursor-pointer w-full bg-coffee-700 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:bg-coffee-800 transition mt-4 flex items-center justify-center gap-2"
-                onClick={addDiscountRule}
-              >
-                <Tag className="w-5 h-5" />
-                Add Another Discount
-              </button>
-            </div>
+           
+          
 
             {/* Tax Settings */}
             <div>
@@ -900,50 +737,7 @@ export default function StorePreferences() {
             </div>
 
             {/* Receipt Settings */}
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass} htmlFor="receiptHeader">
-                  <Receipt className="w-5 h-5 text-coffee-600" />
-                  Receipt Header
-                  <button
-                    type="button"
-                    className="text-coffee-600 hover:text-coffee-800 transition"
-                    onClick={() => showTooltip(help.receiptHeader)}
-                  >
-                    <Info className="w-4 h-4" />
-                  </button>
-                </label>
-                <input
-                  type="text"
-                  value={receiptHeader}
-                  onChange={e => setReceiptHeader(e.target.value)}
-                  className={inputClass}
-                  id="receiptHeader"
-                  placeholder="Thank you for your purchase!"
-                />
-              </div>
-              <div>
-                <label className={labelClass} htmlFor="receiptFooter">
-                  <Receipt className="w-5 h-5 text-coffee-600" />
-                  Receipt Footer
-                  <button
-                    type="button"
-                    className="text-coffee-600 hover:text-coffee-800 transition"
-                    onClick={() => showTooltip(help.receiptFooter)}
-                  >
-                    <Info className="w-4 h-4" />
-                  </button>
-                </label>
-                <input
-                  type="text"
-                  value={receiptFooter}
-                  onChange={e => setReceiptFooter(e.target.value)}
-                  className={inputClass}
-                  id="receiptFooter"
-                  placeholder="Visit us again soon!"
-                />
-              </div>
-            </div>
+            
 
             {/* GCash QR Code */}
             <div>

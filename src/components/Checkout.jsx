@@ -12,12 +12,14 @@ export default function Checkout() {
   const [userData, setUserData] = useState({});
   const [addresses, setAddresses] = useState([]);
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState();
   const [success, setSuccess] = useState(null);
   const [expandedItems, setExpandedItems] = useState({});
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
   const [settings, setSettings] = useState(0);
+  
+  
   useEffect(() => {
       const loadSettings = async () => {
         setLoading(true);
@@ -37,10 +39,51 @@ export default function Checkout() {
       loadSettings();
     }, []); 
 
+
+    const [upSizeFee, setUpSizeFee] = useState(0);
+    const [storeTime, setStoreTime] = useState({});
+    const [showGcashModal, setShowGcashModal] = useState(false);
+
+    const [orderType, setOrderType] = useState({
+      delivery: true,
+      pickup: true
+    });
+    const [taxRate, setTaxRate] = useState(0);
+    const [onlineOrder, setOnlineOrder] = useState(true);
+    const [paymentMet, setPaymentMet] = useState(false);
+    const [minOrder, setMinOrder] = useState(0);
+    const [open, setOpen] = useState(false);
+    useEffect(()=>{
+    const loadStorePref = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      if(!docRef.exists()) return;
+      const data = docRef.data();
+      // set individual fields from storePref document (guarding against missing keys)
+      setPaymentMet(!!data.paymentMethods);
+      setOnlineOrder(!!data.onlineOrder);
+      setTaxRate(Number(data.taxRate ?? 0));
+      setUpSizeFee(Number(data.upSizeFee ?? 0));
+      setOpen(Boolean(data.storeOpen));
+      setOrderType(data.orderType ?? orderType);
+      setMinOrder(data.minOrder ?? minOrder);
+      setStoreTime(data.storeTime ?? {});
+
+      // Debug logs for troubleshooting
+      console.log("loadStorePref -> raw storePref document:", data);
+      console.log("loadStorePref -> paymentMethods:", data.paymentMethods);
+      console.log("loadStorePref -> onlineOrder:", data.onlineOrder);
+      console.log("loadStorePref -> taxRate:", Number(data.taxRate ?? 0));
+      console.log("loadStorePref -> upSizeFee:", Number(data.upSizeFee ?? 0));
+      console.log("loadStorePref -> storeOpen flag:", Boolean(data.storeOpen));
+      console.log("loadStorePref -> orderType:", data.orderType);
+      console.log("loadStorePref -> minOrder:", data.minOrder);
+      console.log("loadStorePref -> storeTime map:", data.storeTime);
+    }
+    loadStorePref();
+  },[])
     
     
   
-
     
   
 
@@ -100,6 +143,9 @@ export default function Checkout() {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
+  // normalize min order value (support either number or { minOrder: number })
+  const minOrderValue = Number(minOrder?.minOrder ?? minOrder ?? 0);
+
   const grandTotal = subtotal + (settings.feeType === "flat" ? settings.flatFee : deliveryFees);
 
   useEffect(() => {
@@ -119,6 +165,54 @@ export default function Checkout() {
     handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long, "delivery");
   
   }, [defaultAddress]);
+
+
+  // Recalculate delivery fee when shipping type changes
+  useEffect(() => {
+    if (shipping.type === "delivery" && defaultAddress?.lat && defaultAddress?.long) {
+      // recalculate fee based on address
+      const handleDeliveryCalculation = async (lat, long) => {
+        try {
+          const cfgRef = doc(db, "settings", "deliveryConfig");
+          const cfgSnap = await getDoc(cfgRef);
+          const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+
+          const baseFee = Number(cfg.baseFee ?? 40);
+          const perKmFee = Number(cfg.perKm ?? 10);
+          const origin = `${cfg.storeLat ?? "14.4239"},${cfg.storeLng ?? "120.8986"}`;
+          const destination = `${lat},${long}`;
+
+          const maps = await loadGoogleMaps();
+          const service = new maps.DistanceMatrixService();
+
+          service.getDistanceMatrix(
+            {
+              origins: [origin],
+              destinations: [destination],
+              travelMode: maps.TravelMode.DRIVING,
+              unitSystem: maps.UnitSystem.METRIC,
+            },
+            (response, status) => {
+              let computed = baseFee;
+              if (status === "OK" && response.rows?.[0]?.elements?.[0]?.status === "OK") {
+                const meters = response.rows[0].elements[0].distance.value || 0;
+                const km = Math.ceil(meters / 1000);
+                computed = baseFee + km * perKmFee;
+              }
+              setDeliveryFee(Number(computed.toFixed(2)));
+            }
+          );
+        } catch (err) {
+          console.error("Failed to calculate delivery fee:", err);
+          setDeliveryFee(60);
+        }
+      };
+
+      handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long);
+    } else if (shipping.type === "pickup") {
+      setDeliveryFee(0);
+    }
+  }, [shipping.type, defaultAddress]);
 
 
   const updateQty = (id, delta) => {
@@ -144,7 +238,8 @@ export default function Checkout() {
 
   const handleCheckout = async () => {
     if (!items.length) return alert("Cart is empty!");
-
+    if (subtotal < minOrderValue) return alert(`Minimum order is ₱${minOrderValue.toFixed(2)}. Add more items to continue.`);
+    
     if (shipping.type === "delivery" && (!shipping.address )) {
       return alert("Please fill out all delivery fields.");
     }
@@ -187,7 +282,64 @@ export default function Checkout() {
     setLoading(false);
   };
 
+  // Check if store is open (uses storePref.storeTime map)
+  const isStoreOpen = () => {
+  try {
+    console.log("isStoreOpen() -> storeTime:", storeTime);
+    console.log("isStoreOpen() -> storeOpen flag:", open);
+
+    // 1. If storeOpen flag is false → always closed
+    if (!open) {
+      console.log("Store closed globally (storeOpen === false)");
+      return false;
+    }
+
+    // 2. Prepare current time
+    const now = new Date();
+    const dayIndex = now.getDay(); // 0 = Sun
+    const hh = now.getHours().toString().padStart(2, "0");
+    const mm = now.getMinutes().toString().padStart(2, "0");
+    const currentTime = `${hh}:${mm}`;
+
+    const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+    const todayKey = dayKeys[dayIndex];
+
+    console.log("Today key:", todayKey);
+    const today = storeTime?.[todayKey];
+
+    // 3. If no config or disabled → closed
+    if (!today || today.enabled === false) {
+      console.log("Today config missing or not enabled → CLOSED");
+      return false;
+    }
+
+    // 4. If no opening hours provided → treat as always open
+    if (!today.time) {
+      console.log("No cutoff time provided → ALWAYS OPEN");
+      return true;
+    }
+
+    const cutoff = today.time;
+    console.log(`Comparing now (${currentTime}) <= cutoff (${cutoff})`);
+
+    // 5. Check if current time is before or at cutoff
+    const openNow = currentTime <= cutoff;
+    console.log("isStoreOpen →", openNow);
+
+    return openNow;
+  } catch (err) {
+    console.error("isStoreOpen() Error:", err);
+    // Safe fallback
+    return true;
+  }
+};
+
+
+  const storeOpen = isStoreOpen(); // computed, not state
+  console.log("Computed storeOpen:", storeOpen);
+
   return (
+    
     <div className="min-h-screen mt-16 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -399,8 +551,11 @@ export default function Checkout() {
                   Cash on delivery
                 </label>
 
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-not-allowed ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200 text-gray-400'} opacity-50`}>
-                  <input type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => setPayment({ method: 'wallet' })} className="hidden" disabled />
+                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'} `}>
+                  <input type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => {
+                      setPayment({ method: 'wallet' });
+                      setShowGcashModal(true); // ← OPEN MODAL HERE
+                    }} className="hidden"/>
                   GCash / Paymaya (coming soon)
                 </label>
               </div>
@@ -519,8 +674,19 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <button onClick={handleCheckout} disabled={loading} className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 hover:bg-yellow-800 transition cursor-pointer">
-                  {loading ? "Processing..." : "Place Order"}
+                <button
+                  onClick={handleCheckout}
+                  disabled={loading || subtotal < minOrderValue || !storeOpen}
+                  className="mt-4 w-full py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50 hover:bg-yellow-800 transition cursor-pointer"
+                >
+                  {loading
+                    ? "Processing..."
+                    : !storeOpen
+                    ? "Store is Closed"
+                    : subtotal < minOrderValue
+                      ? `Minimum order ₱${minOrderValue.toFixed(2)}`
+                      : "Place Order"}
+                      
                 </button>
               </div>
             </div>
@@ -534,11 +700,63 @@ export default function Checkout() {
               <div className="text-sm text-gray-500">Total</div>
               <div className="font-semibold">₱{grandTotal.toFixed(2)}</div>
             </div>
-            <button onClick={handleCheckout} disabled={loading} className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50">
-              {loading ? "Processing..." : "Place Order"}
+            <button
+              onClick={handleCheckout}
+              disabled={loading || subtotal < minOrderValue || !storeOpen}
+              className="px-6 py-3 rounded-lg bg-yellow-950 text-white font-semibold disabled:opacity-50"
+            >
+              {loading ? "Processing..." : !storeOpen ? "Store Closed" : subtotal < minOrderValue ? `Min ₱${minOrderValue.toFixed(2)}` : "Place Order"}
             </button>
           </div>
         </div>
+        <AnimatePresence>
+  {showGcashModal && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999]"
+    >
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        className="bg-white p-6 rounded-xl shadow-xl w-[90%] max-w-sm text-center relative"
+      >
+        <h2 className="text-xl font-bold mb-4">GCash Payment</h2>
+
+        {/* --- QR CODE IMAGE PLACEHOLDER --- */}
+        <div className="w-full flex justify-center mb-4">
+          <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+            <span className="text-gray-500 text-sm">
+              <img
+  src="/your-qrcode-image.png"
+  alt="GCash QR"
+  className="w-48 h-48 object-cover rounded-lg"
+/>
+            </span>
+          </div>
+        </div>
+
+        {/* --- TOTAL AMOUNT --- */}
+        <p className="text-lg font-semibold mb-6">
+          Total: <span className="text-green-600">₱{grandTotal}</span>
+        </p>
+
+        {/* --- CLOSE BUTTON --- */}
+        <button
+          onClick={() => {
+          setShowGcashModal(false);
+          handleCheckout(); // <-- Trigger place order here too
+        }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full"
+        >
+          Done
+        </button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
 
         {/* Success Modal */}
         <AnimatePresence>
@@ -550,6 +768,7 @@ export default function Checkout() {
                   <CheckCircle className="text-green-500" />
                   <div>
                     <h3 className="text-xl font-semibold">Order confirmed</h3>
+                    
                     <div className="text-sm text-gray-500">Order #{success.id} — {success.eta}</div>
                   </div>
                 </div>

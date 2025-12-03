@@ -14,7 +14,12 @@ const Orders = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
   const navigate = useNavigate();
-  
+  const [cart, setCart] = useState([]);
+
+  useEffect(() => {
+      const saved = localStorage.getItem("cart");
+      if (saved) setCart(JSON.parse(saved));
+    }, []);
   // Live fetch orders from the global "orders" collection
  useEffect(() => {
   const uid = localStorage.getItem("authToken");
