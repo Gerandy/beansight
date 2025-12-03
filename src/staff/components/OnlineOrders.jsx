@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { db } from "../../firebase";
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { X, Package, User, MapPin, Clock, Phone, Mail } from "lucide-react";
 
 export default function OnlineOrders() {
   const [orders, setOrders] = useState([]);
-  const [expanded, setExpanded] = useState([]);
   const [filter, setFilter] = useState("Active");
   const [search, setSearch] = useState("");
   const [primarySort, setPrimarySort] = useState("placedAt");
@@ -12,6 +12,8 @@ export default function OnlineOrders() {
   const [toast, setToast] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const nextStatusMap = {
     Pending: "Preparing",
@@ -53,18 +55,26 @@ export default function OnlineOrders() {
         return {
           id: doc.id,
           customer: o.user?.firstName || "Guest",
+          customerDetails: o.user || {},
+          shippingDetails: o.shipping || {},
+          paymentMethod: o.payment?.method || "N/A",
           items:
             o.items?.map((i) => ({
               name: i.name,
               qty: i.quantity,
+              price: i.price,
+              size: i.size,
+              addons: i.addons || [],
             })) || [],
           itemCount:
             o.items?.reduce((sum, i) => sum + (i.quantity || 0), 0) || 0,
-          total:
+          subtotal:
             o.items?.reduce(
               (sum, i) => sum + (i.price || 0) * (i.quantity || 0),
               0
             ) || 0,
+          deliveryFee: o.deliveryFee || 0,
+          total: o.total || 0,
           status: o.status || "Pending",
           placedAt: o.createdAt?.toDate?.() || new Date(),
         };
@@ -100,10 +110,15 @@ export default function OnlineOrders() {
     }
   };
 
-  const toggleExpand = (id) =>
-    setExpanded((e) =>
-      e.includes(id) ? e.filter((x) => x !== id) : [...e, id]
-    );
+  const openOrderModal = (order) => {
+    setSelectedOrder(order);
+    setModalOpen(true);
+  };
+
+  const closeOrderModal = () => {
+    setModalOpen(false);
+    setSelectedOrder(null);
+  };
 
   const compareForKey = (key, a, b) => {
     if (key === "placedAt") return new Date(b.placedAt) - new Date(a.placedAt);
@@ -146,6 +161,13 @@ export default function OnlineOrders() {
 
   const formatTime = (iso) =>
     new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
   return (
     <div className="bg-coffee-50 rounded-xl shadow p-3 sm:p-5">
@@ -263,26 +285,12 @@ export default function OnlineOrders() {
                   </div>
                 </div>
 
-                {expanded.includes(order.id) && (
-                  <div className="mb-3 pt-3 border-t border-coffee-200">
-                    <div className="text-xs font-semibold mb-2 text-coffee-800">Items</div>
-                    <ul className="space-y-1 text-xs">
-                      {order.items.map((it, i) => (
-                        <li key={i} className="flex justify-between text-coffee-700">
-                          <span>{it.name}</span>
-                          <span className="font-medium">x{it.qty}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
                 <div className="flex gap-2">
                   <button
-                    onClick={() => toggleExpand(order.id)}
+                    onClick={() => openOrderModal(order)}
                     className="cursor-pointer flex-1 px-3 py-2 text-xs bg-white border border-coffee-200 rounded-md hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors"
                   >
-                    {expanded.includes(order.id) ? "Hide" : "Details"}
+                    View Details
                   </button>
                   {nextStatusMap[order.status] && (
                     <button
@@ -312,66 +320,45 @@ export default function OnlineOrders() {
               </thead>
               <tbody>
                 {paginatedOrders.map((order, idx) => (
-                  <React.Fragment key={order.id}>
-                    <tr
-                      className={`border-t hover:bg-coffee-50 transition-colors ${
-                        idx % 2 === 0 ? "bg-white" : "bg-coffee-50"
-                      }`}
-                    >
-                      <td className="py-3 px-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="font-medium text-coffee-800">{order.id}</div>
-                          <div className="text-xs text-coffee-700">{formatTime(order.placedAt)}</div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">{order.customer}</td>
-                      <td className="py-3 px-4 text-center">{order.itemCount}</td>
-                      <td className="py-3 px-4 text-right font-medium text-coffee-800">
-                        {currency(order.total)}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <StatusBadge status={order.status} />
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                  <tr
+                    key={order.id}
+                    className={`border-t hover:bg-coffee-50 transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-coffee-50"
+                    }`}
+                  >
+                    <td className="py-3 px-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="font-medium text-coffee-800">{order.id}</div>
+                        <div className="text-xs text-coffee-700">{formatTime(order.placedAt)}</div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">{order.customer}</td>
+                    <td className="py-3 px-4 text-center">{order.itemCount}</td>
+                    <td className="py-3 px-4 text-right font-medium text-coffee-800">
+                      {currency(order.total)}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <StatusBadge status={order.status} />
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openOrderModal(order)}
+                          className="cursor-pointer px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
+                        >
+                          View Details
+                        </button>
+                        {nextStatusMap[order.status] && (
                           <button
-                            onClick={() => toggleExpand(order.id)}
-                            className="cursor-pointer px-3 py-1.5 text-xs bg-white border border-coffee-200 rounded-full hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors shadow"
+                            onClick={() => handleStatusChange(order.id, order.status)}
+                            className="cursor-pointer px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
                           >
-                            {expanded.includes(order.id) ? "Hide" : "Details"}
+                            Move to {nextStatusMap[order.status]}
                           </button>
-                          {nextStatusMap[order.status] && (
-                            <button
-                              onClick={() => handleStatusChange(order.id, order.status)}
-                              className="cursor-pointer px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
-                            >
-                              Move to {nextStatusMap[order.status]}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-
-                    {expanded.includes(order.id) && (
-                      <tr className="bg-coffee-50">
-                        <td colSpan="6" className="py-3 px-4">
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-coffee-700">
-                            <div>
-                              <div className="text-xs font-semibold mb-2 text-coffee-800">Items</div>
-                              <ul className="space-y-1">
-                                {order.items.map((it, i) => (
-                                  <li key={i} className="flex justify-between">
-                                    <span>{it.name}</span>
-                                    <span className="text-coffee-800 font-medium">x{it.qty}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -430,6 +417,205 @@ export default function OnlineOrders() {
             </div>
           )}
         </>
+      )}
+
+      {/* Order Details Modal */}
+      {modalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-coffee-700 text-white p-4 sm:p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Order Details
+                </h3>
+                <p className="text-xs sm:text-sm text-coffee-100 mt-1">
+                  {formatDate(selectedOrder.placedAt)} at {formatTime(selectedOrder.placedAt)}
+                </p>
+              </div>
+              <button
+                onClick={closeOrderModal}
+                className="cursor-pointer p-2 hover:bg-coffee-600 rounded-lg transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-4 sm:p-6 space-y-6">
+              {/* Order Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-coffee-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <User className="w-4 h-4 text-coffee-600" />
+                    <h4 className="font-semibold text-coffee-800">Customer Information</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-coffee-600">Name:</span>{" "}
+                      <span className="font-medium text-coffee-900">
+                        {selectedOrder.customerDetails.firstName} {selectedOrder.customerDetails.lastName}
+                      </span>
+                    </div>
+                    {selectedOrder.customerDetails.email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-3 h-3 text-coffee-600" />
+                        <span className="text-coffee-900">{selectedOrder.customerDetails.email}</span>
+                      </div>
+                    )}
+                    {selectedOrder.customerDetails.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3 h-3 text-coffee-600" />
+                        <span className="text-coffee-900">{selectedOrder.customerDetails.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-coffee-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MapPin className="w-4 h-4 text-coffee-600" />
+                    <h4 className="font-semibold text-coffee-800">Delivery Details</h4>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="text-coffee-600">Type:</span>{" "}
+                      <span className="font-medium text-coffee-900 capitalize">
+                        {selectedOrder.shippingDetails.type || "N/A"}
+                      </span>
+                    </div>
+                    {selectedOrder.shippingDetails.type === "delivery" && (
+                      <div>
+                        <span className="text-coffee-600">Address:</span>{" "}
+                        <span className="text-coffee-900">
+                          {selectedOrder.shippingDetails.address || "N/A"}
+                        </span>
+                      </div>
+                    )}
+                    {selectedOrder.shippingDetails.type === "pickup" && (
+                      <div>
+                        <span className="text-coffee-600">Location:</span>{" "}
+                        <span className="text-coffee-900">
+                          {selectedOrder.shippingDetails.pickupLocation || "N/A"}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3 text-coffee-600" />
+                      <span className="text-coffee-900">
+                        {selectedOrder.shippingDetails.schedule === "now" ? "ASAP" : "Scheduled"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Status & Payment */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-coffee-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-coffee-800 mb-2">Status</h4>
+                  <StatusBadge status={selectedOrder.status} />
+                </div>
+                <div className="bg-coffee-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-coffee-800 mb-2">Payment Method</h4>
+                  <span className="text-sm text-coffee-900 uppercase">
+                    {selectedOrder.paymentMethod}
+                  </span>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <h4 className="font-semibold text-coffee-800 mb-3 flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Order Items
+                </h4>
+                <div className="space-y-3">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="bg-coffee-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-coffee-900">{item.name}</div>
+                          {item.size && (
+                            <div className="text-xs text-coffee-600">Size: {item.size}</div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium text-coffee-900">
+                            {currency(item.price * item.qty)}
+                          </div>
+                          <div className="text-xs text-coffee-600">
+                            {currency(item.price)} × {item.qty}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Add-ons */}
+                      {item.addons && item.addons.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-coffee-200">
+                          <div className="text-xs font-semibold text-coffee-700 mb-1">Add-ons:</div>
+                          <div className="space-y-1">
+                            {item.addons.map((addon, addonIdx) => (
+                              <div key={addonIdx} className="flex justify-between text-xs text-coffee-600">
+                                <span>
+                                  • {addon.name} {addon.qty > 1 && `(×${addon.qty})`}
+                                </span>
+                                <span>{currency(addon.price * addon.qty)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-coffee-100 rounded-lg p-4">
+                <h4 className="font-semibold text-coffee-800 mb-3">Order Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-coffee-600">Subtotal</span>
+                    <span className="text-coffee-900">{currency(selectedOrder.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-coffee-600">Delivery Fee</span>
+                    <span className="text-coffee-900">{currency(selectedOrder.deliveryFee)}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-coffee-300">
+                    <span className="font-semibold text-coffee-800">Total</span>
+                    <span className="font-bold text-coffee-900 text-lg">
+                      {currency(selectedOrder.total)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-coffee-50 p-4 flex items-center justify-end gap-3 border-t border-coffee-200">
+              <button
+                onClick={closeOrderModal}
+                className="cursor-pointer px-4 py-2 text-sm bg-white border border-coffee-200 rounded-lg hover:bg-coffee-100 text-coffee-800 font-semibold transition-colors"
+              >
+                Close
+              </button>
+              {nextStatusMap[selectedOrder.status] && (
+                <button
+                  onClick={() => {
+                    handleStatusChange(selectedOrder.id, selectedOrder.status);
+                    closeOrderModal();
+                  }}
+                  className="cursor-pointer px-4 py-2 text-sm bg-coffee-600 text-white rounded-lg hover:bg-coffee-700 font-semibold transition-colors"
+                >
+                  Move to {nextStatusMap[selectedOrder.status]}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}
