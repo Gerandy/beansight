@@ -16,7 +16,7 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { Calendar, ShoppingBag, Users } from "lucide-react";
 import { db } from "../firebase"; // Adjust path
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDoc, getDocs, doc } from "firebase/firestore";
 import { NavLink } from "react-router-dom";
 import DrillDownModal from "./layouts/dmodal"; // Adjust path
 
@@ -80,6 +80,33 @@ export default function Dashboard() {
   // -------------------------------
   // Fetch Orders from Firestore
   // -------------------------------
+
+  useEffect(() =>{
+    const loadSettings = async () =>{
+      const docRef = await getDoc(doc(db, "settings", "storePref"));
+      const docRefs = await getDoc(doc(db, "settings", "analytics"));
+      if(!docRef.exists() && !docRefs.exists()){console.log("data is not on firestore"); return}
+      const data = docRef.data();
+      const dataa = docRefs.data();
+
+      setTax(data.taxRate);
+      setDateRange(dataa.settings.defaultPeriod);
+
+    }
+    
+    loadSettings();
+
+  },[])
+
+
+
+
+
+
+
+
+
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -196,7 +223,7 @@ export default function Dashboard() {
     periodUnit,
   } = useMemo(() => {
     const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
+   
     // Get previous period for comparison
     const getPreviousPeriod = (period, customStart, customEnd) => {
       const now = new Date();
