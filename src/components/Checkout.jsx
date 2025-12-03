@@ -151,7 +151,7 @@ export default function Checkout() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">Checkout</h1>
+          <h1 className="text-2xl font-bold text-black">CHECKOUT</h1>
           <Link to="/menu">
             <button className="cursor-pointer px-4 py-2 rounded-lg bg-yellow-950 text-white font-medium hover:bg-yellow-800">
               Continue shopping
@@ -377,7 +377,8 @@ export default function Checkout() {
             <div className="lg:sticky lg:top-20 space-y-4">
               <div className="bg-white rounded-2xl p-5 shadow">
                 <h3 className="text-lg font-semibold mb-3">Order Summary</h3>
-                <div className="mt-3 space-y-4">
+                {/* Added max-height and overflow-y-auto with custom scrollbar */}
+                <div className="mt-3 space-y-4 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
                   {items.map(it => {
                     const isExpanded = expandedItems[it.id];
                     const hasAddons = it.addons && it.addons.length > 0;
@@ -540,6 +541,22 @@ export default function Checkout() {
         }
         .animate-slideDown {
           animation: slideDown 0.3s ease-out;
+        }
+        
+        /* Custom scrollbar styles */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 10px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
         }
       `}</style>
     </div>

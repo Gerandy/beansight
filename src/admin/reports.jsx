@@ -610,7 +610,7 @@ export default function Reports() {
     <div className="p-6 space-y-8 text-[var(--color-coffee-900)] animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-3xl font-bold text-[var(--color-coffee-800)]">☕ Reports & Analytics</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-coffee-800)]">☕ Reports</h1>
         <div className="flex gap-2">
           <button onClick={handleExportExcel} className="flex items-center gap-2 bg-[var(--color-coffee-400)] text-white px-4 py-2 rounded-lg hover:bg-[var(--color-coffee-500)] shadow-md transition">
             <FileSpreadsheet className="w-4 h-4" /> Export Excel

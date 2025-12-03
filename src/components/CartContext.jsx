@@ -26,33 +26,49 @@ export function CartProvider({ children }) {
   }, [cart]);
 
   const addToCart = (item) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+    // Create a unique identifier based on product + size + addons
+    const addonsKey = item.addons 
+      ? item.addons
+          .map(a => `${a.id}:${a.qty}`)
+          .sort()
+          .join('|')
+      : '';
+    
+    const uniqueCartItemId = `${item.id}_${item.size || ''}_${addonsKey}`;
 
-      if (existing) {
-        // If item exists, add the selected quantity
-        return prev.map((i) =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + (item.quantity || 1) }
-            : i
+    setCart((prevCart) => {
+      const existingItem = prevCart.find(
+        (cartItem) => cartItem.uniqueCartItemId === uniqueCartItemId
+      );
+
+      if (existingItem) {
+        // Item with same product, size, and add-ons exists - increment quantity
+        return prevCart.map((cartItem) =>
+          cartItem.uniqueCartItemId === uniqueCartItemId
+            ? { ...cartItem, quantity: cartItem.quantity + item.quantity }
+            : cartItem
         );
       }
 
-      // If new item, use the selected quantity
-      return [...prev, { ...item, quantity: item.quantity || 1 }];
+      // New unique item - add to cart
+      return [...prevCart, { ...item, uniqueCartItemId }];
     });
   };
 
-  const updateQuantity = (id, quantity) => {
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, quantity } : item
+  const updateQuantity = (uniqueCartItemId, newQuantity) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.uniqueCartItemId === uniqueCartItemId
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (uniqueCartItemId) => {
+    setCart((prevCart) => 
+      prevCart.filter((item) => item.uniqueCartItemId !== uniqueCartItemId)
+    );
   };
 
   const clearCart = () => setCart([]);

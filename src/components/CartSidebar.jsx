@@ -100,12 +100,12 @@ function CartSidebar({ cartOpen, setCartOpen }) {
           ) : (
             <div className="space-y-4">
               {cart.map((item) => {
-                const isExpanded = expandedItems[item.id];
+                const isExpanded = expandedItems[item.uniqueCartItemId]; // Changed from item.id
                 const hasAddons = item.addons && item.addons.length > 0;
                 
                 return (
                   <div
-                    key={item.id}
+                    key={item.uniqueCartItemId} // Changed from item.id
                     className="bg-white rounded-xl p-4 shadow-sm border border-coffee-200 hover:shadow-md transition"
                   >
                     <div className="flex gap-3">
@@ -121,7 +121,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                           </h3>
                           <button
                             className="text-red-500 hover:text-red-600 transition p-1"
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.uniqueCartItemId)} // Changed
                             aria-label="Remove item"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -137,7 +137,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                         {/* View Details Button */}
                         {hasAddons && (
                           <button
-                            onClick={() => toggleItemDetails(item.id)}
+                            onClick={() => toggleItemDetails(item.uniqueCartItemId)} // Changed
                             className="text-xs text-coffee-600 hover:text-coffee-700 font-medium flex items-center gap-1 mb-2 transition"
                           >
                             {isExpanded ? (
@@ -173,7 +173,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                           <div className="flex items-center gap-2 bg-coffee-100 rounded-lg p-1">
                             <button
                               className="cursor-pointer p-1 hover:bg-white rounded transition"
-                              onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                              onClick={() => updateQuantity(item.uniqueCartItemId, Math.max(1, item.quantity - 1))} // Changed
                               aria-label="Decrease quantity"
                             >
                               <Minus className="w-3 h-3 text-coffee-700" />
@@ -183,7 +183,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
                             </span>
                             <button
                               className="cursor-pointer p-1 hover:bg-white rounded transition"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.uniqueCartItemId, item.quantity + 1)} // Changed
                               aria-label="Increase quantity"
                             >
                               <Plus className="w-3 h-3 text-coffee-700" />

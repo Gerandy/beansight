@@ -38,10 +38,10 @@ function Slider() {
 
   if (loading) {
     return (
-      <div className="w-full flex justify-center" style={{ marginTop: "88px" }}>
-        <div className="relative w-full max-w-5xl mx-auto px-4 min-h-0 md:min-h-[400px]">
-          <div className="rounded-2xl overflow-hidden shadow-lg bg-gray-200 animate-pulse">
-            <div className="w-full h-[200px] md:h-[400px] bg-gray-300"></div>
+      <div className="w-full flex justify-center mt-20 mb-8">
+        <div className="relative w-full max-w-md lg:max-w-5xl mx-auto px-4">
+          <div className="rounded-3xl overflow-hidden shadow-lg bg-gray-200 animate-pulse h-[160px] lg:h-[350px]">
+            <div className="w-full h-full bg-gray-300"></div>
             {/* Pagination dots skeleton */}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
               <div className="w-2 h-2 rounded-full bg-gray-400"></div>
@@ -63,8 +63,8 @@ function Slider() {
   }
 
   return (
-    <div className="w-full flex justify-center" style={{ marginTop: "88px" }}>
-      <div className="relative w-full max-w-5xl mx-auto px-4 min-h-0 md:min-h-[400px]">
+    <div className="w-full flex justify-center mt-20 ">
+      <div className="relative w-full max-w-md lg:max-w-5xl mx-auto px-4">
         <Swiper
           modules={[Navigation, Autoplay, Pagination]}
           pagination={{
@@ -74,18 +74,18 @@ function Slider() {
           }}
           loop
           autoplay={{ delay: 5000, disableOnInteraction: false }}
-          className="rounded-2xl overflow-hidden shadow-lg"
+          className="rounded-3xl overflow-hidden shadow-lg h-[160px] lg:h-[350px]"
         >
           {slides.map((slide) => (
             <SwiperSlide key={slide.id}>
               <div 
-                className="cursor-pointer"
+                className="cursor-pointer w-full h-full"
                 onClick={() => navigate('/menu')}
               >
                 <img
                   src={slide.image}
                   alt={`Banner ${slide.id}`}
-                  className="w-full h-auto object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </SwiperSlide>

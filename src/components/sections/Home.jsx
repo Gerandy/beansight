@@ -9,6 +9,7 @@ import "../../index.css";
 function Home() {
   // auth state
   const [isAuthed, setIsAuthed] = useState(!!localStorage.getItem("authToken"));
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // keep reveal effects
   useEffect(() => {
@@ -33,6 +34,20 @@ function Home() {
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Show/hide scroll to top button based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const scrollToTop = () => {
@@ -61,28 +76,32 @@ function Home() {
       <div className="reveal">
         <HomeFeatured />
       </div>
-      <button
-        onClick={scrollToTop}
-        style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
-          width: '40px',
-          height: '40px',
-          backgroundColor: 'var(--color-coffee-600)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontSize: '20px',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        ↑
-      </button>
+      
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            width: '40px',
+            height: '40px',
+            backgroundColor: 'var(--color-coffee-600)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '20px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }
