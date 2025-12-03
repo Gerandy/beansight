@@ -209,6 +209,13 @@ export default function AdminLayout() {
                   {!collapsed && "Audit Log"}
                 </NavLink>
                 <NavLink
+                  to="/admin/settings/archive"
+                  className={({ isActive }) => linkClasses(isActive)}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  {!collapsed && "Archives"}
+                </NavLink>
+                <NavLink
                   to="/admin/settings/advertisement"
                   className={({ isActive }) => linkClasses(isActive)}
                   onClick={() => setSidebarOpen(false)}
@@ -273,7 +280,7 @@ export default function AdminLayout() {
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 flex">
           <div
-            className="fixed inset-0 bg-black bg-opacity-90"
+            className="fixed inset-0 bg-opacity-90"
             onClick={() => setSidebarOpen(false)}
           />
           <aside className="relative w-64 bg-black text-white p-5 z-50 h-full shadow-lg animate-slide-in flex flex-col justify-between">

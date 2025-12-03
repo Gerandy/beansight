@@ -48,34 +48,34 @@ function MenuCategories() {
   };
 
   return (
-    <div className="max-w-[1050px] mx-auto py-6 relative">
+    <div className="max-w-[1050px] mx-auto py-2 sm:py-4 lg:py-6 relative">
       <div className="px-4">
-        <h1 className="text-coffee-900 text-4xl sm:text-3xl lg:text-4xl font-bold">Menu</h1>
-        <p className="text-coffee-700 mb-4 text-sm sm:text-base lg:text-lg">
+        <h1 className="text-coffee-900 text-2xl sm:text-3xl lg:text-4xl font-bold">Menu</h1>
+        <p className="text-coffee-700 mb-2 sm:mb-4 text-xs sm:text-base lg:text-lg">
           What are you craving for today?
         </p>
       </div>
 
-      {/* Mobile: swipeable, 2 cards visible, no arrows */}
+      {/* Mobile: swipeable, 3 cards visible, no arrows */}
       <div className="lg:hidden relative px-4">
-        <div className="flex overflow-x-auto gap-4 scrollbar-hide py-4 snap-x snap-mandatory">
+        <div className="flex overflow-x-auto gap-3 scrollbar-hide py-2 snap-x snap-mandatory">
           {categories.map((cat) => (
             <div
               key={cat.name}
-              className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 w-[calc((100vw-2rem-32px)/3)] snap-start"
+              className="flex flex-col items-center cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 w-[calc((100vw-2rem-24px)/3)] snap-start"
               onClick={() => handleCategoryClick(cat.name)}
             >
               <div
                 className="rounded-full flex items-center justify-center bg-white shadow-md"
-                style={{ width: 100, height: 100 }}
+                style={{ width: 80, height: 80 }}
               >
                 <img
                   src={cat.imgUrl}
                   alt={cat.name}
-                  style={{ width: 70, height: 70 }}
+                  style={{ width: 56, height: 56 }}
                 />
               </div>
-              <p className="mt-3 text-center font-bold text-coffee-900" style={{ fontSize: 14 }}>
+              <p className="mt-2 text-center font-bold text-coffee-900" style={{ fontSize: 12 }}>
                 {cat.name}
               </p>
             </div>
