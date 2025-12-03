@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import React, { useState, useEffect, useMemo } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc,collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useCart } from "../CartContext";
 import { Coffee, Info, Ruler, ShoppingBag, ArrowLeft, Heart, PlusCircle, Plus, Minus } from "lucide-react";
@@ -11,11 +11,7 @@ import HomeCard from "../home/HomeCard";
 
 
 
-const suggestedBeverages = [
-  { id: "latte", name: "Latte", price: 120, img: logo },
-  { id: "cappuccino", name: "Cappuccino", price: 130, img: logo },
-  { id: "espresso", name: "Espresso", price: 100, img: logo },
-];
+
 
 function ProductDetails() {
   const { id } = useParams();
@@ -31,6 +27,46 @@ function ProductDetails() {
   const [beverageAddOns, setBeverageAddOns]= useState([]); 
   const [foodAddOns, setfoodAddOns] = useState([]);
   const [upSizeFee, setUpSizeFee] = useState(10);
+
+   const [suggestedBeverages, setSuggestedBeverages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  if (!product) return; // wait until product is loaded
+
+  const fetchSuggested = async () => {
+    setLoading(true);
+    try {
+      const colRef = collection(db, "Inventory");
+      const snapshot = await getDocs(colRef);
+
+      const allItems = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Filter opposite category
+      const recommended = allItems.filter(item => {
+        if (product.category === "Beverage") return item.category !== "Beverage";
+        if (product.category === "Meal") return item.category === "Beverage";
+        return true; // fallback: include all
+      }).filter(item => item.id !== product.id); // exclude current product
+
+      // Shuffle and pick 3
+      const shuffled = recommended.sort(() => 0.5 - Math.random());
+      const limited = shuffled.slice(0, 3);
+
+      setSuggestedBeverages(limited);
+    } catch (err) {
+      console.error("Error fetching suggested items:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSuggested();
+}, [product]); // run after product is loaded
+
 
 useEffect(()=>{
     const loadStorePref = async () =>{
@@ -384,7 +420,7 @@ useEffect(()=>{
               )}
 
               {/* You May Also Like - Only for Beverages */}
-              {isBeverages && (
+              
                 <div className="mt-12">
                   <h4 className="text-xl font-semibold mb-4">You may also like</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -399,7 +435,7 @@ useEffect(()=>{
                     ))}
                   </div>
                 </div>
-              )}
+              
 
             </div>
           </div>
