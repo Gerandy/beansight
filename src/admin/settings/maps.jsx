@@ -483,10 +483,10 @@ export default function MapsSettings() {
                   <input
                     type="number"
                     className={inputClass}
-                    value={radius / 1000}
+                    value={radius}
                     min={0.1}
                     step={0.5}
-                    onChange={e => setRadius(Number(e.target.value) * 1000)}
+                    onChange={e => setRadius(Number(e.target.value))}
                     placeholder="5"
                   />
                   <span className="text-coffee-800 font-bold whitespace-nowrap">kilometers</span>
@@ -595,7 +595,7 @@ export default function MapsSettings() {
                       type="number"
                       className={inputClass + " pl-10"}
                       value={flatFee}
-                      min={0}
+                      
                       onChange={e => setFlatFee(Number(e.target.value))}
                       placeholder="50"
                     />

@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCart } from "./CartContext";
 import { Link } from "react-router-dom";
 import { collection, doc, setDoc, serverTimestamp, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
 import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
-import { loadGoogleMaps } from "../utils/loadGoogleMaps";
+
 
 
 export default function Checkout() {
@@ -15,11 +14,32 @@ export default function Checkout() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
-  const [expandedItems, setExpandedItems] = useState({}); // Track which items show add-ons
-  const [dynamicDeliveryFee, setDynamicDeliveryFee] = useState(0);
-  const [feeLoading, setFeeLoading] = useState(false);
+  const [expandedItems, setExpandedItems] = useState({});
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
+  const [settings]
+  useEffect(() => {
+      const loadSettings = async () => {
+        setLoading(true);
+        try {
+          const docRef = await getDoc(doc(db, "settings", "analytics"));
+          if (docRef.exists()) {
+            const data = docRef.data();
+            setSettings(data.settings);
+          }
+        } catch (err) {
+          console.error("Error loading settings:", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      loadSettings();
+    }, []);
+  
+
+    
+  
 
   // Fetch user document and addresses subcollection in real-time
   useEffect(() => {
@@ -46,12 +66,12 @@ export default function Checkout() {
 
   const defaultAddress = addresses?.find(addr => addr.isDefault);
 
-  // Shipping state
+  // Shipping state (unified)
   const [shipping, setShipping] = useState({
     type: "delivery",
     address: "",
     pickupLocation: "Main Branch - Kawit",
-    schedule: "now",
+    schedule: "now", // "now" or "later"
     scheduledDate: "",
     scheduledTime: ""
   });
@@ -68,9 +88,6 @@ export default function Checkout() {
   }, [defaultAddress]);
 
 
-  const [pickupTime, setPickupTime] = useState("now");
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
   const [payment, setPayment] = useState({ method: "cod" });
 
   useEffect(() => {
@@ -79,7 +96,7 @@ export default function Checkout() {
   }, []);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const deliveryFee = shipping.type === "delivery" ? dynamicDeliveryFee : 0;
+  
   const grandTotal = subtotal + deliveryFees;
 
   useEffect(() => {
@@ -311,8 +328,8 @@ export default function Checkout() {
                         type="radio"
                         name="pickupTime"
                         value="now"
-                        checked={pickupTime === "now"}
-                        onChange={() => setPickupTime("now")}
+                        checked={shipping.schedule === "now"}
+                        onChange={() => setShipping({ ...shipping, schedule: "now", scheduledDate: "", scheduledTime: "" })}
                         className="accent-yellow-950"
                       />
                       Now
@@ -322,26 +339,26 @@ export default function Checkout() {
                         type="radio"
                         name="pickupTime"
                         value="later"
-                        checked={pickupTime === "later"}
-                        onChange={() => setPickupTime("later")}
+                        checked={shipping.schedule === "later"}
+                        onChange={() => setShipping({ ...shipping, schedule: "later" })}
                         className="accent-yellow-950"
                       />
                       Schedule
                     </label>
                   </div>
 
-                  {pickupTime === "later" && (
+                  {shipping.schedule === "later" && (
                     <div className="flex gap-4">
                       <input
                         type="date"
-                        value={scheduledDate}
-                        onChange={(e) => setScheduledDate(e.target.value)}
+                        value={shipping.scheduledDate}
+                        onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
                         className="border rounded px-2 py-1 w-1/2"
                       />
                       <input
                         type="time"
-                        value={scheduledTime}
-                        onChange={(e) => setScheduledTime(e.target.value)}
+                        value={shipping.scheduledTime}
+                        onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
                         className="border rounded px-2 py-1 w-1/2"
                       />
                     </div>
