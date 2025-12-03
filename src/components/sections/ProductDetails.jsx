@@ -8,14 +8,7 @@ import logo from "../../assets/ahjinlogo.png";
 import HomeCard from "../home/HomeCard";
 
 // Define add-ons catalogs
-const beverageAddOns = [
-  { id: "pearls", name: "Pearls", price: 15 },
-  { id: "coffee_jelly", name: "Coffee Jelly", price: 15 },
-  { id: "coco_jelly", name: "Coco Jelly", price: 15 },
-  { id: "creamcheese", name: "Creamcheese", price: 15 },
-  { id: "oreo", name: "Oreo", price: 20 },
-  { id: "espresso_shot", name: "Espresso", price: 20 },
-];
+
 
 const foodAddOns = [
   { id: "extra_rice", name: "Extra Rice", price: 20, allowMultiple: true },
@@ -38,6 +31,26 @@ function ProductDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [flyImage, setFlyImage] = useState(null);
   const [selectedAddOns, setSelectedAddOns] = useState({}); // { addonId: qty }
+  const [beverageAddOns, setBeverageAddOns]= useState([]);
+
+
+
+
+
+  useEffect(()=> {
+    const fetchProduct = async () =>{
+      const docRef = await getDoc(doc(db, "extra", "addOns"));
+      if(!docRef.exists()){console.log("data not exist");return}
+      const data = docRef.data();
+
+      setBeverageAddOns(data.beverageAddOns);
+      console.log(data.beverageAddOns);
+
+
+    }
+    fetchProduct();
+
+  },[])
 
   // Fetch product and favorites
   useEffect(() => {
