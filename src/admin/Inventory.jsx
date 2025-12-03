@@ -328,7 +328,7 @@ function InventoryAnalytics() {
   return (
     <div className="p-8 space-y-8 min-h-screen text-coffee-800 font-sans">
       <header className="flex items-center mb-6">
-        <h1 className="text-3xl font-bold text-coffee-800">☕ Inventory Analytics</h1>
+        <h1 className="text-3xl font-bold text-coffee-800">☕ Inventory Management</h1>
         <button
           className="ml-auto text-2xl font-bold bg-coffee-700 text-coffee-50 px-5 py-2.5 rounded-xl shadow hover:bg-coffee-800 transition"
           onClick={() => setShowAddModal(true)}

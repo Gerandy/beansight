@@ -607,39 +607,62 @@ export default function ProductManagement() {
     <div className="min-h-screen text-black p-2 sm:p-4 md:p-6 lg:p-10">
       <div className="mx-auto max-w-screen-2xl w-full">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6 mb-6 md:mb-8">
+        <div className="flex flex-col gap-4 mb-6 md:mb-8">
+          {/* Title and Description */}
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-coffee-900 flex items-center gap-3">
-              <span className="text-xl sm:text-2xl">☕</span> Product Management
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-coffee-900 flex items-center gap-2 sm:gap-3">
+              <span className="text-lg sm:text-xl md:text-2xl">☕</span> 
+              <span className="truncate">Product Management</span>
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-coffee-700 max-w-xl">
-              Manage menu items, pricing, availability, images, and add-ons. Clean, responsive layout designed for quick scanning.
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-coffee-700 max-w-xl">
+              Manage menu items, pricing, availability, images, and add-ons.
             </p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
-                <div className="text-xs text-coffee-600">Total items</div>
-                <div className="text-lg font-semibold text-coffee-800">{totalProducts}</div>
+
+          {/* Stats and Actions Row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+            {/* KPI Stats - Hidden on mobile, visible on md+ */}
+            <div className="hidden md:flex items-center gap-2 sm:gap-3">
+              <div className="px-3 sm:px-4 py-2 bg-white rounded-lg sm:rounded-xl shadow-soft-lg text-center min-w-[80px] sm:min-w-[100px]">
+                <div className="text-[10px] sm:text-xs text-coffee-600">Total items</div>
+                <div className="text-base sm:text-lg font-semibold text-coffee-800">{totalProducts}</div>
               </div>
-              <div className="px-4 py-2 bg-white rounded-xl shadow-soft-lg text-center">
-                <div className="text-xs text-coffee-600">Available</div>
-                <div className="text-lg font-semibold text-coffee-800">{totalAvailable}</div>
+              <div className="px-3 sm:px-4 py-2 bg-white rounded-lg sm:rounded-xl shadow-soft-lg text-center min-w-[80px] sm:min-w-[100px]">
+                <div className="text-[10px] sm:text-xs text-coffee-600">Available</div>
+                <div className="text-base sm:text-lg font-semibold text-coffee-800">{totalAvailable}</div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button
-                  onClick={() => openModal()}
-                  className="flex items-center gap-2 bg-coffee-700 text-white px-4 py-2 rounded-2xl shadow hover:bg-coffee-600 transition cursor-pointer"
-                >
-                  <Plus size={16} /> Add Product
-                </button>
-                <button
-                  onClick={() => setShowAddOnsTab(!showAddOnsTab)}
-                  className="flex items-center gap-2 bg-white text-coffee-700 px-4 py-2 rounded-2xl shadow border border-coffee-200 hover:bg-coffee-50 transition cursor-pointer"
-                >
-                  <Package size={16} /> Manage Add-ons
-                </button>
-              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+              <button
+                onClick={() => openModal()}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-coffee-700 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow hover:bg-coffee-600 transition cursor-pointer text-xs sm:text-sm font-medium flex-1 sm:flex-initial whitespace-nowrap"
+              >
+                <Plus size={14} className="sm:w-4 sm:h-4" /> 
+                <span className="hidden xs:inline">Add Product</span>
+                <span className="xs:hidden">Add</span>
+              </button>
+              <button
+                onClick={() => setShowAddOnsTab(!showAddOnsTab)}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-white text-coffee-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow border border-coffee-200 hover:bg-coffee-50 transition cursor-pointer text-xs sm:text-sm font-medium flex-1 sm:flex-initial whitespace-nowrap"
+              >
+                <Package size={14} className="sm:w-4 sm:h-4" /> 
+                <span className="hidden sm:inline">Manage Add-ons</span>
+                <span className="sm:hidden">Add-ons</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile KPI Stats - Visible only on mobile */}
+          <div className="flex md:hidden items-center gap-2 sm:gap-3">
+            <div className="flex-1 px-3 py-2 bg-white rounded-lg shadow-soft-lg text-center">
+              <div className="text-[10px] text-coffee-600">Total</div>
+              <div className="text-base font-semibold text-coffee-800">{totalProducts}</div>
+            </div>
+            <div className="flex-1 px-3 py-2 bg-white rounded-lg shadow-soft-lg text-center">
+              <div className="text-[10px] text-coffee-600">Available</div>
+              <div className="text-base font-semibold text-coffee-800">{totalAvailable}</div>
             </div>
           </div>
         </div>

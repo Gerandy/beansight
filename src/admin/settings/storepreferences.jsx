@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Info,
   Save,
-  RotateCcw
+  RotateCcw,
+  Coffee
 } from "lucide-react";
 
 const help = {
@@ -36,7 +37,8 @@ const help = {
   taxRate: "Set the percentage rate for tax/VAT applied to all transactions.",
   receiptHeader: "Text or info shown at the top of printed receipts.",
   receiptFooter: "Text or info shown at the bottom of printed receipts.",
-  gcashQR: "Upload your GCash QR code image. This will be shown to customers for GCash payments. Recommended size: 300x300 pixels or larger."
+  gcashQR: "Upload your GCash QR code image. This will be shown to customers for GCash payments. Recommended size: 300x300 pixels or larger.",
+  upsizeFee: "Set the additional fee when customers upsize their drinks. This fee will be added to the base product price when upsize is selected."
 };
 
 // Modal Tooltip Component
@@ -133,6 +135,7 @@ export default function StorePreferences() {
   });
   const [storeOpenTime, setStoreOpenTime] = useState("00:00");
   const [minOrder, setMinOrder] = useState(0);
+  const [upsizeFee, setUpsizeFee] = useState(0);
   const [orderType, setOrderType] = useState({
     pickup: true,
     delivery: true,
@@ -260,6 +263,7 @@ export default function StorePreferences() {
   const validate = () => {
     const newErrors = {};
     if (minOrder < 0) newErrors.minOrder = "Minimum order must be zero or more.";
+    if (upsizeFee < 0) newErrors.upsizeFee = "Upsize fee must be zero or more.";
     if (taxOn && (taxRate < 0 || taxRate > 100)) newErrors.taxRate = "Tax rate must be between 0 and 100.";
     
     discountRules.forEach((rule, idx) => {
@@ -288,21 +292,20 @@ export default function StorePreferences() {
     
     setSaving(true);
     try {
-      // Simulate save to Firebase
       await setDoc(doc(db, "settings", "storePref"),{
         discountRules: discountRules,
         minOrder: minOrder,
+        upsizeFee: upsizeFee,
         onlineOrder: onlineOrdering,
         orderType: orderType,
         paymentMet: paymentMethods,
         storeOpen: storeOpenTime,
         storeTime: cutoffTimes,
         taxRate: taxRate
-
-      }
-    )
+      });
 
       showMessage("✓ Settings saved successfully!", "success");
+      setSuccessModalOpen(true);
     } catch (err) {
       showMessage("Failed to save settings. Please try again.", "error");
     } finally {
@@ -319,6 +322,7 @@ export default function StorePreferences() {
       
       setTaxRate(data?.taxRate || "");
       setMinOrder(data?.minOrder || 0);
+      setUpsizeFee(data?.upsizeFee || 0);
       setCutoffTimes(convertToNewFormat(data?.storeTime));
       setStoreOpenTime(data?.storeOpenTime || "00:00");
       setOrderType(data?.orderType || { pickup: true, delivery: true });
@@ -355,6 +359,7 @@ export default function StorePreferences() {
         const data = docSnap.data();
         setTaxRate(data.taxRate || "");
         setMinOrder(data.minOrder || 0);
+        setUpsizeFee(data.upsizeFee || 0);
         setOnlineOrdering(data.onlineOrder ?? true);
         setCutoffTimes(convertToNewFormat(data.storeTime));
         setStoreOpenTime(data.storeOpen || "00:00");
@@ -566,6 +571,41 @@ export default function StorePreferences() {
                 <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
                   <AlertCircle className="w-4 h-4" />
                   {errors.minOrder}
+                </p>
+              )}
+            </div>
+
+            {/* Upsize Fee */}
+            <div>
+              <label className={labelClass} htmlFor="upsizeFee">
+                <Coffee className="w-5 h-5 text-coffee-600" />
+                Upsize Fee
+                <button
+                  type="button"
+                  className="text-coffee-600 hover:text-coffee-800 transition"
+                  onClick={() => showTooltip(help.upsizeFee)}
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </label>
+              <p className="text-sm text-coffee-600 mb-3">Additional charge when customers upsize their drinks</p>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-coffee-700 font-bold">₱</span>
+                <input
+                  type="number"
+                  value={upsizeFee}
+                  min={0}
+                  step="0.01"
+                  onChange={e => setUpsizeFee(parseFloat(e.target.value) || 0)}
+                  className={inputClass + " pl-10"}
+                  id="upsizeFee"
+                  placeholder="e.g. 20"
+                />
+              </div>
+              {errors.upsizeFee && (
+                <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.upsizeFee}
                 </p>
               )}
             </div>

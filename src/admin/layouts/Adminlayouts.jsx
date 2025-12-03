@@ -15,27 +15,14 @@ import {
   Settings,
   Coffee,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dashboardOpen, setDashboardOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(true); // Always true on load
-
-  const analyticsPages = [
-    "/admin/sales",
-    "/admin/menu-performance",
-    "/admin/customers",
-  ];
-
-  useEffect(() => {
-    if (analyticsPages.includes(location.pathname)) {
-      setDashboardOpen(true);
-    }
-  }, [location.pathname]);
+  const [settingsOpen, setSettingsOpen] = useState(true);
 
   const handleLogout = () => {
     navigate("/login");
@@ -89,67 +76,34 @@ export default function AdminLayout() {
                 Analytics
               </div>
             )}
-            <div>
-              <div
-                className={`flex justify-between items-center p-2 rounded cursor-pointer transition ${
-                  isMobile
-                    ? "text-white hover:bg-yellow-400 hover:text-black"
-                    : "hover:bg-yellow-950 hover:text-white"
-                }`}
-                onClick={() => {
-                  setDashboardOpen((prev) => !prev);
-                  if (!dashboardOpen) {
-                    navigate("/admin/dashboard"); // Navigate to dashboard when clicking "Dashboard"
-                    setSidebarOpen(false);
-                  }
-                }}
-              >
-                <div className="flex items-center gap-2 flex-1">
-                  <LayoutDashboard size={20} />
-                  {!collapsed && "Dashboard"}
-                </div>
-                {!collapsed && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDashboardOpen(!dashboardOpen);
-                    }}
-                    className="p-1 rounded hover:bg-yellow-800"
-                  >
-                    {dashboardOpen ? (
-                      <ChevronDown size={18} />
-                    ) : (
-                      <ChevronRight size={18} />
-                    )}
-                  </button>
-                )}
-              </div>
-              {dashboardOpen && !collapsed && (
-                <div className="ml-6 mt-1 space-y-1 animate-dropdown">
-                  <NavLink
-                    to="/admin/sales"
-                    className={({ isActive }) => linkClasses(isActive)}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <BarChart size={18} /> {!collapsed && "Sales Report"}
-                  </NavLink>
-                  <NavLink
-                    to="/admin/menu-performance"
-                    className={({ isActive }) => linkClasses(isActive)}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <PieChart size={18} /> {!collapsed && "Menu Performance"}
-                  </NavLink>
-                  <NavLink
-                    to="/admin/customers"
-                    className={({ isActive }) => linkClasses(isActive)}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    <Users size={18} /> {!collapsed && "Customers Report"}
-                  </NavLink>
-                </div>
-              )}
-            </div>
+            <NavLink
+              to="/admin/dashboard"
+              className={({ isActive }) => linkClasses(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <LayoutDashboard size={20} /> {!collapsed && "Dashboard"}
+            </NavLink>
+            <NavLink
+              to="/admin/sales"
+              className={({ isActive }) => linkClasses(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <BarChart size={20} /> {!collapsed && "Sales Report"}
+            </NavLink>
+            <NavLink
+              to="/admin/menu-performance"
+              className={({ isActive }) => linkClasses(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <PieChart size={20} /> {!collapsed && "Menu Performance"}
+            </NavLink>
+            <NavLink
+              to="/admin/customers"
+              className={({ isActive }) => linkClasses(isActive)}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Users size={20} /> {!collapsed && "Customers Report"}
+            </NavLink>
           </div>
 
           {/* Management Section */}
