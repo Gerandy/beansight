@@ -44,6 +44,7 @@ const Orders = () => {
             status: o.status || "Pending",
             date: o.createdAt?.toDate ? o.createdAt.toDate() : new Date(),
             items: o.items || [],
+            tae: "ikinamada"
           };
         })
         .filter(Boolean);
@@ -317,6 +318,19 @@ const triggerFlyToCart = (imgSrc) => {
                     <div>
                       <p className="font-medium text-coffee-900">{item.name}</p>
                       <p className="text-sm text-coffee-600">Quantity: {item.quantity}</p>
+                      {item.addons && Object.keys(item.addons).length > 0 && (
+                        <p className="text-sm text-coffee-600">Add-ons:<br/>
+                                                                  {item.addons?.map((a, index) => (
+                                                                  <span
+                                                                    key={index}
+                                                                    className="bg-coffee-100 text-coffee-700 text-xs px-2 py-1 rounded-full"
+                                                                  >
+                                                                  {a.name}
+                                                                  
+                                                                  <br/>
+                                                                  </span>
+                                                                ))}</p>
+                      )}
                     </div>
                     <p className="font-semibold text-coffee-700">₱{(item.price * item.quantity).toFixed(2)}</p>
                   </div>

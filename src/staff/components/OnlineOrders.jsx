@@ -15,11 +15,15 @@ export default function OnlineOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const nextStatusMap = {
-    Pending: "Preparing",
-    Preparing: "Delivering",
-    Delivering: "Completed",
-    Completed: null,
+  const getNextStatus = (currentStatus, orderType) => {
+    const baseMap = {
+      Pending: "Preparing",
+      Preparing: orderType === "pickup" ? "Ready for PickUp" : "Delivering",
+      "Ready for PickUp": "Completed",
+      Delivering: "Completed",
+      Completed: null,
+    };
+    return baseMap[currentStatus] || null;
   };
 
   const currency = (v) =>
@@ -34,6 +38,7 @@ export default function OnlineOrders() {
       Pending: "bg-coffee-300 text-coffee-800",
       Preparing: "bg-coffee-100 text-coffee-700",
       Delivering: "bg-yellow-500 text-white",
+      "Ready for PickUp": "bg-green-400 text-white",
       Completed: "bg-green-500 text-white",
       Cancelled: "bg-red-100 text-red-700",
     };
@@ -56,8 +61,10 @@ export default function OnlineOrders() {
           id: doc.id,
           customer: o.user?.firstName || "Guest",
           customerDetails: o.user || {},
-          shippingDetails: o.shipping || {},
-          paymentMethod: o.payment?.method || "N/A",
+          shippingDetails: o.orderType || "sad",
+          schedule: o.schedule?.now || "Time: "+o.schedule?.time + " Date: " + o.schedule?.date,
+          paymentMethod: o.paymentMethod || "N/A",
+          address: o.user?.address?.address || "",
           items:
             o.items?.map((i) => ({
               name: i.name,
@@ -85,8 +92,8 @@ export default function OnlineOrders() {
     return () => unsub();
   }, []);
 
-  const handleStatusChange = async (orderId, currentStatus) => {
-    const newStatus = nextStatusMap[currentStatus];
+  const handleStatusChange = async (orderId, currentStatus, orderType) => {
+    const newStatus = getNextStatus(currentStatus, orderType);
     if (!newStatus) return;
 
     try {
@@ -199,6 +206,7 @@ export default function OnlineOrders() {
               <option value="Pending">Pending</option>
               <option value="Preparing">Preparing</option>
               <option value="Delivering">Delivering</option>
+              <option value="PickUp">Ready For Pickup</option>
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
             </select>
@@ -292,12 +300,12 @@ export default function OnlineOrders() {
                   >
                     View Details
                   </button>
-                  {nextStatusMap[order.status] && (
+                  {getNextStatus(order.status, order.shippingDetails) && (
                     <button
-                      onClick={() => handleStatusChange(order.id, order.status)}
+                      onClick={() => handleStatusChange(order.id, order.status, order.shippingDetails)}
                       className="cursor-pointer flex-1 px-3 py-2 text-xs bg-coffee-600 text-white rounded-md hover:bg-coffee-700 font-semibold transition-colors"
                     >
-                      {nextStatusMap[order.status]}
+                      {getNextStatus(order.status, order.shippingDetails)}
                     </button>
                   )}
                 </div>
@@ -348,12 +356,12 @@ export default function OnlineOrders() {
                         >
                           View Details
                         </button>
-                        {nextStatusMap[order.status] && (
+                        {getNextStatus(order.status, order.shippingDetails) && (
                           <button
-                            onClick={() => handleStatusChange(order.id, order.status)}
+                            onClick={() => handleStatusChange(order.id, order.status, order.shippingDetails)}
                             className="cursor-pointer px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
                           >
-                            Move to {nextStatusMap[order.status]}
+                            Move to {getNextStatus(order.status, order.shippingDetails)}
                           </button>
                         )}
                       </div>
@@ -481,8 +489,8 @@ export default function OnlineOrders() {
                   <div className="space-y-2 text-sm">
                     <div>
                       <span className="text-coffee-600">Type:</span>{" "}
-                      <span className="font-medium text-coffee-900 capitalize">
-                        {selectedOrder.shippingDetails.type || "N/A"}
+                      <span className="font-medium text-coffee-900 bg-coffee-500 text-coffee-700 text-xs px-2 py-1 rounded-full capitalize ">
+                        {selectedOrder.shippingDetails || "N/A"}
                       </span>
                     </div>
                     {selectedOrder.shippingDetails.type === "delivery" && (
@@ -503,8 +511,14 @@ export default function OnlineOrders() {
                     )}
                     <div className="flex items-center gap-2">
                       <Clock className="w-3 h-3 text-coffee-600" />
+                      <span className="bg-coffee-300 text-coffee-700 text-xs px-2 py-1 rounded-full">  
+                        {selectedOrder.schedule === true ? "ASAP" : "Scheduled at: " + selectedOrder.schedule}    
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3 h-3 text-coffee-600" />
                       <span className="text-coffee-900">
-                        {selectedOrder.shippingDetails.schedule === "now" ? "ASAP" : "Scheduled"}
+                        {selectedOrder.address || "N/A"}
                       </span>
                     </div>
                   </div>
@@ -602,15 +616,15 @@ export default function OnlineOrders() {
               >
                 Close
               </button>
-              {nextStatusMap[selectedOrder.status] && (
+              {getNextStatus(selectedOrder.status, selectedOrder.shippingDetails) && (
                 <button
                   onClick={() => {
-                    handleStatusChange(selectedOrder.id, selectedOrder.status);
+                    handleStatusChange(selectedOrder.id, selectedOrder.status, selectedOrder.shippingDetails);
                     closeOrderModal();
                   }}
                   className="cursor-pointer px-4 py-2 text-sm bg-coffee-600 text-white rounded-lg hover:bg-coffee-700 font-semibold transition-colors"
                 >
-                  Move to {nextStatusMap[selectedOrder.status]}
+                  Move to {getNextStatus(selectedOrder.status, selectedOrder.shippingDetails)}
                 </button>
               )}
             </div>
