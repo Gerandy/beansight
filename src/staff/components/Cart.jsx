@@ -55,13 +55,10 @@ export default function Cart({
                         </div>
                       )}
 
+                      
+                      
                       {/* Price */}
-                      <div className="text-[10px] sm:text-xs text-[var(--color-coffee-600)] mt-1">
-                        ₱{Number(it.price).toFixed(2)} × {quantity} = 
-                        <span className="font-semibold ml-1">
-                          ₱{(Number(it.price) * quantity).toFixed(2)}
-                        </span>
-                      </div>
+                     
 
                       {/* Add-ons total */}
                       {it.addons && it.addons.length > 0 && (
@@ -72,6 +69,14 @@ export default function Cart({
                           </span>
                         </div>
                       )}
+
+                       <div className="text-[10px] sm:text-xs text-[var(--color-coffee-600)] mt-1">
+                       SubTotal: ₱ 
+                        <span className="font-semibold ml-1">
+                          ₱{(Number(it.price) * quantity + it.addons.reduce((sum, addon) => sum + (addon.price * addon.qty), 0) * quantity).toFixed(2)}
+
+                        </span>
+                      </div>
                     </div>
 
                     {/* Quantity Controls */}
