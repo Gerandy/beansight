@@ -14,7 +14,7 @@ import {
   Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, arrayUnion  } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import {
@@ -428,18 +428,15 @@ export default function ProductManagement() {
   useEffect(() => {
     const fetchAddOns = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "addons"));
-        const addOnsList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAddOns(addOnsList);
+        const docRef = await getDoc(doc(db, "extra", "addOns"));
+        const data = docRef.data();
+        setAddOns(data.beverageAddOns);
       } catch (error) {
         console.error("Error fetching add-ons:", error);
       }
     };
     fetchAddOns();
-  }, []);
+  }, [addOns]);
 
   // Add-on management functions
   const openAddOnModal = (addOn = null) => {
@@ -478,50 +475,87 @@ export default function ProductManagement() {
       setAddOnForm((s) => ({ ...s, [name]: value }));
     }
   };
+  const generateCustomId = () => {
+  const timestamp = Date.now().toString(36); // Convert timestamp to base36
+  const randomStr = Math.random().toString(36).substring(2, 8); // 6 random chars
+  return `${timestamp}-${randomStr}`; // Example: "klt9x2-4f1a9b"
+};
+
 
   const handleSaveAddOn = async (e) => {
-    e.preventDefault();
-    try {
-      const addOnData = {
-        name: addOnForm.name,
-        price: addOnForm.price === "" ? 0 : Number(addOnForm.price),
-        category: addOnForm.category,
-        allowMultiple: !!addOnForm.allowMultiple,
-      };
-
-      if (editingAddOn) {
-        const addOnRef = doc(db, "addons", editingAddOn.id);
-        await updateDoc(addOnRef, addOnData);
-      } else {
-        await addDoc(collection(db, "addons"), addOnData);
-      }
-
-      // Refresh list
-      const querySnapshot = await getDocs(collection(db, "addons"));
-      const addOnsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAddOns(addOnsList);
-
-      closeAddOnModal();
-    } catch (error) {
-      console.error("Error saving add-on:", error);
-      alert("Error saving add-on. Please try again.");
+  e.preventDefault();
+  try {
+    const docRef = doc(db, "extra", "addOns"); // your single document
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) {
+      console.error("Document does not exist!");
+      return;
     }
-  };
+
+    const addOnsArray = docSnap.data().beverageAddOns || [];
+
+    const newAddOn = {
+      id: generateCustomId(),
+      name: addOnForm.name,
+      price: addOnForm.price === "" ? 0 : Number(addOnForm.price),
+      category: addOnForm.category,
+      allowMultiple: !!addOnForm.allowMultiple,
+    };
+
+    // Check if an add-on with the same name exists
+    const existingIndex = addOnsArray.findIndex(a => a.name === newAddOn.name);
+
+    let updatedArray;
+    if (existingIndex >= 0) {
+      // Replace the existing add-on
+      updatedArray = [...addOnsArray];
+      updatedArray[existingIndex] = newAddOn;
+    } else {
+      // Add new add-on
+      updatedArray = [...addOnsArray, newAddOn];
+    }
+
+    // Update the Firestore document
+    await updateDoc(docRef, { beverageAddOns: updatedArray });
+
+    console.log("Add-on saved successfully!");
+    closeAddOnModal();
+
+  } catch (error) {
+    console.error("Error saving add-on:", error);
+    alert("Error saving add-on. Please try again.");
+  }
+};
+
 
   const handleDeleteAddOn = async (id) => {
-    if (window.confirm("Delete this add-on?")) {
-      try {
-        await deleteDoc(doc(db, "addons", id));
-        setAddOns(prev => prev.filter(a => a.id !== id));
-      } catch (error) {
-        console.error("Error deleting add-on:", error);
-        alert("Error deleting add-on. Please try again.");
-      }
+  if (!window.confirm("Delete this add-on?")) return;
+
+  try {
+    const docRef = doc(db, "extra", "addOns"); // Your document containing beverageAddOns
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.error("Document not found");
+      return;
     }
-  };
+
+    const addOnsArray = docSnap.data().beverageAddOns || [];
+
+    // Remove the add-on with the matching id
+    const updatedArray = addOnsArray.filter(a => a.id !== id);
+
+    // Update the document
+    await updateDoc(docRef, { beverageAddOns: updatedArray });
+
+    // Update local state
+    setAddOns(prev => prev.filter(a => a.id !== id));
+
+  } catch (error) {
+    console.error("Error deleting add-on:", error);
+    alert("Error deleting add-on. Please try again.");
+  }
+};
 
   // Debounce add-on search
   useEffect(() => {
@@ -952,7 +986,7 @@ export default function ProductManagement() {
                     >
                       <option value="All">All Categories</option>
                       <option value="Beverage">Beverage</option>
-                      <option value="Food">Food</option>
+                      <option value="Meal">Meal</option>
                     </select>
                   </div>
 
@@ -1335,7 +1369,7 @@ export default function ProductManagement() {
                       required
                     >
                       <option value="Beverage">Beverage</option>
-                      <option value="Food">Food</option>
+                      <option value="Meal">Meal</option>
                     </select>
                   </div>
 

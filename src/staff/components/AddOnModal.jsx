@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Minus, Check } from "lucide-react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 
 export default function AddOnModal({ product, onClose, onAddToCart }) {
@@ -12,29 +12,30 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
 
   // Fetch add-ons from Firestore
   useEffect(() => {
-    const fetchAddOns = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "addons"));
-        const addOnsList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        
-        // Filter add-ons by product category
-        const filtered = addOnsList.filter(
-          addon => addon.category === product.category
-        );
-        
-        setAddOns(filtered);
-      } catch (error) {
-        console.error("Error fetching add-ons:", error);
-      } finally {
-        setLoading(false);
+  const fetchAddOns = async () => {
+    try {
+      const docRef = await getDoc(doc(db, "extra","addOns"));
+      if (!docRef.exists()) {
+        console.log("doesnt exist");
+        return;
       }
-    };
 
-    fetchAddOns();
-  }, [product.category]);
+      const data = docRef.data();
+      const addOnsList = data.beverageAddOns || [];
+      console.log(addOnsList);
+
+      // Since this is ONLY beverage add-ons, just set it:
+      setAddOns(addOnsList);
+      setLoading(false);
+
+    } catch (error) {
+      console.error("Error fetching add-ons:", error);
+    }
+  };
+
+  fetchAddOns();
+}, [product.addOns]);
+
 
   // Initialize with first size or default sizes
   useEffect(() => {
@@ -153,7 +154,8 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
             </div>
           )}
 
-          {/* Size Selection */}
+          {/* Size Selection - Only for Beverages and Meals */}
+          {(product.category === "Beverage" ) && (
           <div>
             <h4 className="font-semibold text-coffee-800 mb-3">Select Size *</h4>
             <div className="grid grid-cols-2 gap-3">
@@ -173,73 +175,77 @@ export default function AddOnModal({ product, onClose, onAddToCart }) {
               ))}
             </div>
           </div>
+          )}
 
           {/* Add-ons - Grouped by Category */}
           {loading ? (
             <div className="text-sm text-coffee-600">Loading add-ons...</div>
           ) : Object.keys(groupedAddOns).length > 0 ? (
             <div className="space-y-4">
-              {Object.entries(groupedAddOns).map(([category, items]) => (
-                <div key={category}>
-                  <h4 className="font-semibold text-coffee-800 mb-3">
-                    {category} Add-ons (Optional)
-                  </h4>
-                  <div className="space-y-2">
-                    {items.map((addon) => {
-                      const selected = selectedAddOns.find(a => a.id === addon.id);
-                      
-                      return (
-                        <div
-                          key={addon.id}
-                          className={`p-3 rounded-lg border-2 transition-all ${
-                            selected
-                              ? "border-coffee-600 bg-coffee-50"
-                              : "border-coffee-200"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="font-medium text-coffee-900">{addon.name}</div>
-                              <div className="text-sm text-coffee-600">+₱{addon.price}</div>
-                            </div>
-                            
-                            {selected && addon.allowMultiple ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleAddOnDecrease(addon.id)}
-                                  className="cursor-pointer w-8 h-8 rounded-full bg-coffee-200 hover:bg-coffee-300 flex items-center justify-center transition"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
-                                <span className="w-8 text-center font-semibold">{selected.qty}</span>
+              {Object.entries(groupedAddOns)
+                .filter(([category]) => category === product.category)
+                .map(([category, items]) => (
+                  <div key={category}>
+                    <h4 className="font-semibold text-coffee-800 mb-3">
+                      {category} Add-ons (Optional)
+                    </h4>
+                    <div className="space-y-2">
+                      {items.map((addon) => {
+                        const selected = selectedAddOns.find(a => a.id === addon.id);
+                        
+                        return (
+                          <div
+                            key={addon.id}
+                            className={`p-3 rounded-lg border-2 transition-all ${
+                              selected
+                                ? "border-coffee-600 bg-coffee-50"
+                                : "border-coffee-200"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium text-coffee-900">{addon.name}</div>
+                                <div className="text-sm text-coffee-600">+₱{addon.price}</div>
+                              </div>
+                              
+                              {selected && addon.allowMultiple ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleAddOnDecrease(addon.id)}
+                                    className="cursor-pointer w-8 h-8 rounded-full bg-coffee-200 hover:bg-coffee-300 flex items-center justify-center transition"
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
+                                  <span className="w-8 text-center font-semibold">{selected.qty}</span>
+                                  <button
+                                    onClick={() => handleAddOnToggle(addon)}
+                                    className="cursor-pointer w-8 h-8 rounded-full bg-coffee-600 hover:bg-coffee-700 text-white flex items-center justify-center transition"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
                                 <button
                                   onClick={() => handleAddOnToggle(addon)}
-                                  className="cursor-pointer w-8 h-8 rounded-full bg-coffee-600 hover:bg-coffee-700 text-white flex items-center justify-center transition"
+                                  className={`cursor-pointer w-10 h-10 rounded-full flex items-center justify-center transition ${
+                                    selected
+                                      ? "bg-coffee-600 text-white"
+                                      : "bg-coffee-200 hover:bg-coffee-300"
+                                  }`}
                                 >
-                                  <Plus className="w-4 h-4" />
+                                  {selected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                                 </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleAddOnToggle(addon)}
-                                className={`cursor-pointer w-10 h-10 rounded-full flex items-center justify-center transition ${
-                                  selected
-                                    ? "bg-coffee-600 text-white"
-                                    : "bg-coffee-200 hover:bg-coffee-300"
-                                }`}
-                              >
-                                {selected ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
-                              </button>
-                            )}
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           ) : null}
+
 
           {/* Quantity */}
           <div>
