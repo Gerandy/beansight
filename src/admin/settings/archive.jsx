@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Archive, 
-  Download, 
-  Filter, 
-  Search, 
+import {
+  Archive,
+  Download,
+  Filter,
+  Search,
   Calendar,
   Package,
   ShoppingCart,
@@ -15,8 +15,10 @@ import {
   Clock,
   User,
   RotateCcw,
-  Trash2
+  Trash2,
 } from "lucide-react";
+import { collection, onSnapshot, addDoc, deleteDoc, doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 const sampleArchiveData = [
   {
@@ -205,21 +207,83 @@ const DetailsModal = ({ item, onClose, onRestore, onDelete }) => {
 };
 
 export default function ArchivePage() {
-  const [archives, setArchives] = useState(sampleArchiveData);
+  const [archives, setArchives] = useState([]);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [type, setType] = useState("");
   const [page, setPage] = useState(1);
   const [modalItem, setModalItem] = useState(null);
-  const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
-  const [error] = useState("");
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setLoading(false), 800);
+    const q = collection(db, "archives");
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setError(null);
+      setArchives(data);
+      setLoading(false);
+    }, (err) => {
+      console.error("Failed to load archives:", err);
+      setError(err?.message || "Failed to load archives");
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
+
+  const handleRestore = async (archiveId) => {
+    const archRef = doc(db, "archives", archiveId);
+    const snap = await getDoc(archRef);
+    if (!snap.exists()) return alert("Archive not found");
+
+    const item = snap.data();
+
+    try {
+      if (item.type === "product") {
+        // restore to Inventory (use originalId if available)
+        if (item.originalId) {
+          await setDoc(doc(db, "Inventory", item.originalId), item.originalData);
+        } else {
+          await addDoc(collection(db, "Inventory"), item.originalData || {});
+        }
+      } else if (item.type === "user") {
+        if (item.originalId) {
+          await setDoc(doc(db, "users", item.originalId), item.originalData);
+        } else {
+          await addDoc(collection(db, "users"), item.originalData || {});
+        }
+      } else if (item.type === "order") {
+        if (item.originalId) {
+          await setDoc(doc(db, "orders", item.originalId), item.originalData);
+        } else {
+          await addDoc(collection(db, "orders"), item.originalData || {});
+        }
+      } else {
+        // generic restore: save originalData to a collection matching type
+        await addDoc(collection(db, item.type || "restored"), item.originalData || {});
+      }
+
+      // delete archive doc after successful restore
+      await deleteDoc(archRef);
+      setArchives(prev => prev.filter(a => a.id !== archiveId));
+    } catch (err) {
+      console.error("Restore failed:", err);
+      alert("Failed to restore item.");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this archive?")) return;
+    try {
+      await deleteDoc(doc(db, "archives", id));
+      setArchives(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete archive:", err);
+      alert("Failed to delete archive.");
+    }
+  };
 
   // Filter archives
   const filteredArchives = archives.filter(item => {
@@ -284,18 +348,6 @@ export default function ArchivePage() {
     } else {
       setSortBy(column);
       setSortDir("asc");
-    }
-  };
-
-  const handleRestore = (id) => {
-    console.log("Restoring item:", id);
-    // Add restore logic here
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to permanently delete this item?")) {
-      setArchives(archives.filter(item => item.id !== id));
-      console.log("Deleting item:", id);
     }
   };
 

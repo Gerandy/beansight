@@ -14,7 +14,18 @@ import {
   Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, arrayUnion  } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDoc,
+  setDoc,
+  arrayUnion,
+  serverTimestamp, // added
+} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import {
@@ -272,12 +283,67 @@ export default function ProductManagement() {
   const handleDelete = async (id) => {
     if (window.confirm("Delete this product?")) {
       try {
-        await deleteDoc(doc(db, "Inventory", id));
+        // fetch current product data
+        const productRef = doc(db, "Inventory", id);
+        const snap = await getDoc(productRef);
+        const data = snap.exists() ? snap.data() : null;
+
+        // archive record (store originalId and originalData for restore)
+        await addDoc(collection(db, "archives"), {
+          date: new Date().toISOString(),
+          type: "product",
+          name: data?.name || "Unknown product",
+          details: `Price: ₱${data?.price ?? 0} - Category: ${data?.category ?? "N/A"}`,
+          archivedBy: "admin",
+          reason: "Deleted",
+          originalId: id,
+          originalData: data || {},
+          createdAt: serverTimestamp(),
+        });
+
+        // delete original product
+        await deleteDoc(productRef);
         setProducts(prev => prev.filter(p => p.id !== id));
       } catch (error) {
         console.error("Error deleting product:", error);
         alert("Error deleting product. Please try again.");
       }
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
+
+    try {
+      // archive all then delete
+      const promises = Array.from(selectedIds).map(async (id) => {
+        const productRef = doc(db, "Inventory", id);
+        const snap = await getDoc(productRef);
+        const data = snap.exists() ? snap.data() : null;
+
+        await addDoc(collection(db, "archives"), {
+          date: new Date().toISOString(),
+          type: "product",
+          name: data?.name || "Unknown product",
+          details: `Price: ₱${data?.price ?? 0} - Category: ${data?.category ?? "N/A"}`,
+          archivedBy: "admin",
+          reason: "Bulk deleted",
+          originalId: id,
+          originalData: data || {},
+          createdAt: serverTimestamp(),
+        });
+
+        await deleteDoc(productRef);
+      });
+
+      await Promise.all(promises);
+
+      setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
+      clearSelection();
+    } catch (error) {
+      console.error("Error bulk deleting products:", error);
+      alert("Error deleting products. Please try again.");
     }
   };
 
@@ -347,22 +413,7 @@ export default function ProductManagement() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const bulkDelete = async () => {
-    if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} selected item(s)?`)) return;
-    
-    try {
-      const deletePromises = Array.from(selectedIds).map(id => 
-        deleteDoc(doc(db, "Inventory", id))
-      );
-      await Promise.all(deletePromises);
-      setProducts(prev => prev.filter(p => !selectedIds.has(p.id)));
-      clearSelection();
-    } catch (error) {
-      console.error("Error bulk deleting products:", error);
-      alert("Error deleting products. Please try again.");
-    }
-  };
+  
 
   // Add a function to toggle availability directly from the UI
   const toggleAvailability = async (productId, currentAvailability) => {
@@ -1054,7 +1105,7 @@ export default function ProductManagement() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteAddOn(addOn.id)}
-                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-50 border border-red-100 text-red-700 hover:bg-red-100 transition"
+                                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-red-50 border border-red-100 text-red-700 hover:bg-red-100"
                                 >
                                   <Trash2 size={14} /> <span className="text-sm">Delete</span>
                                 </button>
