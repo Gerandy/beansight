@@ -22,6 +22,7 @@ export default function OnlineOrders() {
       "Ready for PickUp": "Completed",
       Delivering: "Completed",
       Completed: null,
+      Cancelled: "Cancelled",
     };
     return baseMap[currentStatus] || null;
   };
@@ -359,7 +360,11 @@ export default function OnlineOrders() {
                         {getNextStatus(order.status, order.shippingDetails) && (
                           <button
                             onClick={() => handleStatusChange(order.id, order.status, order.shippingDetails)}
-                            className="cursor-pointer px-3 py-1.5 text-xs bg-coffee-600 text-white rounded-full hover:bg-coffee-700 font-semibold shadow transition-colors"
+                            className={`cursor-pointer px-3 py-1.5 text-xs rounded-full font-semibold shadow transition-colors ${
+                              order.status === "Cancelled"
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : "bg-coffee-600 text-white hover:bg-coffee-700"
+                            }`}
                           >
                             Move to {getNextStatus(order.status, order.shippingDetails)}
                           </button>

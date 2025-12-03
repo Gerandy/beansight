@@ -295,7 +295,7 @@ export default function StorePreferences() {
       await setDoc(doc(db, "settings", "storePref"),{
         discountRules: discountRules,
         minOrder: minOrder,
-        upsizeFee: upsizeFee,
+        upSizeFee: upsizeFee,
         onlineOrder: onlineOrdering,
         orderType: orderType,
         paymentMet: paymentMethods,
@@ -359,7 +359,7 @@ export default function StorePreferences() {
         const data = docSnap.data();
         setTaxRate(data.taxRate || "");
         setMinOrder(data.minOrder || 0);
-        setUpsizeFee(data.upsizeFee || 0);
+        setUpsizeFee(data.upSizeFee || 0);
         setOnlineOrdering(data.onlineOrder ?? true);
         setCutoffTimes(convertToNewFormat(data.storeTime));
         setStoreOpenTime(data.storeOpen || "00:00");

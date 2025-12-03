@@ -30,6 +30,7 @@ function ProductDetails() {
   const [selectedAddOns, setSelectedAddOns] = useState({}); // { addonId: qty }
   const [beverageAddOns, setBeverageAddOns]= useState([]); 
   const [foodAddOns, setfoodAddOns] = useState([]);
+  const [upSizeFee, setUpSizeFee] = useState(10);
 
 
 
@@ -38,12 +39,14 @@ function ProductDetails() {
   useEffect(()=> {
     const fetchProduct = async () =>{
       const docRef = await getDoc(doc(db, "extra", "addOns"));
+      const getSettings = await getDoc(doc(db, "settings", "storePref"));
       if(!docRef.exists()){console.log("data not exist");return}
       const data = docRef.data();
+      const settings = getSettings.data();
 
       setBeverageAddOns(data.beverageAddOns);
       setfoodAddOns(data.foodAddOns);
-      
+      setUpSizeFee(settings.upSizeFee);
 
 
     }
@@ -94,17 +97,23 @@ function ProductDetails() {
   // Build current add-ons catalog based on product type - BEFORE early return
   const addOnsCatalog = useMemo(() => {
     let list = [];
-    if (isBeverages) list = beverageAddOns;
-    if (isFood) list = [...list, ...foodAddOns];
+    if (isBeverage && beverageAddOns.length > 0) {
+      list = beverageAddOns.filter(a => a.category === "Beverage");
+    }
+    if (isFood && beverageAddOns.length > 0) {
+      list = [...list, ...beverageAddOns.filter(a => a.category === "Meal")];
+    }
     return list;
-  }, [isBeverages, isFood]);
+  }, [isBeverage, isFood, beverageAddOns, foodAddOns]);
 
   // Calculate add-ons total and prices - BEFORE early return
   const perItemAddOnsTotal = addOnsCatalog.reduce(
     (sum, a) => sum + (selectedAddOns[a.id] || 0) * a.price,
     0
   );
-  const unitPrice = product ? Number(product.price) + perItemAddOnsTotal : 0;
+  
+  const sizePrice = product ? (selectedSize === "Dawn" ? Number(product.price) + upSizeFee : Number(product.price)) : 0;
+  const unitPrice = product ? sizePrice + perItemAddOnsTotal : 0;
   const totalPrice = unitPrice * Number(quantity);
 
   // Early return AFTER all hooks
@@ -273,16 +282,18 @@ function ProductDetails() {
                     <label className="block font-semibold mb-3">Dusk and Dawn Sizes</label>
                     <div className="flex gap-2 sm:gap-4">
                       {[
-                        { name: "Dusk", oz: 16 },
-                        { name: "Dawn", oz: 22 }
+                        { name: "Dusk", oz: 16, price: product.price },
+                        { name: "Dawn", oz: 22, price: product.price+ upSizeFee}
                       ].map(size => (
                         <button
                           key={size.name}
                           type="button"
-                          onClick={() => setSelectedSize(size.name)}
+                          onClick={() => {
+                            setSelectedSize(size.name);
+                          }}
                           className={`cursor-pointer px-4 sm:px-6 py-2 text-sm sm:text-base rounded-full font-semibold transition-all ${selectedSize === size.name ? "bg-[#7D5A50] text-white shadow-md" : "bg-white text-[#7D5A50] border border-[#7D5A50] hover:bg-[#FCDEC0]"}`}
                         >
-                          {size.name} ({size.oz} oz)
+                          {size.name} ({size.oz} oz) ₱{Number(size.price).toFixed(2)}
                         </button>
                       ))}
                     </div>
