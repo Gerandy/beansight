@@ -738,7 +738,7 @@ export default function StorePreferences() {
                           <Tag className="w-4 h-4" />
                           Discount #{idx + 1}
                         </label>
-                        {rule.enabled && <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">ACTIVE</span>}
+                        {rule.enabled && <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-bold">ACTIVE</span>}
                       </div>
                       {discountRules.length > 1 && (
                         <button
