@@ -108,8 +108,8 @@ export default function MapsSettings() {
   const [radius, setRadius] = useState(5000);
   const [feeType, setFeeType] = useState("per_km");
   const [feePerKm, setFeePerKm] = useState(10);
-  const [flatFee, setFlatFee] = useState(0);
-  const [freeThreshold, setFreeThreshold] = useState(0);
+  const [flatFee, setFlatFee] = useState(""); // default empty, not 0
+  const [freeThreshold, setFreeThreshold] = useState(""); // default empty, not 0
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState({ text: "", type: "" });
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -127,11 +127,15 @@ export default function MapsSettings() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setFeeType(data.feeType || "per_km");
-          setFreeThreshold(data.freeDelivery || 0);
-          setFeePerKm(data.deliveryFeeKm || 10);
+          setFreeThreshold(
+            typeof data.freeDelivery === "number" ? String(data.freeDelivery) : ""
+          );
+          setFeePerKm(data.deliveryFeeKm ?? 10);
           setLocation({ lat: data.lat || 14.5995, lng: data.long || 120.9842 });
           setRadius(data.value || 5000);
-          setFlatFee(data.flatFee || 0);
+          setFlatFee(
+            typeof data.flatFee === "number" ? String(data.flatFee) : ""
+          );
         }
       } catch (err) {
         console.error("Error loading settings:", err);
@@ -180,9 +184,7 @@ export default function MapsSettings() {
   const validate = () => {
     const newErrors = {};
     
-    if (radius <= 0) newErrors.radius = "Radius must be greater than 0.";
-    if (feeType === "per_km" && feePerKm < 0) newErrors.feePerKm = "Fee per km must be 0 or greater.";
-    if (feeType === "flat" && flatFee < 0) newErrors.flatFee = "Flat fee must be 0 or greater.";
+    if (!radius || radius <= 0) newErrors.radius = "Radius must be greater than 0.";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -205,11 +207,11 @@ export default function MapsSettings() {
       await setDoc(docRef, {
         lat: location.lat,
         long: location.lng,
-        deliveryFeeKm: feePerKm,
-        flatFee: flatFee || 0,
+        deliveryFeeKm: Number(feePerKm),
+        flatFee: flatFee === "" ? null : Number(flatFee),
         feeType: feeType,
-        value: radius,
-        freeDelivery: freeThreshold || 0
+        value: Number(radius),
+        freeDelivery: freeThreshold === "" ? null : Number(freeThreshold)
       });
       
       setSuccessModalOpen(true);
@@ -486,7 +488,16 @@ export default function MapsSettings() {
                     value={radius}
                     min={0.1}
                     step={0.5}
-                    onChange={e => setRadius(Number(e.target.value))}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setRadius(value === "" ? "" : Number(value));
+                    }}
+                    onBlur={e => {
+                      // Set to minimum value if empty on blur
+                      if (e.target.value === "" || Number(e.target.value) <= 0) {
+                        setRadius(0.5);
+                      }
+                    }}
                     placeholder="5"
                   />
                   <span className="text-coffee-800 font-bold whitespace-nowrap">kilometers</span>
@@ -563,8 +574,8 @@ export default function MapsSettings() {
                       type="number"
                       className={inputClass + " pl-10"}
                       value={feePerKm}
-                      min={0}
-                      onChange={e => setFeePerKm(Number(e.target.value))}
+                      /* removed min constraint to allow any number */
+                      onChange={e => setFeePerKm(e.target.value === "" ? "" : Number(e.target.value))}
                       placeholder="10"
                     />
                   </div>
@@ -595,8 +606,7 @@ export default function MapsSettings() {
                       type="number"
                       className={inputClass + " pl-10"}
                       value={flatFee}
-                      
-                      onChange={e => setFlatFee(Number(e.target.value))}
+                      onChange={e => setFlatFee(e.target.value)}
                       placeholder="50"
                     />
                   </div>
@@ -632,8 +642,8 @@ export default function MapsSettings() {
                     type="number"
                     className={inputClass + " pl-10"}
                     value={freeThreshold}
-                    min={0}
-                    onChange={e => setFreeThreshold(Number(e.target.value))}
+                    /* removed min constraint to allow any number */
+                    onChange={e => setFreeThreshold(e.target.value)}
                     placeholder="500"
                   />
                 </div>
