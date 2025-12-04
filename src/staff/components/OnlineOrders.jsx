@@ -205,6 +205,7 @@ export default function OnlineOrders() {
          orderId={printOrder.id}
          date={printOrder.placedAt}
          orderType={printOrder.shippingDetails}
+         cashGiven={printOrder.total}
          onClose={() => setPrintOrder(null)}
        />
      )}
@@ -571,7 +572,7 @@ export default function OnlineOrders() {
                 <div className="bg-coffee-50 rounded-lg p-4">
                   <h4 className="font-semibold text-coffee-800 mb-2">Payment Method</h4>
                   <span className="text-sm text-coffee-900 uppercase">
-                    {selectedOrder.paymentMethod}
+                    {selectedOrder.paymentMethod === "wallet"? "Gcash":selectedOrder.paymentMethod }
                   </span>
                 </div>
               </div>

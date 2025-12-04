@@ -6,6 +6,7 @@ import { db } from "../firebase";
 import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
 import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
 import { useCart } from "./CartContext";
+import { loadGoogleMaps } from "../utils/loadGoogleMaps";
 
 
 
@@ -43,7 +44,7 @@ export default function Checkout() {
     }, []); 
 
 
-    const [upSizeFee, setUpSizeFee] = useState(0);
+  
     const [storeTime, setStoreTime] = useState({});
     const [showGcashModal, setShowGcashModal] = useState(false);
 
@@ -65,7 +66,6 @@ export default function Checkout() {
       setPaymentMet(!!data.paymentMethods);
       setOnlineOrder(!!data.onlineOrder);
       setTaxRate(Number(data.taxRate ?? 0));
-      setUpSizeFee(Number(data.upSizeFee ?? 0));
       setOpen(Boolean(data.storeOpen));
       setOrderType(data.orderType ?? orderType);
       setMinOrder(data.minOrder ?? minOrder);
@@ -73,19 +73,11 @@ export default function Checkout() {
       setQr(data.qr);
 
       // Debug logs for troubleshooting
-      console.log("loadStorePref -> raw storePref document:", data);
-      console.log("loadStorePref -> paymentMethods:", data.paymentMethods);
-      console.log("loadStorePref -> onlineOrder:", data.onlineOrder);
-      console.log("loadStorePref -> taxRate:", Number(data.taxRate ?? 0));
-      console.log("loadStorePref -> upSizeFee:", Number(data.upSizeFee ?? 0));
-      console.log("loadStorePref -> storeOpen flag:", Boolean(data.storeOpen));
-      console.log("loadStorePref -> orderType:", data.orderType);
-      console.log("loadStorePref -> minOrder:", data.minOrder);
-      console.log("loadStorePref -> storeTime map:", data.storeTime);
+      
     }
     loadStorePref();
   },[])
-    
+    console.log("PRICESSS",deliveryFees);
     
   
     
@@ -153,70 +145,42 @@ export default function Checkout() {
   const grandTotal = subtotal + (settings.feeType === "flat" ? settings.flatFee : deliveryFees);
 
   useEffect(() => {
-    if (!defaultAddress) return;
-  
-    const handleDeliveryCalculation = async (lat, long, type) => {
-      const origin = "14.4427288619125,120.9102805815219";
-  
-      // Google Maps requires LAT, LNG format
-      const destination = `${lat},${long}`;
-     
-      const { fee } = await calculateDeliveryFeeUtil(origin, destination);
-      setDeliveryFee(fee);  
-      calculateDeliveryFee(fee, type);
-    };
-  
-    handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long, "delivery");
-  
-  }, [defaultAddress]);
+    // 1. Check if it's pickup. If so, set fee to 0 and stop.
+    if (shipping.type === "pickup") {
+        setDeliveryFee(0);
+        return; // IMPORTANT: Exit the effect early!
+    }
+
+    // 2. Only proceed with delivery calculation if:
+    //    a) shipping.type is 'delivery'
+    //    b) defaultAddress is available
+    if (shipping.type === "delivery" && defaultAddress) {
+        const handleDeliveryCalculation = async (lat, long) => {
+            try {
+                // Hardcoded origin is acceptable for this calculation if necessary
+                const origin = "14.4427288619125,120.9102805815219"; 
+                const destination = `${lat},${long}`;
+                // Assuming calculateDeliveryFeeUtil is an async function that works
+                const { fee } = await calculateDeliveryFeeUtil(origin, destination);
+                setDeliveryFee(fee);
+                // Note: Removed the call to the non-existent calculateDeliveryFee(fee, type);
+            } catch (error) {
+                console.error("Delivery calculation failed:", error);
+                setDeliveryFee(0); // Set a sensible default/error fee
+            }
+        };
+
+        handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long);
+    } else {
+        // Fallback for when defaultAddress is not yet loaded for delivery type
+        setDeliveryFee(0); 
+    }
+
+}, [defaultAddress, shipping.type]); // Dependencies remain correct
 
 
   // Recalculate delivery fee when shipping type changes
-  useEffect(() => {
-    if (shipping.type === "delivery" && defaultAddress?.lat && defaultAddress?.long) {
-      // recalculate fee based on address
-      const handleDeliveryCalculation = async (lat, long) => {
-        try {
-          const cfgRef = doc(db, "settings", "deliveryConfig");
-          const cfgSnap = await getDoc(cfgRef);
-          const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
-
-          const baseFee = Number(cfg.baseFee ?? 40);
-          const perKmFee = Number(cfg.perKm ?? 10);
-          const origin = `${cfg.storeLat ?? "14.4239"},${cfg.storeLng ?? "120.8986"}`;
-          const destination = `${lat},${long}`;
-
-          const maps = await loadGoogleMaps();
-          const service = new maps.DistanceMatrixService();
-
-          service.getDistanceMatrix(
-            {
-              origins: [origin],
-              destinations: [destination],
-              travelMode: maps.TravelMode.DRIVING,
-              unitSystem: maps.UnitSystem.METRIC,
-            },
-            (response, status) => {
-              let computed = baseFee;
-              if (status === "OK" && response.rows?.[0]?.elements?.[0]?.status === "OK") {
-                const meters = response.rows[0].elements[0].distance.value || 0;
-                const km = Math.ceil(meters / 1000);
-                computed = baseFee + km * perKmFee;
-              }
-              setDeliveryFee(Number(computed.toFixed(2)));
-            }
-          );
-        } catch (err) {
-          console.error("Failed to calculate delivery fee:", err);
-          setDeliveryFee(60);
-        }
-      };
-
-      handleDeliveryCalculation(defaultAddress.lat, defaultAddress.long);
-    } else if (shipping.type === "pickup") {
-      setDeliveryFee(0);
-    }
-  }, [shipping.type, defaultAddress]);
+ 
 
 
   const updateQty = (id, delta) => {
@@ -293,12 +257,9 @@ export default function Checkout() {
   // Check if store is open (uses storePref.storeTime map)
   const isStoreOpen = () => {
   try {
-    console.log("isStoreOpen() -> storeTime:", storeTime);
-    console.log("isStoreOpen() -> storeOpen flag:", open);
-
+    
     // 1. If storeOpen flag is false → always closed
     if (!open) {
-      console.log("Store closed globally (storeOpen === false)");
       return false;
     }
 
@@ -312,27 +273,27 @@ export default function Checkout() {
     const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
     const todayKey = dayKeys[dayIndex];
 
-    console.log("Today key:", todayKey);
+    
     const today = storeTime?.[todayKey];
 
     // 3. If no config or disabled → closed
     if (!today || today.enabled === false) {
-      console.log("Today config missing or not enabled → CLOSED");
+      
       return false;
     }
 
     // 4. If no opening hours provided → treat as always open
     if (!today.time) {
-      console.log("No cutoff time provided → ALWAYS OPEN");
+      
       return true;
     }
 
     const cutoff = today.time;
-    console.log(`Comparing now (${currentTime}) <= cutoff (${cutoff})`);
+   
 
     // 5. Check if current time is before or at cutoff
     const openNow = currentTime <= cutoff;
-    console.log("isStoreOpen →", openNow);
+ 
 
     return openNow;
   } catch (err) {
@@ -344,7 +305,7 @@ export default function Checkout() {
 
 
   const storeOpen = isStoreOpen(); // computed, not state
-  console.log("Computed storeOpen:", storeOpen);
+  
 
   return (
     
@@ -564,7 +525,7 @@ export default function Checkout() {
                       setPayment({ method: 'wallet' });
                       setShowGcashModal(true); // ← OPEN MODAL HERE
                     }} className="hidden"/>
-                  GCash / Paymaya (coming soon)
+                  GCash / Paymaya 
                 </label>
               </div>
             </SectionCard>

@@ -210,7 +210,7 @@ export default function MapsSettings() {
         deliveryFeeKm: Number(feePerKm),
         flatFee: flatFee === "" ? null : Number(flatFee),
         feeType: feeType,
-        value: Number(radius),
+        value: Number(radius * 1000),
         freeDelivery: freeThreshold === "" ? null : Number(freeThreshold)
       });
       

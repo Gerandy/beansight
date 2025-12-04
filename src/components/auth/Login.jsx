@@ -249,23 +249,17 @@ export default function Login({ open, onClose }) {
                 </button>
 
                 {/* OR Divider */}
-                <div className="relative py-4">
+                {/* <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center">
                     <span className="bg-white px-4 text-sm text-gray-500">OR</span>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Guest login */}
-                <button
-                  type="button"
-                  onClick={handleGuestLogin}
-                  className="w-full bg-white border-2 border-gray-300 text-gray-900 font-bold py-4 rounded-full hover:bg-gray-50 transition-all"
-                >
-                  Continue as guest
-                </button>
+                
               </form>
             ) : (
               <form onSubmit={handleVerifyOtp} className="space-y-4">

@@ -904,6 +904,23 @@ export default function Signup() {
                 <h3 className="text-coffee-900 font-bold mt-4">5. Termination</h3>
                 <p className="text-gray-700">We may suspend or terminate accounts that violate these Terms or applicable laws.</p>
 
+                <h3 className="text-coffee-900 font-bold mt-4">6. Delivery and Pickup</h3>
+                <p className="text-gray-700">Estimated delivery/pickup times are provided for convenience only; actual times may vary.
+                                      We are not responsible for delays caused by external factors, including traffic or courier issues.</p>
+
+                <h3 className="text-coffee-900 font-bold mt-4">7. Intellectual Property</h3>
+                <p className="text-gray-700">All content in the App, including text, images, logos, and designs, is owned by us or our licensors.
+You may not copy, modify, distribute, or use the content for commercial purposes without our prior written consent.</p>
+
+
+                <h3 className="text-coffee-900 font-bold mt-4">8. Privacy</h3>
+                <p className="text-gray-700">Your use of the App is subject to our Privacy Policy, which explains how we collect, use, and protect your information.</p>
+
+                <p className="text-gray-700 mt-4 font-medium">By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
+               
+                <h3 className="text-coffee-900 font-bold mt-4">9. Termination</h3>
+                <p className="text-gray-700">We may suspend or terminate your account or access to the App at our discretion, including for violations of these Terms.</p>
+
                 <p className="text-gray-700 mt-4 font-medium">By proceeding, you acknowledge reading and understanding these Terms and our Privacy Policy.</p>
                 
                 {/* Repeat content for scroll */}

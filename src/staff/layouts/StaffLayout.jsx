@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useNavigate } from "react-router-dom";
+import { getAuth, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from "firebase/auth";
 
 export default function StaffLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -11,6 +13,56 @@ export default function StaffLayout() {
   const location = useLocation();
   const prevCountRef = useRef(newOrderCount);
   const audioRef = useRef(null);
+  const navigate = useNavigate();
+   const [currentPassword, setCurrentPassword] = useState("");
+   const [email, setEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New password and confirm password do not match.");
+      return;
+    }
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      setPasswordError("No user logged in.");
+      return;
+    }
+
+    try {
+      // Re-authenticate
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update password
+      await updatePassword(user, newPassword);
+
+      setPasswordSuccess("Password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordModal(false);
+    } catch (err) {
+      console.error(err);
+      setPasswordError(err.message || "Failed to change password.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("firstName");
+    navigate("/");
+  };
 
   useEffect(() => {
     const q = query(
@@ -131,15 +183,15 @@ export default function StaffLayout() {
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-xs sm:text-sm font-medium">John D.</p>
-                  <p className="text-[10px] sm:text-xs text-white/80">Barista</p>
+                  <p className="text-xs sm:text-sm font-medium">{localStorage.getItem("firstName")}</p>
+                  <p className="text-[10px] sm:text-xs text-white/80">Staff/Barista</p>
                 </div>
                 <div className="relative">
                   <button
                     onClick={() => setMobileOpen((v) => !v)}
                     className="cursor-pointer w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 flex items-center justify-center text-xs sm:text-sm font-semibold hover:bg-white/20 transition"
                   >
-                    JD
+                    {localStorage.getItem("firstName").slice(0,1)}
                   </button>
                   <div
                     className={`origin-top-right absolute right-0 mt-2 w-40 rounded-md bg-white text-coffee-900 shadow-lg ring-1 ring-black ring-opacity-5 transform transition-all ${
@@ -154,10 +206,12 @@ export default function StaffLayout() {
                       >
                         Change Password
                       </button>
-                      <button className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-coffee-50">
+                      <button className="cursor-pointer w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-coffee-50"
+                      onClick={() => handleLogout()}>
+                        
                         Logout
                       </button>
-                    </div>
+                    </div> 
                   </div>
                 </div>
               </div>
@@ -223,47 +277,126 @@ export default function StaffLayout() {
       </main>
 
       {/* Change Password Modal */}
+       {/* Change Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-sm">
-            <h2 className="text-base sm:text-lg font-semibold mb-4">Change Password</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setShowPasswordModal(false);
-              }}
-            >
-              <div className="mb-3">
-                <label className="block text-xs sm:text-sm mb-1">Current Password</label>
-                <input type="password" className="w-full border rounded px-3 py-2 text-sm" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-xs sm:text-sm mb-1">New Password</label>
-                <input type="password" className="w-full border rounded px-3 py-2 text-sm" required />
-              </div>
-              <div className="mb-4">
-                <label className="block text-xs sm:text-sm mb-1">Confirm New Password</label>
-                <input type="password" className="w-full border rounded px-3 py-2 text-sm" required />
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="cursor-pointer px-3 sm:px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm"
-                  onClick={() => setShowPasswordModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="cursor-pointer px-3 sm:px-4 py-2 rounded bg-coffee-700 text-white hover:bg-coffee-800 text-sm"
-                >
-                  Change
-                </button>
-              </div>
-            </form>
-          </div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-sm">
+      <h2 className="text-base sm:text-lg font-semibold mb-4">Change Password</h2>
+
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setPasswordError("");
+          setPasswordSuccess("");
+
+          if (newPassword !== confirmPassword) {
+            setPasswordError("New password and confirm password do not match.");
+            return;
+          }
+
+          try {
+            // Example: find staff document by email
+            const staffQuery = query(
+              collection(db, "staff"),
+              where("email", "==", email)
+            );
+            const snapshot = await getDocs(staffQuery);
+
+            if (snapshot.empty) {
+              setPasswordError("Email not found.");
+              return;
+            }
+
+            const staffDoc = snapshot.docs[0];
+            const staffData = staffDoc.data();
+
+            if (staffData.password !== currentPassword) {
+              setPasswordError("Current password is incorrect.");
+              return;
+            }
+
+            // Update password in Firestore
+            await updateDoc(staffDoc.ref, { password: newPassword });
+
+            setPasswordSuccess("Password updated successfully!");
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            setEmail("");
+            setShowPasswordModal(false);
+          } catch (err) {
+            console.error(err);
+            setPasswordError(err.message || "Failed to change password.");
+          }
+        }}
+      >
+        <div className="mb-3">
+          <label className="block text-xs sm:text-sm mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+            required
+          />
         </div>
+
+        <div className="mb-3">
+          <label className="block text-xs sm:text-sm mb-1">Current Password</label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="block text-xs sm:text-sm mb-1">New Password</label>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-xs sm:text-sm mb-1">Confirm New Password</label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        {passwordError && <p className="text-red-500 text-sm mb-2">{passwordError}</p>}
+        {passwordSuccess && <p className="text-green-500 text-sm mb-2">{passwordSuccess}</p>}
+
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            className="cursor-pointer px-3 sm:px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-sm"
+            onClick={() => setShowPasswordModal(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="cursor-pointer px-3 sm:px-4 py-2 rounded bg-coffee-700 text-white hover:bg-coffee-800 text-sm"
+          >
+            Change
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
       )}
+  
     </div>
   );
 }

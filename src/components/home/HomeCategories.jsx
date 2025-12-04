@@ -7,13 +7,13 @@ function MenuCategories() {
   const scrollRef = useRef(null);
 
   const categories = [
-    { name: "Frappe", imgUrl: "/assets/icons/frappe.png" },
-    { name: "Fruity Series", imgUrl: "/assets/icons/frappe.png" },
-    { name: "Latte", imgUrl: "/assets/icons/latte.png" },
-    { name: "Snacks", imgUrl: "/assets/icons/snacks.png" },
-    { name: "Soda Series", imgUrl: "/assets/icons/soda.png" },
-    { name: "Strawberry Series", imgUrl: "/assets/icons/stawberry.png" },
-    { name: "Tea Series", imgUrl: "/assets/icons/tea.png" },
+    // { name: "Frappe", imgUrl: "/assets/icons/frappe.png" },
+    // { name: "Fruity Series", imgUrl: "/assets/icons/frappe.png" },
+    // { name: "Latte", imgUrl: "/assets/icons/latte.png" },
+    // { name: "Snacks", imgUrl: "/assets/icons/snacks.png" },
+    // { name: "Soda Series", imgUrl: "/assets/icons/soda.png" },
+    // { name: "Strawberry Series", imgUrl: "/assets/icons/stawberry.png" },
+    // { name: "Tea Series", imgUrl: "/assets/icons/tea.png" },
   ];
 
   // Card width for desktop (4 visible)
@@ -50,9 +50,9 @@ function MenuCategories() {
   return (
     <div className="max-w-[1050px] mx-auto py-2 sm:py-4 lg:py-6 relative">
       <div className="px-4 md:px-6">
-        <h1 className="text-coffee-900 text-2xl sm:text-3xl lg:text-4xl font-bold">Menu</h1>
+        {/* <h1 className="text-coffee-900 text-2xl sm:text-3xl lg:text-4xl font-bold">Menu</h1> */}
         <p className="text-coffee-700 mb-2 sm:mb-4 text-xs sm:text-base lg:text-lg">
-          What are you craving for today?
+          {/* What are you craving for today? */}
         </p>
       </div>
 
@@ -80,7 +80,7 @@ function MenuCategories() {
       </div>
 
       {/* Desktop: scrollable row */}
-      <div className="hidden lg:block relative px-4">
+      {/* <div className="hidden lg:block relative px-4">
         <button
           className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-10 h-10 bg-coffee-600 text-white shadow-md rounded-full"
           onClick={() => scrollDesktop("left")}
@@ -116,7 +116,7 @@ function MenuCategories() {
         >
           <ChevronRight size={24} />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
