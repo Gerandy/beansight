@@ -18,6 +18,7 @@ export default function Checkout() {
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
   const [settings, setSettings] = useState(0);
+  const [qr, setQr] = useState("");
   
   
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function Checkout() {
       setOrderType(data.orderType ?? orderType);
       setMinOrder(data.minOrder ?? minOrder);
       setStoreTime(data.storeTime ?? {});
+      setQr(data.qr);
 
       // Debug logs for troubleshooting
       console.log("loadStorePref -> raw storePref document:", data);
@@ -730,7 +732,7 @@ export default function Checkout() {
           <div className="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
             <span className="text-gray-500 text-sm">
               <img
-  src="/your-qrcode-image.png"
+  src={qr}
   alt="GCash QR"
   className="w-48 h-48 object-cover rounded-lg"
 />

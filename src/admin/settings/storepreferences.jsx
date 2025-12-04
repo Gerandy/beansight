@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getDoc, setDoc, doc } from "firebase/firestore";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { getDoc, setDoc, doc, updateDoc  } from "firebase/firestore";
 import { db } from "../../firebase";
 import { 
   Settings, 
@@ -123,6 +124,7 @@ export default function StorePreferences() {
   };
 
   // State declarations
+  const [gcashQRURL,setGcashQRURL ] = useState("");
   const [onlineOrdering, setOnlineOrdering] = useState(true);
   const [cutoffTimes, setCutoffTimes] = useState({
     mon: { time: "00:00", enabled: true },
@@ -228,32 +230,67 @@ export default function StorePreferences() {
 
   const removeDiscountRule = idx => setDiscountRules(discountRules.filter((_, i) => i !== idx));
 
-  const handleGcashQRUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        setErrors({...errors, gcashQR: "Please upload an image file"});
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors({...errors, gcashQR: "Image size must be less than 5MB"});
-        return;
-      }
+  const handleGcashQRUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-      setGcashQRImage(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setGcashQRPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      
-      const newErrors = {...errors};
-      delete newErrors.gcashQR;
-      setErrors(newErrors);
+  if (!file.type.startsWith("image/")) {
+    setErrors({ ...errors, gcashQR: "Please upload an image file" });
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setErrors({ ...errors, gcashQR: "Image size must be less than 5MB" });
+    return;
+  }
+
+  setGcashQRImage(file);
+
+  // Preview
+  const reader = new FileReader();
+  reader.onloadend = () => setGcashQRPreview(reader.result);
+  reader.readAsDataURL(file);
+
+  // Upload to Firebase Storage
+  const storage = getStorage();
+  const storageRef = ref(storage, `gcash_qr/${Date.now()}_${file.name}`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+
+  uploadTask.on(
+    "state_changed",
+    (snapshot) => {
+      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      console.log("Upload is " + progress + "% done");
+    },
+    (error) => {
+      console.error("Upload error:", error);
+      setErrors({ ...errors, gcashQR: "Failed to upload image" });
+    },
+    async () => {
+      // Upload complete, get download URL
+      const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+      console.log("File available at:", downloadURL);
+      setGcashQRURL(downloadURL); // optional: keep in state
+
+      // Save URL to Firestore
+      try {
+        const storeRefDoc = doc(db, "settings", "storePref");
+        await updateDoc(storeRefDoc, { qr: downloadURL });
+        console.log("QR URL saved to Firestore!");
+        
+        // Clear previous errors
+        const newErrors = { ...errors };
+        delete newErrors.gcashQR;
+        setErrors(newErrors);
+      } catch (err) {
+        console.error("Failed to update Firestore:", err);
+        setErrors({ ...errors, gcashQR: "Failed to save QR to database" });
+      }
     }
-  };
+  );
+};
+
+
 
   const removeGcashQR = () => {
     setGcashQRImage(null);
@@ -301,8 +338,9 @@ export default function StorePreferences() {
         paymentMet: paymentMethods,
         storeOpen: storeOpenTime,
         storeTime: cutoffTimes,
-        taxRate: taxRate
-      });
+        taxRate: taxRate, 
+        
+      },{merge: true});
 
       showMessage("✓ Settings saved successfully!", "success");
       setSuccessModalOpen(true);
@@ -331,8 +369,6 @@ export default function StorePreferences() {
       setDiscountRules([data?.discountRules || { enabled: false, name: "", type: "percentage", amount: "", minSpend: "" }]);
       setReceiptHeader("");
       setReceiptFooter("");
-      setGcashQRImage(null);
-      setGcashQRPreview("");
       setErrors({});
       
       showMessage("Settings reset to defaults", "success");
@@ -345,6 +381,27 @@ export default function StorePreferences() {
     setTooltipText(text);
     setTooltipOpen(true);
   };
+
+
+
+useEffect(() => {
+  const fetchQR = async () => {
+    try {
+      const storeRefDoc = doc(db, "settings", "storeRef");
+      const docSnap = await getDoc(storeRefDoc);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.qr) {
+          setGcashQRPreview(data.qr); // set the download URL
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load QR:", err);
+    }
+  };
+
+  fetchQR();
+}, []);
 
   useEffect(() => {
     const loadSettings = async () => {
