@@ -203,18 +203,20 @@ useEffect(()=>{
       .filter(a => selectedAddOns[a.id])
       .map(a => ({ id: a.id, name: a.name, price: a.price, qty: selectedAddOns[a.id] }));
 
-    addToCart({
+    const cartItem = {
       id: product.id,
       name: product.name,
-      // price per unit including addons
-      price: unitPrice,
+      price: unitPrice, // unit price already includes size + add-ons
       basePrice: Number(product.price),
       addons,
-      quantity,
       img: product.img || logo,
       size: selectedSize,
       category: product.category,
-    });
+    };
+
+    // Add exactly "quantity" in one call
+    addToCart(cartItem, Number(quantity));
+
     triggerFlyToCart();
   };
 

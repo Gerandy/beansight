@@ -5,6 +5,7 @@ import { collection, doc, setDoc, serverTimestamp, onSnapshot, getDoc } from "fi
 import { db } from "../firebase";
 import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
 import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { useCart } from "./CartContext";
 
 
 
@@ -18,6 +19,7 @@ export default function Checkout() {
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
   const [settings, setSettings] = useState(0);
+  const { clearCart } = useCart(); // ← get clearCart from context
   const [qr, setQr] = useState("");
   
   
@@ -273,9 +275,13 @@ export default function Checkout() {
     try {
       const orderRef = doc(collection(db, "orders"), orderId);
       await setDoc(orderRef, orderData);
-      setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
+
+      // Clear cart everywhere (context + local storage + local state)
+      clearCart();                // ← empties CartSidebar immediately
       localStorage.removeItem("cart");
       setItems([]);
+
+      setSuccess({ id: orderId, eta: shipping.type === "delivery" ? "1-2 hours" : "Ready in 20–30 mins" });
     } catch (err) {
       console.error(err);
       alert("Checkout failed.");

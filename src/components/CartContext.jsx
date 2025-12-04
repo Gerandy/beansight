@@ -106,24 +106,34 @@ export const CartProvider = ({ children }) => {
       CART FUNCTIONS
   ------------------------------------------------------------ */
   const addToCart = (item, quantity = 1) => {
-  setCart((prev) => {
-    const existingIndex = prev.findIndex(
-      (i) =>
-        i.id === item.id &&
-        i.size === item.size &&
-        JSON.stringify(i.addOns || []) === JSON.stringify(item.addOns || [])
-    );
+    const q = Math.max(1, Number.parseInt(quantity, 10) || 1);
 
-    if (existingIndex !== -1) {
-      const updatedCart = [...prev];
-      updatedCart[existingIndex].quantity += quantity;
-      return updatedCart;
-    } else {
-      const uniqueCartItemId = `${item.id}-${Date.now()}-${Math.random()}`;
-      return [...prev, { ...item, quantity, uniqueCartItemId }];
-    }
-  });
-};
+    // keep addon comparison stable
+    const norm = (arr) =>
+      JSON.stringify((arr || []).slice().sort((a, b) => String(a.id).localeCompare(String(b.id))));
+
+    setCart((prev) => {
+      const existingIndex = prev.findIndex(
+        (i) =>
+          i.id === item.id &&
+          i.size === item.size &&
+          norm(i.addons) === norm(item.addons)
+      );
+
+      if (existingIndex !== -1) {
+        const updatedCart = [...prev];
+        // always add 1 when the same item is added again
+        updatedCart[existingIndex] = {
+          ...updatedCart[existingIndex],
+          quantity: updatedCart[existingIndex].quantity + 1,
+        };
+        return updatedCart;
+      } else {
+        const uniqueCartItemId = `${item.id}-${Date.now()}-${Math.random()}`;
+        return [...prev, { ...item, quantity: q, uniqueCartItemId }];
+      }
+    });
+  };
 
 
 
