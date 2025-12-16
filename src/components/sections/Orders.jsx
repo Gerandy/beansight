@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Package, Clock, CheckCircle, ShoppingCart, RefreshCw } from "lucide-react";
+import { X, Package, Clock, CheckCircle, ShoppingCart, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "../../firebase";
 import { data, useNavigate } from "react-router-dom";
@@ -13,6 +13,8 @@ const Orders = () => {
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [activeTab, setActiveTab] = useState("current"); // 'current' or 'history'
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(5); // You can change this number
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
 
@@ -20,51 +22,59 @@ const Orders = () => {
       const saved = localStorage.getItem("cart");
       if (saved) setCart(JSON.parse(saved));
     }, []);
+  
   // Live fetch orders from the global "orders" collection
- useEffect(() => {
-  const uid = localStorage.getItem("authToken");
-  if (!uid) {
-    setLoading(false);
-    return;
-  }
-
-  const ordersCol = query(collection(db, "orders"),("createdAt", "desc"));
-
-  // Live listener
-  const unsubscribe = onSnapshot(
-    ordersCol,
-    snapshot => {
-      const data = snapshot.docs
-        .map(doc => {
-          const o = doc.data();
-
-          // Check if user field exists and matches uid
-          if (!o.user || o.user.uid !== uid) return null;
-
-          return {
-            id: doc.id,
-            item: o.items?.map(i => i.name).join(", ") || "",
-            quantity: o.items?.reduce((acc, i) => acc + i.quantity, 0) || 0,
-            total: o.items?.reduce((acc, i) => acc + i.price * i.quantity, 0) || 0,
-            status: o.status || "Pending",
-            date: o.createdAt?.toDate ? o.createdAt.toDate() : new Date(),
-            items: o.items || [],
-            tae: "ikinamada"
-          };
-        })
-        .filter(Boolean);
-
-      setOrders(data);
+  useEffect(() => {
+    const uid = localStorage.getItem("authToken");
+    if (!uid) {
       setLoading(false);
-    },
-    err => {
-      console.error("Error fetching orders:", err);
-      setLoading(false);
+      return;
     }
-  );
 
-  return () => unsubscribe();
-}, []);
+    const ordersCol = query(collection(db, "orders"));
+
+    // Live listener
+    const unsubscribe = onSnapshot(
+      ordersCol,
+      snapshot => {
+        const data = snapshot.docs
+          .map(doc => {
+            const o = doc.data();
+
+            // Check if user field exists and matches uid
+            if (!o.user || o.user.uid !== uid) return null;
+
+            return {
+              id: doc.id,
+              item: o.items?.map(i => i.name).join(", ") || "",
+              quantity: o.items?.reduce((acc, i) => acc + i.quantity, 0) || 0,
+              total: o.items?.reduce((acc, i) => acc + i.price * i.quantity, 0) || 0,
+              status: o.status || "Pending",
+              date: o.createdAt?.toDate ? o.createdAt.toDate() : new Date(),
+              items: o.items || [],
+              tae: "ikinamada"
+            };
+          })
+          .filter(Boolean)
+          // Sort by date/time, most recent first
+          .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        setOrders(data);
+        setLoading(false);
+      },
+      err => {
+        console.error("Error fetching orders:", err);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Reset to page 1 when changing tabs or filters
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, filter]);
 
   const hasOrders = orders.length > 0;
   const currentOrders = orders.filter(order => !["Delivered", "Completed","Cancelled"].includes(order.status));
@@ -73,70 +83,85 @@ const Orders = () => {
 
   let filteredOrders = activeTab === "current" ? currentOrders : pastOrders;
   if (filter !== "All") filteredOrders = filteredOrders.filter(order => order.status === filter);
-  if (sortBy === "newest") filteredOrders.reverse();
+  if (sortBy === "oldest") {
+    filteredOrders = [...filteredOrders].sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+  // Note: 'newest' is already sorted from the useEffect
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrdersPage = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
 
   const handleOrderClick = order => setSelectedOrder(order);
   const closeModal = () => setSelectedOrder(null);
+  
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    // Scroll to top of orders section
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const reorder = (order) => {
-  if (!order || !order.items || order.items.length === 0) return;
+    if (!order || !order.items || order.items.length === 0) return;
 
-  // Add each item from the order to the cart, preserving quantity
-  order.items.forEach((item) => {
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity || 1,
-      img: item.img || null,
-      size: item.size,
-      category: item.category,
+    // Add each item from the order to the cart, preserving quantity
+    order.items.forEach((item) => {
+      addToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity || 1,
+        img: item.img || null,
+        size: item.size,
+        category: item.category,
+      });
     });
-  });
 
-  // Trigger fly-to-cart animation for the first item (optional: animate each with small delays)
-  if (order.items[0]?.img) {
-    triggerFlyToCart(order.items[0].img);
-  }
+    // Trigger fly-to-cart animation for the first item (optional: animate each with small delays)
+    if (order.items[0]?.img) {
+      triggerFlyToCart(order.items[0].img);
+    }
+  };
 
-};
+  const triggerFlyToCart = (imgSrc) => {
+    const cartIcon = document.getElementById("navbar-cart-icon");
+    if (!cartIcon) return;
 
-const triggerFlyToCart = (imgSrc) => {
-  const cartIcon = document.getElementById("navbar-cart-icon");
-  if (!cartIcon) return;
+    const cartRect = cartIcon.getBoundingClientRect();
+    // Start from center of the viewport (no product image element in Orders view)
+    const startX = window.innerWidth / 2;
+    const startY = window.innerHeight / 2;
 
-  const cartRect = cartIcon.getBoundingClientRect();
-  // Start from center of the viewport (no product image element in Orders view)
-  const startX = window.innerWidth / 2;
-  const startY = window.innerHeight / 2;
+    const flyImg = document.createElement("img");
+    flyImg.src = imgSrc;
+    flyImg.style.position = "fixed";
+    flyImg.style.left = `${startX}px`;
+    flyImg.style.top = `${startY}px`;
+    flyImg.style.width = "120px";
+    flyImg.style.height = "120px";
+    flyImg.style.objectFit = "cover";
+    flyImg.style.borderRadius = "12px";
+    flyImg.style.zIndex = 9999;
+    flyImg.style.transition = "all 0.8s cubic-bezier(.42,.01,.56,1.02)";
+    flyImg.style.transform = "translate(-50%,-50%)";
+    document.body.appendChild(flyImg);
 
-  const flyImg = document.createElement("img");
-  flyImg.src = imgSrc;
-  flyImg.style.position = "fixed";
-  flyImg.style.left = `${startX}px`;
-  flyImg.style.top = `${startY}px`;
-  flyImg.style.width = "120px";
-  flyImg.style.height = "120px";
-  flyImg.style.objectFit = "cover";
-  flyImg.style.borderRadius = "12px";
-  flyImg.style.zIndex = 9999;
-  flyImg.style.transition = "all 0.8s cubic-bezier(.42,.01,.56,1.02)";
-  flyImg.style.transform = "translate(-50%,-50%)";
-  document.body.appendChild(flyImg);
+    // animate to cart
+    requestAnimationFrame(() => {
+      flyImg.style.left = `${cartRect.left + cartRect.width / 2}px`;
+      flyImg.style.top = `${cartRect.top + cartRect.height / 2}px`;
+      flyImg.style.width = "40px";
+      flyImg.style.height = "40px";
+      flyImg.style.opacity = "0.25";
+      flyImg.style.transform = "translate(-50%,-50%) scale(0.35)";
+    });
 
-  // animate to cart
-  requestAnimationFrame(() => {
-    flyImg.style.left = `${cartRect.left + cartRect.width / 2}px`;
-    flyImg.style.top = `${cartRect.top + cartRect.height / 2}px`;
-    flyImg.style.width = "40px";
-    flyImg.style.height = "40px";
-    flyImg.style.opacity = "0.25";
-    flyImg.style.transform = "translate(-50%,-50%) scale(0.35)";
-  });
-
-  setTimeout(() => {
-    if (flyImg.parentNode) document.body.removeChild(flyImg);
-  }, 900);
-};
+    setTimeout(() => {
+      if (flyImg.parentNode) document.body.removeChild(flyImg);
+    }, 900);
+  };
   
 
   const getStatusIcon = status => {
@@ -204,79 +229,150 @@ const triggerFlyToCart = (imgSrc) => {
               <p className="text-coffee-600 text-lg">No orders found in this category</p>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {filteredOrders.map((order, index) => (
-                <div
-                  key={order.id}
-                  className="bg-white rounded-2xl shadow-soft-lg hover:shadow-soft-xl transition-all p-6 border-l-4 border-coffee-500"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-bold text-xl text-coffee-900 mb-1 logo-font">Order #{order.id}</h3>
-                      <p className="text-coffee-600 text-sm flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        {new Date(order.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+            <>
+              <div className="grid gap-4">
+                {currentOrdersPage.map((order, index) => (
+                  <div
+                    key={order.id}
+                    className="bg-white rounded-2xl shadow-soft-lg hover:shadow-soft-xl transition-all p-6 border-l-4 border-coffee-500"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-xl text-coffee-900 mb-1 logo-font">Order #{order.id}</h3>
+                        <p className="text-coffee-600 text-sm flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {new Date(order.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(order.status)}
+                        <span
+                          className={`text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-2 ${
+                            order.status === "Delivered" || order.status === "Completed"
+                              ? "bg-green-100 text-green-700"
+                              : order.status === "Pending"
+                              ? "bg-coffee-200 text-coffee-800"
+                              : order.status === "Cancelled"
+                              ? "bg-red-300 text-black-800"
+                              : "bg-yellow-100 text-yellow-800"
+                              
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-coffee-200 pt-4 mb-4">
+                      <p className="text-coffee-800 mb-2">
+                        <span className="font-medium">Item:</span> {order.item}
+                      </p>
+                      <p className="text-coffee-800 mb-2">
+                        <span className="font-medium">Quantity:</span> {order.quantity}
+                      </p>
+                      <p className="text-2xl font-bold text-coffee-700">
+                        ₱{order.total?.toFixed(2) || "0.00"}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(order.status)}
-                      <span
-                        className={`text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-2 ${
-                          order.status === "Delivered" || order.status === "Completed"
-                            ? "bg-green-100 text-green-700"
-                            : order.status === "Pending"
-                            ? "bg-coffee-200 text-coffee-800"
-                            : order.status === "Cancelled"
-                            ? "bg-red-300 text-black-800"
-                            : "bg-yellow-100 text-yellow-800"
-                            
-                        }`}
+
+                    <div className="flex gap-3 flex-wrap">
+                      <button
+                        onClick={() => handleOrderClick(order)}
+                        className="cursor-pointer flex-1 bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
                       >
-                        {order.status}
-                      </span>
+                        View Details
+                      </button>
+
+                      {["Delivered", "Completed"].includes(order.status) && (
+                        <button
+                          onClick={() => reorder(order)}
+                          className="cursor-pointer flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Reorder
+                        </button>
+                      )}
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="border-t border-coffee-200 pt-4 mb-4">
-                    <p className="text-coffee-800 mb-2">
-                      <span className="font-medium">Item:</span> {order.item}
-                    </p>
-                    <p className="text-coffee-800 mb-2">
-                      <span className="font-medium">Quantity:</span> {order.quantity}
-                    </p>
-                    <p className="text-2xl font-bold text-coffee-700">
-                      ₱{order.total?.toFixed(2) || "0.00"}
-                    </p>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-3 mt-8">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`p-2 rounded-xl transition-all ${
+                      currentPage === 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-coffee-600 text-white hover:bg-coffee-700 shadow-soft-lg cursor-pointer'
+                    }`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  <div className="flex gap-2">
+                    {[...Array(totalPages)].map((_, index) => {
+                      const pageNumber = index + 1;
+                      // Show first page, last page, current page, and pages around current
+                      const showPage = 
+                        pageNumber === 1 || 
+                        pageNumber === totalPages || 
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1);
+                      
+                      const showEllipsis = 
+                        (pageNumber === 2 && currentPage > 3) || 
+                        (pageNumber === totalPages - 1 && currentPage < totalPages - 2);
+
+                      if (showEllipsis) {
+                        return <span key={pageNumber} className="px-2 text-coffee-600">...</span>;
+                      }
+
+                      if (!showPage) return null;
+
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`px-4 py-2 rounded-xl font-semibold transition-all cursor-pointer ${
+                            currentPage === pageNumber
+                              ? 'bg-coffee-600 text-white shadow-soft-lg'
+                              : 'bg-white text-coffee-700 hover:bg-coffee-100 shadow-soft-md'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  <div className="flex gap-3 flex-wrap">
-                    <button
-                      onClick={() => handleOrderClick(order)}
-                      className="cursor-pointer flex-1 bg-coffee-600 hover:bg-coffee-700 text-white font-semibold px-6 py-2 rounded-xl transition-all shadow-soft-lg hover:shadow-soft-xl"
-                    >
-                      View Details
-                    </button>
-
-                    {["Delivered", "Completed"].includes(order.status) && (
-                      <button
-                        onClick={() => reorder(order)}
-                        className="cursor-pointer flex-1 bg-coffee-500 hover:bg-coffee-600 text-white font-semibold px-6 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-soft-lg hover:shadow-soft-xl"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        Reorder
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`p-2 rounded-xl transition-all ${
+                      currentPage === totalPages
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-coffee-600 text-white hover:bg-coffee-700 shadow-soft-lg cursor-pointer'
+                    }`}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* Page Info */}
+              <div className="text-center mt-4 text-coffee-600">
+                Showing {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
+              </div>
+            </>
           )}
         </div>
       )}
