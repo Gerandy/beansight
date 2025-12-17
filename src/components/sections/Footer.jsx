@@ -11,15 +11,12 @@ function Footer() {
 
         <div className="flex gap-12 text-sm">
           <div className="flex flex-col gap-2">
-            <a href="#" className="text-white font-bold hover:underline">About</a>
-            <a href="#" className="text-white font-bold hover:underline">Terms & Conditions</a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <a href="#" className="text-white font-bold hover:underline">Contact Us</a>
-            <a href="#" className="text-white font-bold hover:underline">Privacy Policy</a>
+            <Link to="/about" className="text-white font-bold hover:underline">About</Link>
+            <Link to="/terms" className="text-white font-bold hover:underline">Terms & Conditions</Link>
           </div>
           <div className="flex flex-col gap-2">
             <Link to="/faq" className="text-white font-bold hover:underline">FAQ</Link>
+            <Link to="/privacy" className="text-white font-bold hover:underline">Privacy Policy</Link>
           </div>
         </div>
 

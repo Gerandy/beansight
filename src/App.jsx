@@ -15,6 +15,9 @@ import Checkout from "./components/Checkout";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import Faq from "./components/sections/Faq";
+import About from "./components/sections/About";
+import TermsAndConditions from "./components/sections/TermsAndConditions";
+import PrivacyPolicy from "./components/sections/PrivacyPolicy";
 
 // MyAccount (Client)
 import Myaccount from "./components/sections/Myaccount";
@@ -83,6 +86,9 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/faq" element={<Faq />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/terms" element={<TermsAndConditions />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
 
                   {/* Client Account */}
                   <Route

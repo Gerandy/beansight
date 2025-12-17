@@ -100,7 +100,7 @@ function MenuFeatured() {
             {foodMenu.map((item) => (
               <div
                 key={item.id}
-                className="flex-shrink-0 w-[calc(50%-6px)] snap-start"
+                className="flex-shrink-0 w-[43%] snap-start"
               >
                 <Link to={`/menu/product-details/${item.id}`}>
                   <MenuCard

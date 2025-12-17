@@ -39,7 +39,7 @@ function Slider() {
   if (loading) {
     return (
       <div className="w-full flex justify-center mt-20 mb-8">
-        <div className="relative w-full max-w-md md:max-w-full lg:max-w-5xl mx-auto px-2 sm:px-4">
+        <div className="relative w-full max-w-[1050px] mx-auto px-4">
           <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg bg-gray-200 animate-pulse h-[140px] sm:h-[160px] md:h-[200px] lg:h-[350px]">
             <div className="w-full h-full bg-gray-300"></div>
             {/* Pagination dots skeleton */}
@@ -64,7 +64,7 @@ function Slider() {
 
   return (
     <div className="w-full flex justify-center mt-20 ">
-      <div className="relative w-full max-w-md md:max-w-full lg:max-w-5xl mx-auto px-2 sm:px-4">
+      <div className="relative w-full max-w-[1050px] mx-auto px-4">
         <Swiper
           modules={[Navigation, Autoplay, Pagination]}
           pagination={{

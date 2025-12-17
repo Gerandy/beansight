@@ -117,7 +117,7 @@ function Favorites() {
     : favoriteProducts;
 
   return (
-    <div className="max-w-[1050px] mx-auto px-4 py-2 sm:py-4 lg:py-6 relative">
+    <div className="max-w-[1050px] mx-auto px-4 pb-2 sm:pb-4 lg:pb-6 relative">
       {/* Header */}
       <div className="mb-3 sm:mb-4 lg:mb-6">
         <h1 className="text-gray-950 text-2xl sm:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2">
@@ -189,7 +189,7 @@ function Favorites() {
         {favoriteProducts.map((product) => (
           <div
             key={product.id}
-            className="flex-shrink-0 w-[calc(47vw-12px)] snap-start"
+            className="flex-shrink-0 w-[43%] snap-start"
           >
             <Link to={`/menu/product-details/${product.id}`}>
               <MenuCard 
