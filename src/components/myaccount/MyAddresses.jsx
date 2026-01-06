@@ -214,7 +214,7 @@ function MyAddresses() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h1 className="text-2xl sm:text-3xl lg:text-4xl border-b border-coffee-200 pb-4 text-coffee-900 font-bold mb-6 lg:mb-10">
+      <h1 className="text-2xl sm:text-3xl lg:text-4xl pb-4 text-coffee-900 font-bold mb-6 lg:mb-10">
         My Addresses
       </h1>
 

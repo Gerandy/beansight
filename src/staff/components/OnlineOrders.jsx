@@ -143,7 +143,7 @@ export default function OnlineOrders() {
   };
 
   const compareForKey = (key, a, b) => {
-    if (key === "placedAt") return new Date(b.placedAt) - new Date(a.placedAt);
+    if (key === "placedAt") return new Date(a.placedAt) - new Date(b.placedAt); // FIFO: oldest first
     if (key === "total") return b.total - a.total;
     if (key === "customer") return a.customer.localeCompare(b.customer);
     if (key === "status") return a.status.localeCompare(b.status);
@@ -164,10 +164,30 @@ export default function OnlineOrders() {
       );
     });
 
-    return [...filtered].sort((a, b) => {
+    const sorted = [...filtered].sort((a, b) => {
       const p = compareForKey(primarySort, a, b);
       if (p !== 0 || secondarySort === "none") return p;
       return compareForKey(secondarySort, a, b);
+    });
+
+    // Add queue position and canProcess flag for FIFO enforcement
+    const activeOrders = sorted.filter(o => o.status !== "Completed" && o.status !== "Cancelled");
+    const oldestActiveOrder = activeOrders.length > 0 ? activeOrders[0] : null;
+    
+    return sorted.map((order, idx) => {
+      const queuePosition = activeOrders.findIndex(o => o.id === order.id) + 1;
+      const canProcess = !oldestActiveOrder || 
+                        order.status === "Completed" || 
+                        order.status === "Cancelled" ||
+                        order.id === oldestActiveOrder.id ||
+                        order.status !== "Pending"; // Allow processing orders already in progress
+      
+      return {
+        ...order,
+        queuePosition: queuePosition > 0 ? queuePosition : null,
+        canProcess,
+        isNext: order.id === oldestActiveOrder?.id
+      };
     });
   }, [orders, search, filter, primarySort, secondarySort]);
 
@@ -250,7 +270,7 @@ export default function OnlineOrders() {
               onChange={(e) => setPrimarySort(e.target.value)}
               className="cursor-pointer bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm shadow-sm"
             >
-              <option value="placedAt">Sort: Newest</option>
+              <option value="placedAt">Sort: Oldest First (FIFO)</option>
               <option value="total">Sort: Total</option>
               <option value="customer">Sort: Customer</option>
               <option value="status">Sort: Status</option>
@@ -262,7 +282,7 @@ export default function OnlineOrders() {
               className="cursor-pointer bg-white border border-coffee-200 text-coffee-800 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm shadow-sm"
             >
               <option value="none">No secondary</option>
-              <option value="placedAt">Then: Newest</option>
+              <option value="placedAt">Then: Oldest First</option>
               <option value="total">Then: Total</option>
               <option value="customer">Then: Customer</option>
               <option value="status">Then: Status</option>
@@ -303,10 +323,21 @@ export default function OnlineOrders() {
           {/* Mobile Card View */}
           <div className="block lg:hidden space-y-3">
             {paginatedOrders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm border border-coffee-200 p-4">
+              <div key={order.id} className={`bg-white rounded-lg shadow-sm border p-4 ${
+                order.isNext ? 'border-green-500 border-2 ring-2 ring-green-200' : 'border-coffee-200'
+              }`}>
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <div className="font-medium text-sm text-coffee-800">{order.id}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-sm text-coffee-800">{order.id}</div>
+                      {order.queuePosition && order.status === "Pending" && (
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          order.isNext ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          #{order.queuePosition} in queue
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-coffee-600">{formatTime(order.placedAt)}</div>
                   </div>
                   <StatusBadge status={order.status} />
@@ -364,13 +395,23 @@ export default function OnlineOrders() {
                 {paginatedOrders.map((order, idx) => (
                   <tr
                     key={order.id}
-                    className={`border-t hover:bg-coffee-50 transition-colors ${
-                      idx % 2 === 0 ? "bg-white" : "bg-coffee-50"
+                    className={`border-t transition-colors ${
+                      order.isNext ? 'bg-green-50 border-l-4 border-l-green-500' :
+                      idx % 2 === 0 ? "bg-white hover:bg-coffee-50" : "bg-coffee-50 hover:bg-coffee-100"
                     }`}
                   >
                     <td className="py-3 px-4">
                       <div className="flex flex-col gap-1">
-                        <div className="font-medium text-coffee-800">{order.id}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-coffee-800">{order.id}</div>
+                          {order.queuePosition && order.status === "Pending" && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                              order.isNext ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                            }`}>
+                              #{order.queuePosition}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-coffee-700">{formatTime(order.placedAt)}</div>
                       </div>
                     </td>

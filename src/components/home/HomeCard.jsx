@@ -1,8 +1,11 @@
 import React from "react";
 
-function MenuCard({ name, price, img, isNew }) {
+function MenuCard({ name, price, img, isNew, onClick }) {
   return (
-    <div className="group bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out p-3 sm:p-6 flex flex-col items-center text-center cursor-pointer border-2 border-[#D4A574] h-[250px] sm:h-[280px] relative overflow-hidden">
+    <div 
+      onClick={onClick}
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out p-3 sm:p-6 flex flex-col items-center text-center cursor-pointer border-2 border-[#D4A574] h-[250px] sm:h-[280px] relative overflow-hidden"
+    >
       <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
 
       {isNew && (

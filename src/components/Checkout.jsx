@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { collection, doc, setDoc, serverTimestamp, onSnapshot, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { calculateDeliveryFeeUtil } from "../utils/calculateDeliveryFee";
-import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { CreditCard, Truck, Mail, CheckCircle, Trash2, Plus, Minus, Package, ChevronDown, ChevronUp, HelpCircle, X } from "lucide-react";
 import { useCart } from "./CartContext";
 import { loadGoogleMaps } from "../utils/loadGoogleMaps";
 
@@ -22,6 +22,7 @@ export default function Checkout() {
   const [settings, setSettings] = useState(0);
   const { clearCart } = useCart(); // ← get clearCart from context
   const [qr, setQr] = useState("");
+  const [infoModal, setInfoModal] = useState({ isOpen: false, title: "", message: "" });
   
   
   useEffect(() => {
@@ -312,10 +313,10 @@ export default function Checkout() {
     <div className="min-h-screen mt-16 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <header className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">CHECKOUT</h1>
-          <Link to="/menu">
-            <button className="cursor-pointer px-4 py-2 rounded-lg bg-yellow-950 text-white font-medium hover:bg-yellow-800">
+        <header className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-black">CHECKOUT</h1>
+          <Link to="/menu" className="w-full sm:w-auto">
+            <button className="cursor-pointer w-full sm:w-auto px-4 py-2 rounded-lg bg-yellow-950 text-white text-sm sm:text-base font-medium hover:bg-yellow-800 transition-colors">
               Continue shopping
             </button>
           </Link>
@@ -323,216 +324,8 @@ export default function Checkout() {
 
         {/* Grid: forms + summary */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left: forms */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Contact info */}
-            <SectionCard title="Contact information" icon={<Mail size={18} />}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Input label="Full name" value={`${userData?.firstName || ""} ${userData?.lastName || ""}`} />
-                <Input label="Email" value={userData?.email || ""} required />
-                <Input label="Phone" value={userData?.contactNumber || ""} required />
-              </div>
-            </SectionCard>
-
-            {/* Shipping */}
-            <SectionCard title="Shipping & pickup" icon={<Truck size={18} />}>
-              <div className="flex gap-3">
-                <label
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
-                    shipping.type === 'delivery' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="shiptype"
-                    checked={shipping.type === 'delivery'}
-                    onChange={() => setShipping({ ...shipping, type: 'delivery' })}
-                    className="hidden"
-                  />
-                  <span className="font-medium">Delivery</span>
-                  <span className="text-sm text-gray-500">₱{shipping.type === 'delivery' ? deliveryFees.toFixed(2) : '0.00'}</span>
-                </label>
-
-                <label
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
-                    shipping.type === 'pickup' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="shiptype"
-                    checked={shipping.type === 'pickup'}
-                    onChange={() => {
-                      setShipping({ ...shipping, type: 'pickup' });
-                      setDeliveryFee(0); // Reset delivery fee for pickup
-                    }}
-                    className="hidden"
-                  />
-                  <span className="font-medium">Pickup</span>
-                </label>
-              </div>
-
-              {/* Delivery Section */}
-              {shipping.type === 'delivery' && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Delivery: Now or Schedule */}
-                  <div className="col-span-1 md:col-span-2 flex gap-4">
-                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="deliverySchedule"
-                        value="now"
-                        checked={shipping.schedule === "now"}
-                        onChange={() => setShipping({ ...shipping, schedule: "now", scheduledDate: "", scheduledTime: "" })}
-                        className="accent-yellow-950"
-                      />
-                      Now
-                    </label>
-                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="deliverySchedule"
-                        value="later"
-                        checked={shipping.schedule === "later"}
-                        onChange={() => {
-                          setShipping({ ...shipping, schedule: "later" });
-                          // Recalculate delivery fee when scheduling changes
-                        }}
-                        className="accent-yellow-950"
-                      />
-                      Schedule
-                    </label>
-                  </div>
-
-                  {shipping.schedule === "later" && (
-                    <>
-                      <input
-                        type="date"
-                        value={shipping.scheduledDate}
-                        onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2 cursor"
-                      />
-                      <input
-                        type="time"
-                        value={shipping.scheduledTime}
-                        onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2 cursor"
-                      />
-                    </>
-                  )}
-
-                 <Input
-                    label="Address"
-                    value={shipping.address || ""}
-                    onChange={(v) => setShipping({ ...shipping, address: v })}
-                    placeholder="Street, House no."
-                    required
-                    readOnly={true}  // now this will work!
-                  />
-
-                  
-                  
-                  <textarea
-                    className="col-span-1 md:col-span-2 mt-2 p-3 border border-gray-200 rounded-lg"
-                    placeholder="Delivery notes (optional)"
-                    value={shipping.notes}
-                    onChange={(e) => setShipping({ ...shipping, notes: e.target.value })}
-                  />
-                </div>
-              )}
-
-              {/* Pickup Section */}
-              {shipping.type === 'pickup' && (
-                <div className="mt-4 flex flex-col gap-3">
-                  <p className="text-sm">Pickup location: <span className="font-medium">{shipping.pickupLocation}</span></p>
-
-                  <div className="flex gap-4 mb-2">
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="pickupTime"
-                        value="now"
-                        checked={shipping.schedule === "now"}
-                        onChange={() => setShipping({ ...shipping, schedule: "now", scheduledDate: "", scheduledTime: "" })}
-                        className="accent-yellow-950"
-                      />
-                      Now
-                    </label>
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="pickupTime"
-                        value="later"
-                        checked={shipping.schedule === "later"}
-                        onChange={() => setShipping({ ...shipping, schedule: "later" })}
-                        className="accent-yellow-950"
-                      />
-                      Schedule
-                    </label>
-                  </div>
-
-                  {shipping.schedule === "later" && (
-                    <div className="flex gap-4">
-                      <input
-                        type="date"
-                        value={shipping.scheduledDate}
-                        onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2"
-                      />
-                      <input
-                        type="time"
-                        value={shipping.scheduledTime}
-                        onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
-                        className="border rounded px-2 py-1 w-1/2"
-                      />
-                    </div>
-                  )}
-
-                  <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
-                    <iframe
-                      title="Pickup Location"
-                      width="100%"
-                      height="100%"
-                      frameBorder="0"
-                      style={{ border: 0 }}
-                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBGvh2aLua0lajoAnSJjRm0S-XUVSof6RY&q=Sol-ace Café&zoom=19`}
-                      allowFullScreen
-                    />
-                  </div>
-
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=Sol-ace+Café`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 bg-yellow-950 text-white rounded-lg hover:bg-yellow-800 transition"
-                  >
-                    Get Directions
-                  </a>
-                </div>
-              )}
-            </SectionCard>
-
-            {/* Payment */}
-            <SectionCard title="Payment" icon={<CreditCard size={18} />}>
-              <div className="flex gap-3">
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'cod' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
-                  <input type="radio" name="pay" checked={payment.method === 'cod'} onChange={() => setPayment({ method: 'cod' })} className="hidden" />
-                  Cash on delivery
-                </label>
-
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'} `}>
-                  <input type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => {
-                      setPayment({ method: 'wallet' });
-                      setShowGcashModal(true); // ← OPEN MODAL HERE
-                    }} className="hidden"/>
-                  GCash / Paymaya 
-                </label>
-              </div>
-            </SectionCard>
-          </div>
-
-          {/* Right: summary */}
-          <aside className="lg:col-span-4 text-black">
+          {/* Right: summary - appears first on mobile */}
+          <aside className="lg:col-span-4 lg:order-2">
             <div className="lg:sticky lg:top-20 space-y-4">
               <div className="bg-white rounded-2xl p-5 shadow">
                 <h3 className="text-lg font-semibold mb-3">Order Summary</h3>
@@ -660,6 +453,256 @@ export default function Checkout() {
               </div>
             </div>
           </aside>
+
+          {/* Left: forms - appears second on mobile */}
+          <div className="lg:col-span-8 lg:order-1 space-y-6">
+            {/* Contact info */}
+            <SectionCard title="Contact information" icon={<Mail size={18} />}>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Input label="Full name" value={`${userData?.firstName || ""} ${userData?.lastName || ""}`} />
+                <Input label="Email" value={userData?.email || ""} required />
+                <Input label="Phone" value={userData?.contactNumber || ""} required />
+              </div>
+            </SectionCard>
+
+            {/* Shipping */}
+            <SectionCard title="Shipping & pickup" icon={<Truck size={18} />}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-medium text-gray-700">Choose how you want to receive your order</span>
+                <button 
+                  onClick={() => setInfoModal({ isOpen: true, title: "Shipping & Pickup", message: "Delivery brings the order to your address. Pickup means you collect it from our store" })}
+                  className="cursor-pointer hover:text-gray-900 transition-colors"
+                  aria-label="Shipping info"
+                >
+                  <HelpCircle size={16} className="text-gray-600" />
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <label
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
+                    shipping.type === 'delivery' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="shiptype"
+                    checked={shipping.type === 'delivery'}
+                    onChange={() => setShipping({ ...shipping, type: 'delivery' })}
+                    className="hidden"
+                  />
+                  <span className="font-medium">Delivery</span>
+                  <span className="text-sm text-gray-500">₱{shipping.type === 'delivery' ? deliveryFees.toFixed(2) : '0.00'}</span>
+                </label>
+
+                <label
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${
+                    shipping.type === 'pickup' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="shiptype"
+                    checked={shipping.type === 'pickup'}
+                    onChange={() => {
+                      setShipping({ ...shipping, type: 'pickup' });
+                      setDeliveryFee(0); // Reset delivery fee for pickup
+                    }}
+                    className="hidden"
+                  />
+                  <span className="font-medium">Pickup</span>
+                </label>
+              </div>
+
+              {/* Delivery Section */}
+              {shipping.type === 'delivery' && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Delivery: Now or Schedule */}
+                  <div className="col-span-1 md:col-span-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium text-gray-700">Delivery Time</span>
+                      <button 
+                        onClick={() => setInfoModal({ isOpen: true, title: "Delivery Time", message: "Choose 'Now' for immediate delivery or 'Schedule' to pick a specific date and time" })}
+                        className="cursor-pointer hover:text-gray-900 transition-colors"
+                        aria-label="Delivery time info"
+                      >
+                        <HelpCircle size={16} className="text-gray-600" />
+                      </button>
+                    </div>
+                    <div className="flex gap-4">
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deliverySchedule"
+                          value="now"
+                          checked={shipping.schedule === "now"}
+                          onChange={() => setShipping({ ...shipping, schedule: "now", scheduledDate: "", scheduledTime: "" })}
+                          className="accent-yellow-950"
+                        />
+                        Now
+                      </label>
+                      <label className="inline-flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="deliverySchedule"
+                          value="later"
+                          checked={shipping.schedule === "later"}
+                          onChange={() => {
+                            setShipping({ ...shipping, schedule: "later" });
+                            // Recalculate delivery fee when scheduling changes
+                          }}
+                          className="accent-yellow-950"
+                        />
+                        Schedule
+                      </label>
+                    </div>
+                  </div>
+
+                  {shipping.schedule === "later" && (
+                    <>
+                      <input
+                        type="date"
+                        value={shipping.scheduledDate}
+                        onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
+                        className="border rounded px-2 py-1 w-1/2 cursor"
+                      />
+                      <input
+                        type="time"
+                        value={shipping.scheduledTime}
+                        onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
+                        className="border rounded px-2 py-1 w-1/2 cursor"
+                      />
+                    </>
+                  )}
+
+                 <Input
+                    label="Address"
+                    value={shipping.address || ""}
+                    onChange={(v) => setShipping({ ...shipping, address: v })}
+                    placeholder="Street, House no."
+                    required
+                    readOnly={true}  // now this will work!
+                  />
+
+                  
+                  
+                  <textarea
+                    className="col-span-1 md:col-span-2 mt-2 p-3 border border-gray-200 rounded-lg"
+                    placeholder="Delivery notes (optional)"
+                    value={shipping.notes}
+                    onChange={(e) => setShipping({ ...shipping, notes: e.target.value })}
+                  />
+                </div>
+              )}
+
+              {/* Pickup Section */}
+              {shipping.type === 'pickup' && (
+                <div className="mt-4 flex flex-col gap-3">
+                  <p className="text-sm">Pickup location: <span className="font-medium">{shipping.pickupLocation}</span></p>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-gray-700">Pickup Time</span>
+                    <button 
+                      onClick={() => setInfoModal({ isOpen: true, title: "Pickup Time", message: "Choose when you want to pick up your order from our store" })}
+                      className="cursor-pointer hover:text-gray-900 transition-colors"
+                      aria-label="Pickup time info"
+                    >
+                      <HelpCircle size={16} className="text-gray-600" />
+                    </button>
+                  </div>
+                  <div className="flex gap-4 mb-2">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="pickupTime"
+                        value="now"
+                        checked={shipping.schedule === "now"}
+                        onChange={() => setShipping({ ...shipping, schedule: "now", scheduledDate: "", scheduledTime: "" })}
+                        className="accent-yellow-950"
+                      />
+                      Now
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="pickupTime"
+                        value="later"
+                        checked={shipping.schedule === "later"}
+                        onChange={() => setShipping({ ...shipping, schedule: "later" })}
+                        className="accent-yellow-950"
+                      />
+                      Schedule
+                    </label>
+                  </div>
+
+                  {shipping.schedule === "later" && (
+                    <div className="flex gap-4">
+                      <input
+                        type="date"
+                        value={shipping.scheduledDate}
+                        onChange={(e) => setShipping({ ...shipping, scheduledDate: e.target.value })}
+                        className="border rounded px-2 py-1 w-1/2"
+                      />
+                      <input
+                        type="time"
+                        value={shipping.scheduledTime}
+                        onChange={(e) => setShipping({ ...shipping, scheduledTime: e.target.value })}
+                        className="border rounded px-2 py-1 w-1/2"
+                      />
+                    </div>
+                  )}
+
+                  <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
+                    <iframe
+                      title="Pickup Location"
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      style={{ border: 0 }}
+                      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBGvh2aLua0lajoAnSJjRm0S-XUVSof6RY&q=Sol-ace Café&zoom=19`}
+                      allowFullScreen
+                    />
+                  </div>
+
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=Sol-ace+Café`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-yellow-950 text-white rounded-lg hover:bg-yellow-800 transition"
+                  >
+                    Get Directions
+                  </a>
+                </div>
+              )}
+            </SectionCard>
+
+            {/* Payment */}
+            <SectionCard title="Payment" icon={<CreditCard size={18} />}>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-medium text-gray-700">Select your payment method</span>
+                <button 
+                  onClick={() => setInfoModal({ isOpen: true, title: "Payment Method", message: "Choose Cash on Delivery to pay when you receive your order, or GCash/Paymaya to pay online now" })}
+                  className="cursor-pointer hover:text-gray-900 transition-colors"
+                  aria-label="Payment info"
+                >
+                  <HelpCircle size={16} className="text-gray-600" />
+                </button>
+              </div>
+              <div className="flex gap-3">
+                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'cod' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'}`}>
+                  <input type="radio" name="pay" checked={payment.method === 'cod'} onChange={() => setPayment({ method: 'cod' })} className="hidden" />
+                  Cash on delivery
+                </label>
+
+                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${payment.method === 'wallet' ? 'border-orange-400 bg-orange-50' : 'border-gray-200'} `}>
+                  <input type="radio" name="pay" checked={payment.method === 'wallet'} onChange={() => {
+                      setPayment({ method: 'wallet' });
+                      setShowGcashModal(true); // ← OPEN MODAL HERE
+                    }} className="hidden"/>
+                  GCash / Paymaya 
+                </label>
+              </div>
+            </SectionCard>
+          </div>
         </div>
 
         {/* Mobile sticky bar */}
@@ -782,6 +825,37 @@ export default function Checkout() {
           background: #9ca3af;
         }
       `}</style>
+
+      {/* Info Modal */}
+      {infoModal.isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => setInfoModal({ isOpen: false, title: "", message: "" })}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-dropdown"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800">{infoModal.title}</h3>
+              <button
+                onClick={() => setInfoModal({ isOpen: false, title: "", message: "" })}
+                className="text-gray-600 hover:text-gray-900 transition-colors p-1 hover:bg-gray-100 rounded-full"
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm sm:text-base text-gray-700 leading-relaxed">{infoModal.message}</p>
+            <button
+              onClick={() => setInfoModal({ isOpen: false, title: "", message: "" })}
+              className="mt-6 w-full bg-yellow-950 hover:bg-yellow-800 text-white font-semibold py-2.5 rounded-lg transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
