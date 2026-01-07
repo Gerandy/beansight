@@ -49,7 +49,8 @@ function InventoryAnalytics() {
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  },[]);
+
 
   const categories = ["All", ...Array.from(new Set(inventoryData.map((i) => i.category)))];
 
