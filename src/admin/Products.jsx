@@ -115,6 +115,7 @@ export default function ProductManagement() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -128,6 +129,7 @@ export default function ProductManagement() {
   const [addOns, setAddOns] = useState([]);
   const [addOnModalOpen, setAddOnModalOpen] = useState(false);
   const [editingAddOn, setEditingAddOn] = useState(null);
+  const [isSavingAddOn, setIsSavingAddOn] = useState(false);
   const [addOnForm, setAddOnForm] = useState({
     name: "",
     price: "",
@@ -140,6 +142,15 @@ export default function ProductManagement() {
   const [addOnQuery, setAddOnQuery] = useState("");
   const [addOnCategoryFilter, setAddOnCategoryFilter] = useState("All");
   const [debouncedAddOnQuery, setDebouncedAddOnQuery] = useState("");
+
+  // Categories state
+  const [categoryList, setCategoryList] = useState([]);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+  });
 
   const filtered = useMemo(() => {
     const q = debouncedQuery || "";
@@ -237,6 +248,7 @@ export default function ProductManagement() {
   // Save (upload image to Firebase Storage first, then save URL to Firestore)
   const handleSave = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
     try {
       let imageUrl = form.img || "";
 
@@ -277,6 +289,8 @@ export default function ProductManagement() {
     } catch (error) {
       console.error("Error saving product:", error);
       alert("Error saving product. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -489,6 +503,115 @@ export default function ProductManagement() {
     fetchAddOns();
   }, [addOns]);
 
+  // Fetch categories from Firestore
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const docRef = await getDoc(doc(db, "extra", "categories"));
+        if (docRef.exists()) {
+          const data = docRef.data();
+          setCategoryList(data.categoryList || []);
+        } else {
+          // Initialize with default categories if document doesn't exist
+          const defaultCategories = [
+            { id: "1", name: "Beverage" },
+            { id: "2", name: "Dessert" },
+            { id: "3", name: "Burger" },
+            { id: "4", name: "Chicken" },
+            { id: "5", name: "Fries & Sides" },
+          ];
+          await setDoc(doc(db, "extra", "categories"), { categoryList: defaultCategories });
+          setCategoryList(defaultCategories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Category management functions
+  const openCategoryModal = (category = null) => {
+    if (category) {
+      setEditingCategory(category);
+      setCategoryForm({ name: category.name || "" });
+    } else {
+      setEditingCategory(null);
+      setCategoryForm({ name: "" });
+    }
+    setCategoryModalOpen(true);
+  };
+
+  const closeCategoryModal = () => {
+    setCategoryModalOpen(false);
+    setEditingCategory(null);
+  };
+
+  const handleCategoryInput = (e) => {
+    const { value } = e.target;
+    setCategoryForm({ name: value });
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    setIsSavingCategory(true);
+    try {
+      const docRef = doc(db, "extra", "categories");
+      const docSnap = await getDoc(docRef);
+      
+      let updatedList;
+      if (editingCategory) {
+        // Update existing category
+        const existingList = docSnap.exists() ? docSnap.data().categoryList || [] : [];
+        updatedList = existingList.map(cat => 
+          cat.id === editingCategory.id 
+            ? { ...cat, name: categoryForm.name }
+            : cat
+        );
+      } else {
+        // Add new category
+        const existingList = docSnap.exists() ? docSnap.data().categoryList || [] : [];
+        const newCategory = {
+          id: generateCustomId(),
+          name: categoryForm.name,
+        };
+        updatedList = [...existingList, newCategory];
+      }
+
+      await setDoc(docRef, { categoryList: updatedList });
+      setCategoryList(updatedList);
+      closeCategoryModal();
+    } catch (error) {
+      console.error("Error saving category:", error);
+      alert("Error saving category. Please try again.");
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm("Delete this category? Products with this category will need to be updated.")) return;
+
+    try {
+      const docRef = doc(db, "extra", "categories");
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        console.error("Document not found");
+        return;
+      }
+
+      const existingList = docSnap.data().categoryList || [];
+      const updatedList = existingList.filter(cat => cat.id !== id);
+
+      await setDoc(docRef, { categoryList: updatedList });
+      setCategoryList(updatedList);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("Error deleting category. Please try again.");
+    }
+  };
+
   // Add-on management functions
   const openAddOnModal = (addOn = null) => {
     if (addOn) {
@@ -535,6 +658,7 @@ export default function ProductManagement() {
 
   const handleSaveAddOn = async (e) => {
   e.preventDefault();
+  setIsSavingAddOn(true);
   try {
     const docRef = doc(db, "extra", "addOns"); // your single document
     const docSnap = await getDoc(docRef);
@@ -575,6 +699,8 @@ export default function ProductManagement() {
   } catch (error) {
     console.error("Error saving add-on:", error);
     alert("Error saving add-on. Please try again.");
+  } finally {
+    setIsSavingAddOn(false);
   }
 };
 
@@ -729,11 +855,19 @@ export default function ProductManagement() {
                 <span className="xs:hidden">Add</span>
               </button>
               <button
+                onClick={() => openCategoryModal()}
+                className="flex items-center justify-center gap-1.5 sm:gap-2 bg-white text-coffee-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow border border-coffee-200 hover:bg-coffee-50 transition cursor-pointer text-xs sm:text-sm font-medium flex-1 sm:flex-initial whitespace-nowrap"
+              >
+                <Filter size={14} className="sm:w-4 sm:h-4" /> 
+                <span className="hidden sm:inline">Categories</span>
+                <span className="sm:hidden">Cat</span>
+              </button>
+              <button
                 onClick={() => setShowAddOnsTab(!showAddOnsTab)}
                 className="flex items-center justify-center gap-1.5 sm:gap-2 bg-white text-coffee-700 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow border border-coffee-200 hover:bg-coffee-50 transition cursor-pointer text-xs sm:text-sm font-medium flex-1 sm:flex-initial whitespace-nowrap"
               >
                 <Package size={14} className="sm:w-4 sm:h-4" /> 
-                <span className="hidden sm:inline">Manage Add-ons</span>
+                <span className="hidden sm:inline">Add-ons</span>
                 <span className="sm:hidden">Add-ons</span>
               </button>
             </div>
@@ -1223,20 +1357,33 @@ export default function ProductManagement() {
 
                     <div>
                       <label className="block text-sm font-medium text-coffee-700 mb-1">Category</label>
-                      <select
-                        name="category"
-                        value={form.category}
-                        onChange={handleInput}
-                        className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
-                        required
-                      >
-                        <option value="">Select category</option>
-                        <option value="Beverage">Beverage</option>
-                        <option value="Dessert">Dessert</option>
-                        <option value="Burger">Burger</option>
-                        <option value="Chicken">Chicken</option>
-                        <option value="Fries & Sides">Fries & Sides</option>
-                      </select>
+                      <div className="flex gap-2">
+                        <select
+                          name="category"
+                          value={form.category}
+                          onChange={handleInput}
+                          className="flex-1 border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
+                          required
+                        >
+                          <option value="">Select category</option>
+                          {categoryList.map((cat) => (
+                            <option key={cat.id} value={cat.name}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeModal();
+                            openCategoryModal();
+                          }}
+                          className="px-3 py-2 rounded-xl bg-coffee-100 hover:bg-coffee-200 text-coffee-700 transition flex items-center gap-1 text-sm"
+                          title="Manage categories"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -1336,10 +1483,133 @@ export default function ProductManagement() {
 
                     <button
                       type="submit"
-                      className="cursor-pointer px-5 py-2.5 rounded-xl text-white font-medium flex items-center gap-2 transition bg-coffee-700 hover:bg-coffee-800"
+                      disabled={isSaving}
+                      className="cursor-pointer px-5 py-2.5 rounded-xl text-white font-medium flex items-center gap-2 transition bg-coffee-700 hover:bg-coffee-800 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Save className="w-4 h-4" />
-                      {editing ? "Update Product" : "Save Product"}
+                      <Save className={`w-4 h-4 ${isSaving ? 'animate-spin' : ''}`} />
+                      {isSaving ? "Saving..." : editing ? "Update Product" : "Save Product"}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Category Management Modal */}
+        <AnimatePresence>
+          {categoryModalOpen && (
+            <motion.div
+              key="category-modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
+              onClick={closeCategoryModal}
+            >
+              <motion.div
+                key="category-modal-content"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gradient-to-br from-white to-coffee-50 rounded-3xl shadow-2xl p-6 sm:p-8 w-[95%] max-w-3xl max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-coffee-900 flex items-center gap-2">
+                    <Filter className="w-6 h-6 text-coffee-700" />
+                    {editingCategory ? "Edit Category" : "Manage Categories"}
+                  </h2>
+                  <button
+                    onClick={closeCategoryModal}
+                    className="p-2 hover:bg-coffee-100 rounded-xl transition"
+                  >
+                    <X className="w-5 h-5 text-coffee-700" />
+                  </button>
+                </div>
+
+                {!editingCategory && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-coffee-800 mb-3">Existing Categories</h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {categoryList.length === 0 ? (
+                        <p className="text-coffee-600 text-sm italic">No categories yet. Add your first category below.</p>
+                      ) : (
+                        categoryList.map((cat) => (
+                          <div
+                            key={cat.id}
+                            className="flex items-center justify-between bg-white rounded-xl p-3 border border-coffee-200 hover:border-coffee-300 transition"
+                          >
+                            <span className="font-medium text-coffee-800">{cat.name}</span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingCategory(cat);
+                                  setCategoryForm({ name: cat.name });
+                                }}
+                                className="p-2 rounded-lg bg-coffee-100 hover:bg-coffee-200 text-coffee-700 transition"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSaveCategory} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-coffee-700 mb-1">
+                      {editingCategory ? "Edit Category Name" : "New Category Name"}
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={categoryForm.name}
+                      onChange={handleCategoryInput}
+                      className="w-full border border-coffee-300 rounded-xl px-4 py-2.5 bg-white/70 focus:ring-2 focus:ring-coffee-400 focus:border-coffee-400 outline-none text-coffee-900"
+                      placeholder="e.g. Pasta, Salad, Drinks..."
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-6">
+                    {editingCategory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingCategory(null);
+                          setCategoryForm({ name: "" });
+                        }}
+                        className="cursor-pointer px-5 py-2.5 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium flex items-center gap-2 transition"
+                      >
+                        <X className="w-4 h-4" /> Back to List
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={closeCategoryModal}
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-200 hover:bg-coffee-300 text-coffee-800 font-medium flex items-center gap-2 transition"
+                    >
+                      <X className="w-4 h-4" /> Close
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSavingCategory}
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Save className={`w-4 h-4 ${isSavingCategory ? 'animate-spin' : ''}`} />
+                      {isSavingCategory ? "Saving..." : editingCategory ? "Update" : "Add Category"}
                     </button>
                   </div>
                 </form>
@@ -1448,10 +1718,11 @@ export default function ProductManagement() {
                     </button>
                     <button
                       type="submit"
-                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 transition"
+                      disabled={isSavingAddOn}
+                      className="cursor-pointer px-5 py-2.5 rounded-xl bg-coffee-700 hover:bg-coffee-800 text-white font-medium flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Save className="w-4 h-4" />
-                      {editingAddOn ? "Update" : "Save"}
+                      <Save className={`w-4 h-4 ${isSavingAddOn ? 'animate-spin' : ''}`} />
+                      {isSavingAddOn ? "Saving..." : editingAddOn ? "Update" : "Save"}
                     </button>
                   </div>
                 </form>
