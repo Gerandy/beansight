@@ -15,6 +15,7 @@ export default function ThermalReceipt({
   change = 0,
   date = new Date().toLocaleString(),
   orderType = "Default",
+  baristaServer = localStorage.getItem("firstName"),
 
   onClose = () => {},
 }) {
@@ -45,6 +46,7 @@ export default function ThermalReceipt({
         <div class="row"><span>Order ID:</span><span>${orderId}</span></div>
         <div class="row"><span>Customer:</span><span>${customer}</span></div>
         <div class="row"><span>Date:</span><span>${formatDate(date)}</span></div>
+        <div class="row"><span>Barista:</span><span>${(baristaServer)}</span></div>
         <div class="line"></div>
         ${items
           .map((i) => {

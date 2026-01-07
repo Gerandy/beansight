@@ -11,8 +11,8 @@ export default function ProtectedRoute({ role, children }) {
 
   if (role && userRole !== role) {
     // Logged in but role doesn't match → redirect to their proper page
-   if (userRole === "client") return <Navigate to="/home" replace />;
-   if (userRole === "staff") return <Navigate to="/staff" replace />;
+  //  if (userRole === "client") return <Navigate to="/home" replace />;
+  //  if (userRole === "staff") return <Navigate to="/staff" replace />;
    
   }
 
