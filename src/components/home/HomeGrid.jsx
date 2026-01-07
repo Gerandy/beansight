@@ -31,10 +31,21 @@ function MenuGrid() {
       setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, "Inventory"));
-        const items = querySnapshot.docs.map((doc) => ({
+        let items = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+
+        // Normalize availability field and sort so available items come first
+        const isAvailable = (it) => {
+          if (it.availability !== undefined) return !!it.availability;
+          if (it.available !== undefined) return !!it.available;
+          return true;
+        };
+
+        items.sort((a, b) => Number(isAvailable(b)) - Number(isAvailable(a)));
+
+        // Keep only first 5 for the grid preview
         setFoodMenu(items.slice(0, 5));
       } catch (error) {
         console.error("Error fetching menu items:", error);
@@ -90,16 +101,28 @@ function MenuGrid() {
         <>
           {/* Desktop Grid */}
           <div className="hidden lg:grid grid-cols-5 gap-4">
-            {foodMenu.map((item) => (
-              <Link to={`/menu/product-details/${item.id}`} key={item.id}>
+            {foodMenu.map((item) => {
+              const available = item.availability !== undefined ? !!item.availability : (item.available !== undefined ? !!item.available : true);
+              const card = (
                 <MenuCard
                   name={item.name}
                   price={`${item.price}`}
                   img={item.img}
                   isLoading={false}
+                  available={available}
                 />
-              </Link>
-            ))}
+              );
+
+              return (
+                <div key={item.id}>
+                  {available ? (
+                    <Link to={`/menu/product-details/${item.id}`}>{card}</Link>
+                  ) : (
+                    card
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Mobile Swiper */}
@@ -111,21 +134,28 @@ function MenuGrid() {
               msOverflowStyle: 'none',
             }}
           >
-            {foodMenu.map((item) => (
-              <div
-                key={item.id}
-                className="flex-shrink-0 w-[43%] snap-start"
-              >
-                <Link to={`/menu/product-details/${item.id}`}>
-                  <MenuCard
-                    name={item.name}
-                    price={`${item.price}`}
-                    img={item.img}
-                    isLoading={false}
-                  />
-                </Link>
-              </div>
-            ))}
+            {foodMenu.map((item) => {
+              const available = item.availability !== undefined ? !!item.availability : (item.available !== undefined ? !!item.available : true);
+              const card = (
+                <MenuCard
+                  name={item.name}
+                  price={`${item.price}`}
+                  img={item.img}
+                  isLoading={false}
+                  available={available}
+                />
+              );
+
+              return (
+                <div key={item.id} className="flex-shrink-0 w-[43%] snap-start">
+                  {available ? (
+                    <Link to={`/menu/product-details/${item.id}`}>{card}</Link>
+                  ) : (
+                    card
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       ) : (

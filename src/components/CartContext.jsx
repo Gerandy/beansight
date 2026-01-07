@@ -59,12 +59,12 @@ export const CartProvider = ({ children }) => {
 
       try {
         // Read delivery config
-        const cfgSnap = await getDoc(doc(db, "settings", "deliveryConfig"));
-        const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+        const cfgSnap = await getDoc(doc(db, "settings", "mapRadius"));
+        const cfg = cfgSnap.data();
 
-        const baseFee = Number(cfg.baseFee ?? 40);
-        const perKmFee = Number(cfg.perKm ?? 10);
-        const origin = `${cfg.storeLat ?? "14.4239"},${cfg.storeLng ?? "120.8986"}`;
+        const baseFee = Number(cfg.flatFee || 40);
+        const perKmFee = Number(cfg.deliveryFeeKm || 10);
+        const origin = `${cfg.lat },${cfg.long }`;
 
         // Load Google Maps SDK
         const maps = await loadGoogleMaps();

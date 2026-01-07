@@ -20,10 +20,19 @@ function MenuGrid({ selectedCategory = "All" }) {
       try {
         setLoading(true);
         const querySnapshot = await getDocs(collection(db, "Inventory"));
-        const fetchedItems = querySnapshot.docs.map(doc => ({
+        let fetchedItems = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         }));
+
+        // Sort so available items come first
+        const isAvailable = (it) => {
+          if (it.availability !== undefined) return !!it.availability;
+          if (it.available !== undefined) return !!it.available;
+          return true;
+        };
+
+        fetchedItems.sort((a, b) => Number(isAvailable(b)) - Number(isAvailable(a)));
         setProducts(fetchedItems);
       } catch (error) {
         console.error("Error fetching inventory:", error);
@@ -110,12 +119,14 @@ function MenuGrid({ selectedCategory = "All" }) {
   return (
     <div className="max-w-6xl mx-auto mt-15 px-4 py-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-        {currentProducts.map(p => (
-          <div
-            key={p.id}
-            onClick={() => navigate(`/menu/product-details/${p.id}`)}
-            className="bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-3 sm:p-6 flex flex-col relative hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer group overflow-hidden"
-          >
+        {currentProducts.map(p => {
+          const available = p.availability !== undefined ? !!p.availability : (p.available !== undefined ? !!p.available : true);
+          return (
+            <div
+              key={p.id}
+              onClick={() => available && navigate(`/menu/product-details/${p.id}`)}
+              className={`bg-white border-2 border-[#D4A574] rounded-2xl shadow-lg p-3 sm:p-6 flex flex-col relative transition-all duration-300 group overflow-hidden ${available ? 'hover:shadow-xl hover:-translate-y-2 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+            >
             {/* Heart Icon */}
             <button
               onClick={e => toggleFavorite(p.id, e)}
@@ -152,8 +163,19 @@ function MenuGrid({ selectedCategory = "All" }) {
             <p className="font-bold text-[#6B3E2E] text-lg sm:text-2xl mb-2 sm:mb-4 relative z-10">
               ₱{Number(p.price).toFixed(2)}
             </p>
+
+            {!available && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl z-20">
+                <div className="text-white font-semibold text-center px-3">
+                  Not available
+                  <div className="text-xs font-medium mt-1">Cannot be ordered</div>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
+          );
+        })}
+        
       </div>
 
       {/* Pagination */}

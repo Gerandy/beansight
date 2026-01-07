@@ -14,12 +14,23 @@ function MenuFeatured() {
       setLoading(true);
       try {
         const querySnapshot = await getDocs(collection(db, "Inventory"));
-        const items = querySnapshot.docs.map((doc) => ({
+        let items = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+
         // Filter to only include new items (assuming 'isNew' field exists in Firestore)
-        const newItems = items.filter((item) => item.isNew);
+        let newItems = items.filter((item) => item.isNew);
+
+        // Sort by availability: available items first
+        const isAvailable = (it) => {
+          if (it.availability !== undefined) return !!it.availability;
+          if (it.available !== undefined) return !!it.available;
+          return true;
+        };
+
+        newItems.sort((a, b) => Number(isAvailable(b)) - Number(isAvailable(a)));
+
         setFoodMenu(newItems.slice(0, 5));
       } catch (error) {
         console.error("Error fetching featured items:", error);
@@ -75,17 +86,29 @@ function MenuFeatured() {
         <>
           {/* Desktop Grid */}
           <div className="hidden lg:grid grid-cols-5 gap-4">
-            {foodMenu.map((item) => (
-              <Link to={`/menu/product-details/${item.id}`} key={item.id}>
+            {foodMenu.map((item) => {
+              const available = item.availability !== undefined ? !!item.availability : (item.available !== undefined ? !!item.available : true);
+              const card = (
                 <MenuCard
                   name={item.name}
                   price={item.price}
                   img={item.img}
                   isNew={item.isNew}
                   isLoading={false}
+                  available={available}
                 />
-              </Link>
-            ))}
+              );
+
+              return (
+                <div key={item.id}>
+                  {available ? (
+                    <Link to={`/menu/product-details/${item.id}`}>{card}</Link>
+                  ) : (
+                    card
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Tablet & Mobile Swiper - 2 cards visible */}
@@ -97,22 +120,29 @@ function MenuFeatured() {
               msOverflowStyle: 'none',
             }}
           >
-            {foodMenu.map((item) => (
-              <div
-                key={item.id}
-                className="flex-shrink-0 w-[43%] snap-start"
-              >
-                <Link to={`/menu/product-details/${item.id}`}>
-                  <MenuCard
-                    name={item.name}
-                    price={item.price}
-                    img={item.img}
-                    isNew={item.isNew}
-                    isLoading={false}
-                  />
-                </Link>
-              </div>
-            ))}
+            {foodMenu.map((item) => {
+              const available = item.availability !== undefined ? !!item.availability : (item.available !== undefined ? !!item.available : true);
+              const card = (
+                <MenuCard
+                  name={item.name}
+                  price={item.price}
+                  img={item.img}
+                  isNew={item.isNew}
+                  isLoading={false}
+                  available={available}
+                />
+              );
+
+              return (
+                <div key={item.id} className="flex-shrink-0 w-[43%] snap-start">
+                  {available ? (
+                    <Link to={`/menu/product-details/${item.id}`}>{card}</Link>
+                  ) : (
+                    card
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       ) : (

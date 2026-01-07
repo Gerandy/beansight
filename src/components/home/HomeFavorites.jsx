@@ -39,6 +39,15 @@ function Favorites() {
         }
       }
 
+      // Sort so available items come first
+      const isAvailable = (it) => {
+        if (it.availability !== undefined) return !!it.availability;
+        if (it.available !== undefined) return !!it.available;
+        return true;
+      };
+
+      products.sort((a, b) => Number(isAvailable(b)) - Number(isAvailable(a)));
+
       setFavoriteProducts(products);
       setLoading(false);
     };
@@ -149,16 +158,28 @@ function Favorites() {
               : ""
           }`}
         >
-          {visibleProducts.map((product) => (
-            <Link to={`/menu/product-details/${product.id}`} key={product.id}>
+          {visibleProducts.map((product) => {
+            const available = product.availability !== undefined ? !!product.availability : (product.available !== undefined ? !!product.available : true);
+            const card = (
               <MenuCard 
                 name={product.name} 
                 price={product.price} 
                 img={product.img}
                 isLoading={false}
+                available={available}
               />
-            </Link>
-          ))}
+            );
+
+            return (
+              <div key={product.id}>
+                {available ? (
+                  <Link to={`/menu/product-details/${product.id}`}>{card}</Link>
+                ) : (
+                  card
+                )}
+              </div>
+            );
+          })}
           {/* Fill empty columns if less than 5 */}
           {Array.from({ length: itemsPerPage - visibleProducts.length }).map((_, idx) => (
             <div key={`empty-${idx}`} />
@@ -186,21 +207,28 @@ function Favorites() {
           msOverflowStyle: 'none',
         }}
       >
-        {favoriteProducts.map((product) => (
-          <div
-            key={product.id}
-            className="flex-shrink-0 w-[43%] snap-start"
-          >
-            <Link to={`/menu/product-details/${product.id}`}>
-              <MenuCard 
-                name={product.name} 
-                price={product.price} 
-                img={product.img}
-                isLoading={false}
-              />
-            </Link>
-          </div>
-        ))}
+        {favoriteProducts.map((product) => {
+          const available = product.availability !== undefined ? !!product.availability : (product.available !== undefined ? !!product.available : true);
+          const card = (
+            <MenuCard 
+              name={product.name} 
+              price={product.price} 
+              img={product.img}
+              isLoading={false}
+              available={available}
+            />
+          );
+
+          return (
+            <div key={product.id} className="flex-shrink-0 w-[43%] snap-start">
+              {available ? (
+                <Link to={`/menu/product-details/${product.id}`}>{card}</Link>
+              ) : (
+                card
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <style>{`

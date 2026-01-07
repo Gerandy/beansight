@@ -201,13 +201,13 @@ export default function AdminLayout() {
             </div>
             {settingsOpen && !collapsed && (
               <div className="ml-6 mt-1 space-y-1 animate-dropdown">
-                <NavLink
+                {/* <NavLink
                   to="/admin/settings/auditlog"
                   className={({ isActive }) => linkClasses(isActive)}
                   onClick={() => setSidebarOpen(false)}
                 >
                   {!collapsed && "Audit Log"}
-                </NavLink>
+                </NavLink> */}
                 <NavLink
                   to="/admin/settings/archive"
                   className={({ isActive }) => linkClasses(isActive)}

@@ -16,6 +16,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
   const [expandedItems, setExpandedItems] = useState({}); // Track which items are expanded
   const [deliveryFees, setDeliveryFee] = useState(0);
   const uid = localStorage.getItem("authToken");
+  const [origins, setOrigin] = useState("")
 
   const [settings, setSettings] = useState(0);
   useEffect(() => {
@@ -26,6 +27,7 @@ function CartSidebar({ cartOpen, setCartOpen }) {
           if (docRef.exists()) {
             const data = docRef.data();
             setSettings(data);
+            setOrigin(`${data.lat},${data.long}`);
           }
         } catch (err) {
           console.error("Error loading settings:", err);
@@ -33,12 +35,17 @@ function CartSidebar({ cartOpen, setCartOpen }) {
       };
   
       loadSettings();
-    }, []); 
+    }, []);
 
+   
+    
+    
   const { cart = [], removeFromCart, updateQuantity, totalPrice = 0,  calculateDeliveryFee } = useCart() || {};
   const navigate = useNavigate();
   
   const grandTotal = totalPrice + (settings.feeType === "flat" ? settings.flatFee : deliveryFees) ;
+  
+    
 
   useEffect(() => {
       if (!uid) return;
@@ -68,7 +75,7 @@ useEffect(() => {
   if (!defaultAddress) return;
 
   const handleDeliveryCalculation = async (lat, long, type) => {
-    const origin = "14.4427288619125,120.9102805815219";
+    const origin = origins;
 
     // Google Maps requires LAT, LNG format
     const destination = `${lat},${long}`;

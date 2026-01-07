@@ -1,10 +1,20 @@
 import React from "react";
 
-function MenuCard({ name, price, img, isNew, onClick }) {
+function MenuCard({ name, price, img, isNew, onClick, available = true }) {
+  const clickHandler = (e) => {
+    if (!available) {
+      e.preventDefault();
+      return;
+    }
+    if (onClick) onClick(e);
+  };
+
   return (
     <div 
-      onClick={onClick}
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-out p-3 sm:p-6 flex flex-col items-center text-center cursor-pointer border-2 border-[#D4A574] h-[250px] sm:h-[280px] relative overflow-hidden"
+      onClick={clickHandler}
+      className={`group bg-white rounded-2xl shadow-lg transition-all duration-300 ease-out p-3 sm:p-6 flex flex-col items-center text-center border-2 border-[#D4A574] h-[250px] sm:h-[280px] relative overflow-hidden ${
+        available ? 'hover:shadow-xl hover:-translate-y-2 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+      }`}
     >
       <div className="absolute inset-0 opacity-[0.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iNCIgZmlsbD0iIzJFMUMxNCIvPgo8L3N2Zz4=')] bg-repeat"></div>
 
@@ -24,6 +34,14 @@ function MenuCard({ name, price, img, isNew, onClick }) {
         </h2>
         <p className="text-[#6B3E2E] font-bold text-base sm:text-2">₱{Number(price).toFixed(2)}</p>
       </div>
+      {!available && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl z-20">
+          <div className="text-white font-semibold text-center px-3">
+            Not available
+            <div className="text-xs font-medium mt-1">Cannot be ordered</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

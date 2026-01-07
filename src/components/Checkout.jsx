@@ -23,6 +23,8 @@ export default function Checkout() {
   const { clearCart } = useCart(); // ← get clearCart from context
   const [qr, setQr] = useState("");
   const [infoModal, setInfoModal] = useState({ isOpen: false, title: "", message: "" });
+  const [origins, setOrigin] = useState("")
+  
   
   
   useEffect(() => {
@@ -33,6 +35,7 @@ export default function Checkout() {
           if (docRef.exists()) {
             const data = docRef.data();
             setSettings(data);
+            setOrigin(`${data.lat},${data.long}`);
           }
         } catch (err) {
           console.error("Error loading settings:", err);
@@ -159,7 +162,7 @@ export default function Checkout() {
         const handleDeliveryCalculation = async (lat, long) => {
             try {
                 // Hardcoded origin is acceptable for this calculation if necessary
-                const origin = "14.4427288619125,120.9102805815219"; 
+                const origin = origins;
                 const destination = `${lat},${long}`;
                 // Assuming calculateDeliveryFeeUtil is an async function that works
                 const { fee } = await calculateDeliveryFeeUtil(origin, destination);

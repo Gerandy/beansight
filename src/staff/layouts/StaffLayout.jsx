@@ -127,7 +127,7 @@ export default function StaffLayout() {
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center gap-3 lg:gap-4">
-                {["POS", "Online Orders", "Products", "Inventory", "History"].map((label, idx) => (
+                {["POS", "Online Orders", "Products",  "History"].map((label, idx) => (
                   <NavLink
                     key={label}
                     to={`/staff/${label.toLowerCase().replace(" ", "-")}`}
@@ -245,7 +245,7 @@ export default function StaffLayout() {
             <h2 className="text-lg font-semibold text-coffee-800">Menu</h2>
           </div>
           <div className="p-3 space-y-1">
-            {["POS", "Online Orders", "Products", "Inventory", "History"].map((label) => (
+            {["POS", "Online Orders", "Products",  "History"].map((label) => (
               <NavLink
                 key={label}
                 to={`/staff/${label.toLowerCase().replace(" ", "-")}`}
