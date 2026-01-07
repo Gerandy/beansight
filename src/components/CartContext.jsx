@@ -12,21 +12,22 @@ import { loadGoogleMaps } from "../utils/loadGoogleMaps";
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  // Initialize cart from localStorage immediately
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem("cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Error loading cart from localStorage:", error);
+      return [];
+    }
+  });
   const [totalPrice, setTotalPrice] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [feeLoading, setFeeLoading] = useState(false);
 
   /* -----------------------------------------------------------
-      Load INITIAL CART
-  ------------------------------------------------------------ */
-  useEffect(() => {
-    const saved = localStorage.getItem("cart");
-    if (saved) setCart(JSON.parse(saved));
-  }, []);
-
-  /* -----------------------------------------------------------
-      RECALCULATE TOTAL & SAVE CART
+      RECALCULATE TOTAL & SAVE CART TO LOCALSTORAGE
   ------------------------------------------------------------ */
   useEffect(() => {
     const total = cart.reduce(
@@ -34,7 +35,13 @@ export const CartProvider = ({ children }) => {
       0
     );
     setTotalPrice(total);
-    localStorage.setItem("cart", JSON.stringify(cart));
+    
+    // Save to localStorage whenever cart changes
+    try {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } catch (error) {
+      console.error("Error saving cart to localStorage:", error);
+    }
   }, [cart]);
 
 
@@ -156,7 +163,11 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => {
     setCart([]);
     setDeliveryFee(0);
-    localStorage.removeItem("cart");
+    try {
+      localStorage.removeItem("cart");
+    } catch (error) {
+      console.error("Error clearing cart from localStorage:", error);
+    }
   };
 
   /* -----------------------------------------------------------

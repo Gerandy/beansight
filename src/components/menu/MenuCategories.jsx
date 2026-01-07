@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useRef, useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 
 function MenuCategories({ selected = "All", onSelect = () => {} }) {
@@ -22,28 +22,35 @@ function MenuCategories({ selected = "All", onSelect = () => {} }) {
       setLoading(true);
       setError(null);
       try {
-        const snapshot = await getDocs(collection(db, "Inventory"));
-        const catSet = new Set();
-        snapshot.docs.forEach((doc) => {
-          const c = doc.data()?.category;
-          if (c) catSet.add(String(c));
-        });
-        const list = Array.from(catSet)
-          .map((s) => String(s || "").trim())
-          .filter(Boolean)
-          .sort((a, b) =>
+        // Fetch categories from the extra/categories document
+        const docRef = doc(db, "extra", "categories");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const categoryList = data.categoryList || [];
+          const categoryNames = categoryList.map(cat => cat.name).sort((a, b) =>
             a.localeCompare(b, undefined, { sensitivity: "base", numeric: true })
           );
-        if (mounted) setCategories(["All", ...list]);
+          if (mounted) setCategories(["All", ...categoryNames]);
+        } else {
+          // Fallback to default categories if document doesn't exist
+          if (mounted) setCategories(["All", "Beverage", "Dessert", "Burger", "Chicken", "Fries & Sides"]);
+        }
       } catch (err) {
         console.error("Failed to load categories:", err);
-        if (mounted) setError(err?.message || String(err));
+        if (mounted) {
+          setError(err?.message || String(err));
+          // Set default categories on error
+          setCategories(["All", "Beverage", "Dessert", "Burger", "Chicken", "Fries & Sides"]);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
     };
 
     loadCategories();
+    return () => { mounted = false; };
   }, []);
 
   return (
