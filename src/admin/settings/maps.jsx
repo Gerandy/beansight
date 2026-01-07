@@ -378,7 +378,7 @@ export default function MapsSettings() {
                       />
                       <Circle
                         center={location}
-                        radius={radius * 1000}
+                        radius={radius }
                         options={{
                           fillColor: "#8B4513",
                           fillOpacity: 0.15,

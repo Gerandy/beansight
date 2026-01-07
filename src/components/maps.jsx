@@ -1,20 +1,41 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../../firebase";
+
+const [shopLocation, setLocation] = useState({ lat: 14.5995, lng: 120.9842 });
+
+
+
+useEffect(()=> {
+  
+  const loadLocation = async () =>{
+    const docSnap = await getDoc(doc(db, "settings", "mapRadius" ));
+    if (docSnap.exists()){
+      const data = docSnap.data();
+      setLocation({ lat: data.lat || 14.5995, lng: data.long || 120.9842 });
+      
+    }
+  }
+
+loadLocation();
+},[])
+
+
+
+
 
 const containerStyle = {
   width: "100%",
   height: "300px",
 };
 
-// STATIC SHOP LOCATION
-const shopLocation = {
-  lat: 14.442745288868798, 
-  lng: 120.91028756755293,
-};
+
+
+
 
 export default function Map({ onSelect }) {
   const [customerPos, setCustomerPos] = useState(null);
-
   const handleMapClick = useCallback(
     (e) => {
       const newPos = {

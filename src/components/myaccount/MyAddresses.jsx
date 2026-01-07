@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { db } from "../../firebase";
-import { collection, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
 
 // Ensure Google Maps JS API is loaded in index.html
 // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
 
 function MyAddresses() {
+  
   const [addresses, setAddresses] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -20,9 +21,28 @@ function MyAddresses() {
     long: null,
   });
   const [errors, setErrors] = useState({});
+  const [hasOutOfZoneAddresses, setHasOutOfZoneAddresses] = useState(false);
+
+  const [longitude, setlongitude] = useState(null);
+  const [latitude, setlatitude] = useState(null);
+    const [radius, setRadius] = useState(null);
 
   const addressLabel = ["Residential","Office"];
-  
+  const storeCenter = { lat: latitude, lng: longitude };
+
+  // compute distance (meters) between two lat/lng pairs (Haversine)
+  const computeDistanceMeters = (lat1, lon1, lat2, lon2) => {
+    if ([lat1, lon1, lat2, lon2].some(v => v === null || v === undefined)) return Infinity;
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371000; // meters
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
   // Google Maps refs
   const mapRef = useRef(null);
@@ -30,6 +50,26 @@ function MyAddresses() {
   const markerInstance = useRef(null);
   const autocompleteRef = useRef(null);
   const inputRef = useRef(null);
+  const deliveryRadius = radius;
+
+
+  useEffect(() =>{
+      const load = async () => {
+        const docSnap = await getDoc(doc(db, "settings", "mapRadius"));  
+        if (docSnap.exists()){
+          const radiusValue = docSnap.data().value
+          const long = docSnap.data().long
+          const lat = docSnap.data().lat
+          setRadius(radiusValue)
+          setlongitude(long)
+          setlatitude(lat)
+          console.log(radius)
+        }
+      }
+      load();
+    },[])
+
+
 
   // Fetch addresses
   useEffect(() => {
@@ -40,19 +80,42 @@ function MyAddresses() {
         const colRef = collection(db, "users", userId, "addresses");
         const snapshot = await getDocs(colRef);
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setAddresses(data);
+
+        // mark out-of-zone addresses based on current store center/radius
+        const marked = data.map(a => {
+          const dist = computeDistanceMeters(latitude, longitude, a.lat, a.long);
+          return { ...a, outOfZone: radius ? dist > radius : false, distanceMeters: isFinite(dist) ? Math.round(dist) : null };
+        });
+        setAddresses(marked);
+        setHasOutOfZoneAddresses(marked.some(m => m.outOfZone));
       } catch (err) {
         console.error("Error fetching addresses:", err);
       }
     };
     fetchAddresses();
-  }, []);
+  }, [latitude, longitude, radius]);
 
+  // re-evaluate addresses when store center/radius change
+  useEffect(() => {
+    if (!addresses || addresses.length === 0) return;
+    const marked = addresses.map(a => {
+      const dist = computeDistanceMeters(latitude, longitude, a.lat, a.long);
+      return { ...a, outOfZone: radius ? dist > radius : false, distanceMeters: isFinite(dist) ? Math.round(dist) : null };
+    });
+    setAddresses(marked);
+    setHasOutOfZoneAddresses(marked.some(m => m.outOfZone));
+  }, [latitude, longitude, radius]);
+  
   // Initialize Google Maps
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
 
-    const defaultLocation = { lat: 14.4453, lng: 120.9187 }; // Kawit, Cavite
+    const defaultLocation = (formData.lat && formData.long)
+      ? { lat: formData.lat, lng: formData.long }
+      : (latitude && longitude)
+        ? { lat: latitude, lng: longitude }
+        : { lat: 14.3966, lng: 120.956 }; // fallback
+
     mapInstance.current = new window.google.maps.Map(mapRef.current, {
       center: defaultLocation,
       zoom: 14,
@@ -64,24 +127,64 @@ function MyAddresses() {
       position: defaultLocation,
     });
 
-    // Drag marker to update address
+    // create delivery zone only if center & radius available
+    const zoneCircle = (latitude && longitude && radius)
+      ? new window.google.maps.Circle({
+          map: mapInstance.current,
+          center: storeCenter,
+          radius: radius,
+          fillColor: "#8B4513",
+          strokeColor: "#5D2E0F",
+          strokeWeight: 2,
+          clickable: false,
+          fillOpacity: 0.15,
+        })
+      : null;
+
+    const isInsideZone = (pos) => {
+      if (!zoneCircle || !window.google.maps.geometry) return true;
+      return window.google.maps.geometry.spherical.computeDistanceBetween(
+        pos,
+        zoneCircle.getCenter()
+      ) <= zoneCircle.getRadius();
+    };
+
+    const snapToCircleEdge = (pos) => {
+      if (!zoneCircle || !window.google.maps.geometry) return pos;
+      const center = zoneCircle.getCenter();
+      const distance = window.google.maps.geometry.spherical.computeDistanceBetween(pos, center);
+      if (distance <= zoneCircle.getRadius()) return pos;
+      const heading = window.google.maps.geometry.spherical.computeHeading(center, pos);
+      return window.google.maps.geometry.spherical.computeOffset(center, zoneCircle.getRadius(), heading);
+    };
+
+    // Drag marker to update address (snap to zone if outside)
     markerInstance.current.addListener("dragend", async () => {
-      const pos = markerInstance.current.getPosition();
+      let pos = markerInstance.current.getPosition();
+      if (!isInsideZone(pos)) {
+        pos = snapToCircleEdge(pos);
+        markerInstance.current.setPosition(pos);
+      }
       const geocoder = new window.google.maps.Geocoder();
       const res = await geocoder.geocode({ location: pos });
       if (res?.results?.[0]) fillAddressFromPlace(res.results[0]);
     });
 
-    // Click map to move marker
+    // Click map to move marker (snap to zone if outside)
     mapInstance.current.addListener("click", (e) => {
-      const pos = e.latLng;
-      markerInstance.current.setPosition(pos);
+      let pos = e.latLng;
+      if (!isInsideZone(pos)) {
+        pos = snapToCircleEdge(pos);
+        markerInstance.current.setPosition(pos);
+      } else {
+        markerInstance.current.setPosition(pos);
+      }
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode({ location: pos }, (results, status) => {
         if (status === "OK" && results[0]) fillAddressFromPlace(results[0]);
       });
     });
-  }, [showForm]);
+  }, [showForm, latitude, longitude, radius]);
 
   // Autocomplete
   useEffect(() => {
@@ -96,12 +199,33 @@ function MyAddresses() {
     autocompleteRef.current.addListener("place_changed", () => {
       const place = autocompleteRef.current.getPlace();
       if (!place) return;
-      fillAddressFromPlace(place);
 
-      if (place.geometry && mapInstance.current && markerInstance.current) {
-        const pos = place.geometry.location;
+      // prefer geometry location and snap to zone if needed
+      let pos = place.geometry && place.geometry.location ? place.geometry.location : null;
+
+      if (pos && window.google && radius && latitude && longitude && window.google.maps.geometry) {
+        const center = new window.google.maps.LatLng(latitude, longitude);
+        const dist = window.google.maps.geometry.spherical.computeDistanceBetween(pos, center);
+        if (dist > radius) {
+          const heading = window.google.maps.geometry.spherical.computeHeading(center, pos);
+          pos = window.google.maps.geometry.spherical.computeOffset(center, radius, heading);
+        }
+      }
+
+      if (mapInstance.current && markerInstance.current && pos) {
         mapInstance.current.setCenter(pos);
         markerInstance.current.setPosition(pos);
+      }
+
+      // ensure form gets filled from a GeocoderResult (snapped or original)
+      if (pos) {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ location: pos }, (results, status) => {
+          if (status === "OK" && results[0]) fillAddressFromPlace(results[0]);
+          else if (place) fillAddressFromPlace(place);
+        });
+      } else {
+        fillAddressFromPlace(place);
       }
     });
   }, [showForm]);
@@ -218,6 +342,12 @@ function MyAddresses() {
         My Addresses
       </h1>
 
+      {hasOutOfZoneAddresses && (
+        <div className="mb-4 p-3 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-900">
+          The store's delivery location or radius has changed — some saved addresses are now outside the delivery zone. Please review and update your addresses.
+        </div>
+      )}
+
       <div className="space-y-4">
         {addresses.map(addr => (
           <div key={addr.id} className="flex items-start gap-4 p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
@@ -225,6 +355,9 @@ function MyAddresses() {
             <div className="flex-1 min-w-0">
               <h2 className="font-bold text-base sm:text-lg text-coffee-900 mb-1">{addr.label}</h2>
               <p className="text-sm text-coffee-700 leading-relaxed">{addr.details}, {addr.city}, {addr.province} {addr.zipcode}</p>
+              {addr.outOfZone && (
+                <p className="text-sm text-red-600 mt-2">This address is outside the store's delivery zone. The store location changed — please update this address.</p>
+              )}
             </div>
             <button onClick={() => handleEdit(addr)} className="cursor-pointer px-4 py-2 bg-coffee-400 text-white rounded-lg font-medium hover:bg-coffee-500 transition-colors text-sm flex-shrink-0">Edit</button>
           </div>
